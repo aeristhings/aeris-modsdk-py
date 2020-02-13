@@ -53,6 +53,11 @@ def mycli(ctx, verbose, config_file):
     ctx.obj['verbose'] = verbose
     #print('context:\n' + str(ctx.invoked_subcommand))
     if load_config(ctx, config_file):
+        if ctx.obj['modemMfg'] == 'quectel':
+            my_modem = quectel
+        elif ctx.obj['modemMfg'] == 'ublox':
+            my_modem = ublox
+        my_modem.init(ctx.obj['comPort'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
     elif ctx.invoked_subcommand not in ['config',
                                         'ping']:  # This is not ok unless we are doing a config or ping command
