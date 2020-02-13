@@ -6,10 +6,18 @@ import glob
 
 modem_port = '/dev/ttyUSB2'
 
+getpacket = """GET / HTTP/1.1
+Host: <hostname>
+
+"""
+
+
 def init(modem_port_in):
     modem_port = modem_port_in
-    print('Modem port: ' + modem_port)
-    
+
+
+def get_http_packet(hostname):
+    return getpacket.replace('<hostname>', hostname) 
 
 def find_modem():
     # find USB devices
