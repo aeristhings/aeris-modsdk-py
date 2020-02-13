@@ -45,10 +45,17 @@ def write(ser, cmd, moredata=None):
     ser.write(cmd.encode())
     out = ''
     # let's wait one second before reading output (let's give device time to answer)
-    time.sleep(1)
+    # Let's wait up to one second for data to come back
+    #time.sleep(1)
+    start_time = time.time()
+    elapsed_time = 0
+    while ser.inWaiting() == 0 and elapsed_time < 1.0:
+        time.sleep(0.05)
+        elapsed_time = time.time() - start_time
+        print("Elapsed time: " + str(elapsed_time))
     while ser.inWaiting() > 0:
         myoutput.append(ser.read()[0])
-    out = myoutput.decode("utf-8")
+    out = myoutput.decode("utf-8")  # Change to utf-8
     if(moredata != None):
         #print('Current out: ' + out)
         #print('More data length: ' + str(len(moredata)))

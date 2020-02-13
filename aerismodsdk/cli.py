@@ -104,19 +104,19 @@ def interactive(ctx):
 @click.argument('host')
 @click.pass_context
 def get(ctx, host):
-    my_modem.do_http_get(host)
+    my_modem.http_get(host)
 
 @mycli.command()
 @click.argument('host')
 @click.pass_context
 def ping(ctx, host):
-    my_modem.do_icmp_ping(host)
+    my_modem.icmp_ping(host)
 
 @mycli.command()
 @click.argument('host')
 @click.pass_context
 def lookup(ctx, host):
-    my_modem.do_dns_lookup(host)
+    my_modem.dns_lookup(host)
 
 
 def main():

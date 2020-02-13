@@ -10,7 +10,7 @@ def check_modem():
     rmutils.write(ser, 'ATI')
 
 
-def do_http_get(host):
+def http_get(host):
     ser = rmutils.init_modem()
     rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
     rmutils.write(ser, 'AT+QIACT=1') #Activate context / create packet session
@@ -26,14 +26,14 @@ def do_http_get(host):
     rmutils.write(ser, 'AT+QISEND=0,0') #Check how much data sent
     rmutils.write(ser, 'AT+QIRD=0,1500') #Check receive
 
-def do_icmp_ping(host):
+def icmp_ping(host):
     ser = rmutils.init_modem()
     rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
     rmutils.write(ser, 'AT+QIACT=1') #Activate context / create packet session
     mycmd = 'AT+QPING=1,\"' + host + '\"'
     rmutils.write(ser, mycmd) # Write a ping command
 
-def do_dns_lookup(host):
+def dns_lookup(host):
     ser = rmutils.init_modem()
     rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
     rmutils.write(ser, 'AT+QIACT=1') #Activate context / create packet session
