@@ -130,6 +130,17 @@ def lookup(ctx, host):
     my_modem.dns_lookup(host)
 
 
+@mycli.command()
+@click.pass_context
+def psminfo(ctx):
+    my_modem.psm_info()
+
+@mycli.command()
+@click.pass_context
+def psmenable(ctx):
+    my_modem.psm_enable()
+
+
 def main():
     mycli(obj={})
 
