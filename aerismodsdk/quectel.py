@@ -100,3 +100,12 @@ def psm_info():
     print('Active time units: ' + str(at_units(timer_units(atu))))
 
 def psm_enable():
+    #mycmd = 'AT+CPSMS=1,,,”00101000”,”00100100”'
+    #mycmd = 'AT+CPSMS=1,,,,'
+    #mycmd = 'AT+CPSMS=1,,,"01100000","00000000"'
+    #mycmd = 'AT+CPSMS=1,,,"01100001","00000001"'
+    #mycmd = 'AT+CPSMS=1,,,"10100001","00100001"'
+    mycmd = 'AT+CPSMS=1,,,"01111110","00011110"'
+    ser = rmutils.init_modem()
+    rmutils.write(ser, mycmd) # Enable PSM and set the timers
+    
