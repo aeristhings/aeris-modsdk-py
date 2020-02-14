@@ -4,6 +4,7 @@ import pathlib
 import aerismodsdk.rmutils as rmutils
 import aerismodsdk.ublox as ublox
 import aerismodsdk.quectel as quectel
+import aerismodsdk.telit as telit
 import aerismodsdk.aerisutils as aerisutils
 
 
@@ -13,6 +14,13 @@ default_config_filename = home_directory + "/.aeris_config"
 
 # Establish the modem type; send commands to appropriate modem module
 my_modem = quectel
+
+# Mapper between manufacturer to the corresponding logic, add new ones here
+modules = {
+  'quectel' : quectel,
+  'ublox' : ublox,
+  'telit' : telit
+}
 
 # Loads configuration from file
 def load_config(ctx, config_filename):
@@ -51,12 +59,10 @@ def mycli(ctx, verbose, config_file):
     if ctx.obj is None:
         ctx.obj = {}
     ctx.obj['verbose'] = verbose
-    #print('context:\n' + str(ctx.invoked_subcommand))
+    #print('context:\n' + str(ctx.invoked_subcommand))    
     if load_config(ctx, config_file):
-        if ctx.obj['modemMfg'] == 'quectel':
-            my_modem = quectel
-        elif ctx.obj['modemMfg'] == 'ublox':
-            my_modem = ublox
+        global my_modem
+        my_modem  = modules.get(ctx.obj['modemMfg'])
         my_modem.init(ctx.obj['comPort'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
     elif ctx.invoked_subcommand not in ['config',
@@ -68,7 +74,7 @@ def mycli(ctx, verbose, config_file):
 
 
 @mycli.command()
-@click.option('--modemmfg', prompt='Modem mfg', type=click.Choice(['ublox', 'quectel']),
+@click.option('--modemmfg', prompt='Modem mfg', type=click.Choice(['ublox', 'quectel','telit']),
               cls=default_from_context('modemMfg', 'ublox'), help="Modem manufacturer.")
 @click.option('--comport', prompt='COM port', type=click.Choice(['USB0', 'USB1', 'USB2', 'USB3']),
               cls=default_from_context('comPort', 'USB0'), help="Modem COM port.")
@@ -87,7 +93,7 @@ def config(ctx, modemmfg, comport):
 @mycli.command()
 @click.pass_context
 def modem(ctx):
-    #find_modem()
+    #find_modem()    
     my_modem.check_modem()
 
 @mycli.command()
