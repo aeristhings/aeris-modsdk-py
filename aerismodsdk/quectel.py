@@ -9,10 +9,9 @@ def create_packet_session():
     ser = rmutils.init_modem()
     rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
     constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
-    #rmutils.write(ser, 'AT+QIDEACT=1')  # Deactivate context in case already active
-    if "10" not in constate:
+    if len(constate) < len('+QIACT: '):  # Returns packet session info if in session 
         rmutils.write(ser, 'AT+QIACT=1')  # Activate context / create packet session
-        rmutils.write(ser, 'AT+QIACT?')  # Check that we connected
+        rmutils.write(ser, 'AT+QIACT?')  # Verify that we connected
     return ser
 
 def check_modem():
@@ -22,14 +21,14 @@ def check_modem():
 
 def http_get(host):
     ser = create_packet_session()
-    #time.sleep(1)
     # Open socket to the host
     rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
     mycmd = 'AT+QIOPEN=1,0,\"TCP\",\"' + host + '\",80,0,0'
     rmutils.write(ser, mycmd, delay=1)  # Create TCP socket connection as a client
     sostate = rmutils.write(ser, 'AT+QISTATE=1,0')  # Check socket state
-    if "TCP" not in sostate:  # Try one more time with a delay
+    if "TCP" not in sostate:  # Try one more time with a delay if not connected
         sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
+    # Send HTTP GET
     getpacket = rmutils.get_http_packet(host)
     mycmd = 'AT+QISEND=0,' + str(len(getpacket))
     rmutils.write(ser, mycmd, getpacket, delay=1)  # Write an http get command
