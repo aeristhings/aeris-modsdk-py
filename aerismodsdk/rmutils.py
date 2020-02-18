@@ -65,9 +65,9 @@ def write(ser, cmd, moredata=None, delay=0):
     start_time = time.time()
     elapsed_time = 0
     while ser.inWaiting() == 0 and elapsed_time < 1.0:
-        time.sleep(0.05)
+        time.sleep(0.005)
         elapsed_time = time.time() - start_time
-        print("Elapsed time: " + str(elapsed_time))
+        #print("Elapsed time: " + str(elapsed_time))
     while ser.inWaiting() > 0:
         myoutput.append(ser.read()[0])
     out = myoutput.decode("utf-8")  # Change to utf-8

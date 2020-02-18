@@ -137,12 +137,12 @@ def edrx_time(i):  # eDRX cycle time duration
         0b0111:'122.88 sec',
         0b1000:'143.36 sec',
         0b1001:'163.84 sec',
-        0b1010:'327.68 sec',
-        0b1011:'655.36 sec',
-        0b1100:'1310.72 sec',
-        0b1101:'2621.44 sec',
-        0b1110:'5242.88 sec',
-        0b1111:'10485.88 sec'}
+        0b1010:'327.68 sec (5.5 min)',
+        0b1011:'655.36 sec (10.9 min)',
+        0b1100:'1310.72 sec (21 min)',
+        0b1101:'2621.44 sec (43 min)',
+        0b1110:'5242.88 sec (87 min)',
+        0b1111:'10485.88 sec (174 min)'}
     return switcher.get(i,"Invalid value")
 
 
@@ -184,12 +184,11 @@ def edrx_info():
 
 
 def edrx_enable():
-    #mycmd = 'AT+CEDRXS=1,4,“1001”'
-    #mycmd = 'AT+CEDRXS=1,4,“0000”'
+    #mycmd = 'AT+CEDRXS=1,4,“1001”' # Does not work with 1 on LTE-M
+    mycmd = 'AT+CEDRXS=2,4,"1001"'
     #mycmd = 'AT+CEDRXS=0'
     #mycmd = 'AT+CEDRXS=0,5'
-    mycmd = 'AT+CEDRXS=3'
-    #mycmd = 'AT+CEDRXS=1,5,"0000"'
+    #mycmd = 'AT+CEDRXS=1,5,"0000"'  # This works for CAT-NB with 1
     ser = rmutils.init_modem()
     rmutils.write(ser, mycmd) # Enable eDRX and set the timers
 
