@@ -34,20 +34,21 @@ def http_get(host):
     # Send HTTP GET
     getpacket = rmutils.get_http_packet(host)
     mycmd = 'AT+QISEND=0,' + str(len(getpacket))
-    rmutils.write(ser, mycmd, getpacket, delay=1)  # Write an http get command
+    rmutils.write(ser, mycmd, getpacket, delay=0)  # Write an http get command
     rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
     rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
 
 def icmp_ping(host):
     ser = create_packet_session()
-    mycmd = 'AT+QPING=1,\"' + host + '\"'
-    rmutils.write(ser, mycmd, delay=4) # Write a ping command
+    mycmd = 'AT+QPING=1,\"' + host + '\",4,4'  # Context, host, timeout, pingnum
+    rmutils.write(ser, mycmd, delay=6) # Write a ping command; Wait timeout plus 2 seconds
 
 def dns_lookup(host):
     ser = create_packet_session()
     rmutils.write(ser, 'AT+QIDNSCFG=1') # Check DNS server
     mycmd = 'AT+QIDNSGIP=1,\"' + host + '\"'
-    rmutils.write(ser, mycmd, delay=2) # Write a dns lookup command
+    rmutils.write(ser, mycmd, timeout=0) # Write a dns lookup command
+    rmutils.wait_urc(ser, 4) # Wait up to 4 seconds for results to come back via urc
 
 def parse_response(response, prefix):
     #print('Response: ' + response)

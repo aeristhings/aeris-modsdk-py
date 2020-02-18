@@ -51,7 +51,7 @@ def init_modem():
     write(ser, 'ATE0') # Turn off echo
     return ser
 
-def write(ser, cmd, moredata=None, delay=0):
+def write(ser, cmd, moredata=None, delay=0, timeout=1.0):
     print(">> " + cmd)
     myoutput = bytearray()
     cmd = cmd + '\r\n'
@@ -64,7 +64,7 @@ def write(ser, cmd, moredata=None, delay=0):
         time.sleep(delay)
     start_time = time.time()
     elapsed_time = 0
-    while ser.inWaiting() == 0 and elapsed_time < 1.0:
+    while ser.inWaiting() == 0 and elapsed_time < timeout:
         time.sleep(0.005)
         elapsed_time = time.time() - start_time
         #print("Elapsed time: " + str(elapsed_time))
@@ -77,6 +77,21 @@ def write(ser, cmd, moredata=None, delay=0):
         time.sleep(1)
         ser.write(moredata.encode())
         time.sleep(1)
+    print("<< " + out.strip())
+    return out
+
+
+def wait_urc(ser, timeout):
+    myoutput = bytearray()
+    start_time = time.time()
+    elapsed_time = 0
+    while elapsed_time < timeout:
+        while ser.inWaiting() > 0:
+            myoutput.append(ser.read()[0])
+        time.sleep(0.005)
+        elapsed_time = time.time() - start_time
+        #print("Elapsed time: " + str(elapsed_time))
+    out = myoutput.decode("utf-8")  # Change to utf-8
     print("<< " + out.strip())
     return out
 
