@@ -135,10 +135,23 @@ def lookup(ctx, host):
 def psminfo(ctx):
     my_modem.psm_info()
 
+
 @mycli.command()
 @click.pass_context
 def psmenable(ctx):
     my_modem.psm_enable()
+
+
+@mycli.command()
+@click.pass_context
+def edrxinfo(ctx):
+    my_modem.edrx_info()
+
+
+@mycli.command()
+@click.pass_context
+def edrxenable(ctx):
+    my_modem.edrx_enable()
 
 
 def main():
