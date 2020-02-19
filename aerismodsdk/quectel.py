@@ -99,11 +99,14 @@ def psm_info():
     # Different way to query
     psmsettings = rmutils.write(ser, 'AT+CPSMS?') # Check PSM settings
     vals = parse_response(psmsettings, '+CPSMS:')
-    tauu = int(vals[3].strip('\"'), 2)
-    print('TAU units: ' + str(tau_units(timer_units(tauu))))
-    atu = int(vals[4].strip('\"'), 2)
-    print('Active time units: ' + str(at_units(timer_units(atu))))
-
+    tau_value = int(vals[3].strip('\"'), 2)
+    print('TAU units: ' + str(tau_units(timer_units(tau_value))))
+    print('TAU value: ' + str(tau_value & 0b00011111))
+    active_time = int(vals[4].strip('\"'), 2)
+    print('Active time units: ' + str(at_units(timer_units(active_time))))
+    print('Active time value: ' + str(active_time & 0b00011111))
+    # Check on urc setting
+    rmutils.write(ser, 'AT+QCFG="psm/urc"') # Check if urc enabled
 
 def psm_enable():
     #mycmd = 'AT+CPSMS=1,,,”00101000”,”00100100”'
@@ -111,9 +114,26 @@ def psm_enable():
     #mycmd = 'AT+CPSMS=1,,,"01100000","00000000"'
     #mycmd = 'AT+CPSMS=1,,,"01100001","00000001"'
     #mycmd = 'AT+CPSMS=1,,,"10100001","00100001"'
-    mycmd = 'AT+CPSMS=1,,,"01111110","00011110"'
+    #mycmd = 'AT+CPSMS=1,,,"01111110","00011110"'  # 2 sec * 30
+    mycmd = 'AT+CPSMS=1,,,"10100001","00011111"'  # 2 sec * 31
     ser = rmutils.init_modem()
     rmutils.write(ser, mycmd) # Enable PSM and set the timers
+    # Enable urc setting
+    rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
+    # Let's try to wait for such a urc
+    rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    
+
+
+def psm_now():
+    mycmd = 'AT+QCFG="psm/enter",1'  # Enter PSM right after RRC
+    ser = rmutils.init_modem()
+    rmutils.write(ser, mycmd)
+    # Enable urc setting
+    #rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
+    # Let's try to wait for such a urc
+    rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    
 
 
 def act_type(i):  # Access technology type

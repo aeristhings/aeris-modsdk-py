@@ -144,6 +144,12 @@ def psmenable(ctx):
 
 @mycli.command()
 @click.pass_context
+def psmnow(ctx):
+    my_modem.psm_now()
+
+
+@mycli.command()
+@click.pass_context
 def edrxinfo(ctx):
     my_modem.edrx_info()
 
