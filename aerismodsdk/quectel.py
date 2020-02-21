@@ -127,15 +127,23 @@ def psm_enable():
     #mycmd = 'AT+CPSMS=1,,,"01100001","00000001"'
     #mycmd = 'AT+CPSMS=1,,,"10100001","00100001"'
     #mycmd = 'AT+CPSMS=1,,,"01111110","00011110"'  # 2 sec * 30
-    mycmd = 'AT+CPSMS=1,,,"10100001","00011111"'  # 2 sec * 31
+    mycmd = 'AT+CPSMS=1,,,"10000100","00000001"'  # TAU: 30 sec * 4 / Active Time: 2 sec * 1
     ser = rmutils.init_modem()
     rmutils.write(ser, mycmd) # Enable PSM and set the timers
     # Enable urc setting
     rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
     # Let's try to wait for such a urc
-    rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
     
 
+def psm_disable(verbose):
+    mycmd = 'AT+CPSMS=0'  # Disable PSM
+    ser = rmutils.init_modem(verbose=verbose)
+    rmutils.write(ser, mycmd, verbose=verbose)
+    # Disable urc setting
+    rmutils.write(ser, 'AT+QCFG="psm/urc",0', verbose=verbose)
+    print('PSM and PSM/URC disabled')
+    
 
 def psm_now():
     mycmd = 'AT+QCFG="psm/enter",1'  # Enter PSM right after RRC
@@ -200,10 +208,10 @@ def paging_time(i):  # eDRX paging time duration
     return switcher.get(i,"Invalid value")
 
 
-def edrx_info():
-    ser = rmutils.init_modem()
-    psmsettings = rmutils.write(ser, 'AT+CEDRXS?') # Check eDRX settings
-    edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP') # Read eDRX settings requested and network-provided
+def edrx_info(verbose):
+    ser = rmutils.init_modem(verbose=verbose)
+    edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose) # Check eDRX settings
+    edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP', verbose=verbose) # Read eDRX settings requested and network-provided
     vals = parse_response(edrxsettings, '+CEDRXRDP: ')
     a_type = act_type(int(vals[0].strip('\"')))
     if a_type is not None:
@@ -216,13 +224,22 @@ def edrx_info():
         print('Paging time: ' + str(p_time))
 
 
-def edrx_enable():
+def edrx_enable(verbose):
     #mycmd = 'AT+CEDRXS=1,4,“1001”' # Does not work with 1 on LTE-M
     mycmd = 'AT+CEDRXS=2,4,"1001"'
     #mycmd = 'AT+CEDRXS=0'
     #mycmd = 'AT+CEDRXS=0,5'
     #mycmd = 'AT+CEDRXS=1,5,"0000"'  # This works for CAT-NB with 1
-    ser = rmutils.init_modem()
-    rmutils.write(ser, mycmd) # Enable eDRX and set the timers
+    ser = rmutils.init_modem(verbose=verbose)
+    rmutils.write(ser, mycmd, verbose=verbose) # Enable eDRX and set the timers
+    print('edrx is now enabled for LTE-M')
+
+
+def edrx_disable(verbose):
+    mycmd = 'AT+CEDRXS=0'
+    #mycmd = 'AT+CEDRXS=0,5'
+    ser = rmutils.init_modem(verbose=verbose)
+    rmutils.write(ser, mycmd, verbose=verbose) # Enable eDRX and set the timers
+    print('edrx is now disabled')
 
 

@@ -49,7 +49,7 @@ def open_serial():
         timeout=1
     )
     ser.isOpen()
-    print("Serial port is now open")
+    #print("Serial port is now open")
     return ser
 
 def init_modem(verbose=True):

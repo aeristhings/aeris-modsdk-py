@@ -178,6 +178,16 @@ def enable(ctx):
 
 @psm.command()
 @click.pass_context
+def disable(ctx):
+    """Disable PSM
+    \f
+
+    """
+    my_modem.psm_disable(ctx.obj['verbose'])
+
+
+@psm.command()
+@click.pass_context
 def enternow(ctx):
     """Enter PSM mode as soon as 
     \f
@@ -206,7 +216,7 @@ def info(ctx):
     \f
 
     """
-    my_modem.edrx_info()
+    my_modem.edrx_info(ctx.obj['verbose'])
 
 
 @edrx.command()
@@ -216,7 +226,17 @@ def enable(ctx):
     \f
 
     """
-    my_modem.edrx_enable()
+    my_modem.edrx_enable(ctx.obj['verbose'])
+
+
+@edrx.command()
+@click.pass_context
+def disable(ctx):
+    """Disable eDRX
+    \f
+
+    """
+    my_modem.edrx_disable(ctx.obj['verbose'])
 
 
 def main():
