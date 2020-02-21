@@ -12,6 +12,12 @@ Host: <hostname>
 """
 
 
+# Print if verbose flag set
+def vprint(verbose, mystr):
+    if verbose:
+        print(mystr)
+
+
 def init(modem_port_in):
     modem_port = modem_port_in
 
@@ -46,13 +52,13 @@ def open_serial():
     print("Serial port is now open")
     return ser
 
-def init_modem():
+def init_modem(verbose=True):
     ser = open_serial()
-    write(ser, 'ATE0') # Turn off echo
+    write(ser, 'ATE0', verbose=verbose) # Turn off echo
     return ser
 
-def write(ser, cmd, moredata=None, delay=0, timeout=1.0):
-    print(">> " + cmd)
+def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
+    vprint(verbose, ">> " + cmd)
     myoutput = bytearray()
     cmd = cmd + '\r\n'
     ser.write(cmd.encode())
@@ -77,7 +83,7 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0):
         time.sleep(1)
         ser.write(moredata.encode())
         time.sleep(1)
-    print("<< " + out.strip())
+    vprint(verbose, "<< " + out.strip())
     return out
 
 

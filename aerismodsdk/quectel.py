@@ -51,21 +51,26 @@ def dns_lookup(host):
     rmutils.wait_urc(ser, 4) # Wait up to 4 seconds for results to come back via urc
 
 def parse_response(response, prefix):
-    #print('Response: ' + response)
     response = response.rstrip('OK\r\n')
     findex = response.rfind(prefix) + len(prefix)
-    #print('Found index: ' + str(findex))
     value = response[findex: len(response)]
-    #print('Value: ' + value)
     vals = value.split(',')
-    print('Values: ' + str(vals))
+    #print('Values: ' + str(vals))
     return vals
+
+def psm_mode(i):  # PSM mode
+    switcher={
+        0b0001:'PSM without network coordination',
+        0b0010:'Rel 12 PSM without context retention',
+        0b0100:'Rel 12 PSM with context retention',
+        0b1000:'PSM in between eDRX cycles'}
+    return switcher.get(i,"Invalid value")
+
 
 def timer_units(value):
     units = value & 0b11100000
-    #print('Units: ' + str(bin(units)))
-    #print('Units xlate: ' + tau_units(units))
     return units
+
     
 def tau_units(i):  # Tracking Area Update
     switcher={
@@ -78,6 +83,7 @@ def tau_units(i):  # Tracking Area Update
         0b11100000:'invalid'}
     return switcher.get(i,"Invalid value")
 
+
 def at_units(i):  # Active Time
     switcher={
         0b00000000:'2 sec',
@@ -87,26 +93,32 @@ def at_units(i):  # Active Time
     return switcher.get(i,"Invalid value")
 
 
-def psm_info():
-    ser = rmutils.init_modem()
-    psmsettings = rmutils.write(ser, 'AT+QPSMCFG?') # Check PSM feature mode and min time threshold
+def psm_info(verbose):
+    ser = rmutils.init_modem(verbose=verbose)
+    psmsettings = rmutils.write(ser, 'AT+QPSMCFG?', verbose=verbose) # Check PSM feature mode and min time threshold
     vals = parse_response(psmsettings, '+QPSMCFG:')
     print('Minimum seconds to enter PSM: ' + vals[0])
-    print('PSM mode: ' + str(bin(int(vals[1]))))
+    print('PSM mode: ' + psm_mode(int(vals[1])))
     # Query settings
-    psmsettings = rmutils.write(ser, 'AT+QPSMS?') # Check PSM settings
+    psmsettings = rmutils.write(ser, 'AT+QPSMS?', verbose=verbose) # Check PSM settings
     vals = parse_response(psmsettings, '+QPSMS:')
+    print('PSM enabled: ' + vals[0])
+    print('Network-specified TAU: ' + vals[3])
+    print('Network-specified Active Time: ' + vals[4])
     # Different way to query
-    psmsettings = rmutils.write(ser, 'AT+CPSMS?') # Check PSM settings
+    psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose) # Check PSM settings
     vals = parse_response(psmsettings, '+CPSMS:')
     tau_value = int(vals[3].strip('\"'), 2)
-    print('TAU units: ' + str(tau_units(timer_units(tau_value))))
-    print('TAU value: ' + str(tau_value & 0b00011111))
+    print('PSM enabled: ' + vals[0])
+    print('TAU requested units: ' + str(tau_units(timer_units(tau_value))))
+    print('TAU requested value: ' + str(tau_value & 0b00011111))
     active_time = int(vals[4].strip('\"'), 2)
-    print('Active time units: ' + str(at_units(timer_units(active_time))))
-    print('Active time value: ' + str(active_time & 0b00011111))
+    print('Active time requested units: ' + str(at_units(timer_units(active_time))))
+    print('Active time requested value: ' + str(active_time & 0b00011111))
     # Check on urc setting
-    rmutils.write(ser, 'AT+QCFG="psm/urc"') # Check if urc enabled
+    psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose) # Check if urc enabled
+    vals = parse_response(psmsettings, '+QCFG: ')
+    print('PSM unsolicited response codes (urc): ' + vals[1])
 
 def psm_enable():
     #mycmd = 'AT+CPSMS=1,,,”00101000”,”00100100”'

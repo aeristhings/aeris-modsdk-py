@@ -93,70 +93,129 @@ def config(ctx, modemmfg, comport):
 @mycli.command()
 @click.pass_context
 def modem(ctx):
+    """Modem information
+    \f
+
+    """
     #find_modem()    
     my_modem.check_modem()
 
-@mycli.command()
-@click.pass_context
-def serialfind(ctx):
-    rmutils.find_serial()
-
-@mycli.command()
-@click.pass_context
-def serialopen(ctx):
-    rmutils.open_serial()
 
 @mycli.command()
 @click.pass_context
 def interactive(ctx):
+    """Interactive mode
+    \f
+
+    """
     rmutils.interactive()
 
-@mycli.command()
+
+# ========================================================================
+#
+# Define the packet group of commands
+#
+@mycli.group()
+@click.pass_context
+def packet(ctx):
+    """Packet commands
+    \f
+
+    """
+
+
+@packet.command()
 @click.argument('host')
 @click.pass_context
 def get(ctx, host):
     my_modem.http_get(host)
 
-@mycli.command()
+@packet.command()
 @click.argument('host')
 @click.pass_context
 def ping(ctx, host):
     my_modem.icmp_ping(host)
 
-@mycli.command()
+@packet.command()
 @click.argument('host')
 @click.pass_context
 def lookup(ctx, host):
     my_modem.dns_lookup(host)
 
 
-@mycli.command()
+# ========================================================================
+#
+# Define the psm group of commands
+#
+@mycli.group()
 @click.pass_context
-def psminfo(ctx):
-    my_modem.psm_info()
+def psm(ctx):
+    """PSM commands
+    \f
+
+    """
 
 
-@mycli.command()
+@psm.command()
 @click.pass_context
-def psmenable(ctx):
+def info(ctx):
+    """Get current PSM settings
+    \f
+
+    """
+    my_modem.psm_info(ctx.obj['verbose'])
+
+
+@psm.command()
+@click.pass_context
+def enable(ctx):
+    """Enable PSM
+    \f
+
+    """
     my_modem.psm_enable()
 
 
-@mycli.command()
+@psm.command()
 @click.pass_context
-def psmnow(ctx):
+def enternow(ctx):
+    """Enter PSM mode as soon as 
+    \f
+
+    """
     my_modem.psm_now()
 
 
-@mycli.command()
+# ========================================================================
+#
+# Define the edrx group of commands
+#
+@mycli.group()
 @click.pass_context
-def edrxinfo(ctx):
+def edrx(ctx):
+    """eDRX commands
+    \f
+
+    """
+
+
+@edrx.command()
+@click.pass_context
+def info(ctx):
+    """Get current eDRX settings
+    \f
+
+    """
     my_modem.edrx_info()
 
 
-@mycli.command()
+@edrx.command()
 @click.pass_context
-def edrxenable(ctx):
+def enable(ctx):
+    """Enable eDRX
+    \f
+
+    """
     my_modem.edrx_enable()
 
 
