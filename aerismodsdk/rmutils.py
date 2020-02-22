@@ -39,17 +39,20 @@ def find_serial():
     print(glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*'))
 
 def open_serial():
+    ser = None
     # configure the serial connections (the parameters differs on the device you are connecting to)
-    ser = serial.Serial(
-        port = modem_port,
-        baudrate=9600,
-        parity=serial.PARITY_NONE,
-        stopbits=serial.STOPBITS_ONE,
-        bytesize=serial.EIGHTBITS,
-        timeout=1
-    )
-    ser.isOpen()
-    #print("Serial port is now open")
+    try:
+        ser = serial.Serial(
+            port = modem_port,
+            baudrate=9600,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.EIGHTBITS,
+            timeout=1
+        )
+        ser.isOpen()
+    except serial.serialutil.SerialException:
+        print("Could not open serial port")
     return ser
 
 def init_modem(verbose=True):
@@ -58,6 +61,9 @@ def init_modem(verbose=True):
     return ser
 
 def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
+    if ser is None:
+        print('Serial port is not open')
+        return None
     vprint(verbose, ">> " + cmd)
     myoutput = bytearray()
     cmd = cmd + '\r\n'

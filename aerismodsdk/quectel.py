@@ -24,7 +24,7 @@ def check_modem():
 
 def http_get(host):
     ser = create_packet_session()
-    # Open socket to the host
+    # Open TCP socket to the host
     rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
     mycmd = 'AT+QIOPEN=1,0,\"TCP\",\"' + host + '\",80,0,0'
     rmutils.write(ser, mycmd, delay=1)  # Create TCP socket connection as a client
@@ -38,10 +38,25 @@ def http_get(host):
     rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
     rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
 
+
+def udp_echo():
+    ser = create_packet_session()
+    # Open UDP socket for listen
+    rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
+    mycmd = 'AT+QIOPEN=1,0,"UDP SERVICE","127.0.0.1",0,3030,0'
+    rmutils.write(ser, mycmd, delay=1)  # Create UDP socket connection
+    sostate = rmutils.write(ser, 'AT+QISTATE=1,0')  # Check socket state
+    if "UDP" not in sostate:  # Try one more time with a delay if not connected
+        sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
+    # Wait for data
+    rmutils.wait_urc(ser, 30) # Wait up to X seconds for UDP data to come in
+
+
 def icmp_ping(host):
     ser = create_packet_session()
     mycmd = 'AT+QPING=1,\"' + host + '\",4,4'  # Context, host, timeout, pingnum
     rmutils.write(ser, mycmd, delay=6) # Write a ping command; Wait timeout plus 2 seconds
+
 
 def dns_lookup(host):
     ser = create_packet_session()
@@ -50,6 +65,7 @@ def dns_lookup(host):
     rmutils.write(ser, mycmd, timeout=0) # Write a dns lookup command
     rmutils.wait_urc(ser, 4) # Wait up to 4 seconds for results to come back via urc
 
+
 def parse_response(response, prefix):
     response = response.rstrip('OK\r\n')
     findex = response.rfind(prefix) + len(prefix)
@@ -57,6 +73,7 @@ def parse_response(response, prefix):
     vals = value.split(',')
     #print('Values: ' + str(vals))
     return vals
+
 
 def psm_mode(i):  # PSM mode
     switcher={
@@ -210,6 +227,8 @@ def paging_time(i):  # eDRX paging time duration
 
 def edrx_info(verbose):
     ser = rmutils.init_modem(verbose=verbose)
+    if ser is None:
+        return None
     edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose) # Check eDRX settings
     edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP', verbose=verbose) # Read eDRX settings requested and network-provided
     vals = parse_response(edrxsettings, '+CEDRXRDP: ')

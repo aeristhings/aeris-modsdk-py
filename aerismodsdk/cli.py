@@ -143,6 +143,12 @@ def lookup(ctx, host):
     my_modem.dns_lookup(host)
 
 
+@packet.command()
+@click.pass_context
+def udp(ctx):
+    my_modem.udp_echo()
+
+
 # ========================================================================
 #
 # Define the psm group of commands
