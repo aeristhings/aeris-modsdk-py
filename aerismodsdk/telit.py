@@ -1,4 +1,8 @@
 import aerismodsdk.rmutils as rmutils
+from urllib.parse import urlsplit
+
+packet = """GET <url> HTTP/1.1"""
+
 
 def init(modem_port_config):
     modem_port = '/dev/tty' + modem_port_config
@@ -26,19 +30,24 @@ def dns_lookup(host):
     ser = create_packet_session()
     mycmd = 'AT#QDNS=\"' + host + '\"' 
     rmutils.write(ser, mycmd)
-    rmutils.wait_urc(ser, 4) # 4 seconds wait time
+    rmutils.wait_urc(ser, 2) # 4 seconds wait time
+
 
 def icmp_ping(host):
     ser = create_packet_session()
     mycmd = 'AT#PING=\"' + host + '\",3,100,300,200' 
-    rmutils.write(ser, mycmd, timeout=4)
+    rmutils.write(ser, mycmd, timeout=2)
 
-def http_get(host):
+def http_get(url):
+    urlValues = urlsplit(url)
+    if urlValues.netloc :
+       host = urlValues.netloc 
+       path = urlValues.path 
+    else :
+       host = urlValues.path
+       path = '/'
     ser = create_packet_session()
-    # Open socket to the host
-    mycmd = 'AT#SD=1,0,80,\"' + host + '\",0,0,1'
-    rmutils.write(ser, mycmd, delay=1)
-    print("not fully implemented")
-    
-
-    
+    rmutils.write(ser, 'AT#HTTPCFG=0,\"'+host+'\",80,0,,,0,120,1')  #Establish HTTP Connection
+    rmutils.write(ser, 'AT#HTTPQRY=0,0,\"'+path+'\"', delay=2)  # Send HTTP Get 
+    rmutils.write(ser, 'AT#HTTPRCV=0', delay=2)  # Receive HTTP Response
+    rmutils.write(ser, 'AT#SH=1', delay=2) # Close socket
