@@ -119,23 +119,26 @@ def psm_info(verbose):
     # Query settings
     psmsettings = rmutils.write(ser, 'AT+QPSMS?', verbose=verbose) # Check PSM settings
     vals = parse_response(psmsettings, '+QPSMS:')
-    print('PSM enabled: ' + vals[0])
-    print('Network-specified TAU: ' + vals[3])
-    print('Network-specified Active Time: ' + vals[4])
-    # Different way to query
-    psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose) # Check PSM settings
-    vals = parse_response(psmsettings, '+CPSMS:')
-    tau_value = int(vals[3].strip('\"'), 2)
-    print('PSM enabled: ' + vals[0])
-    print('TAU requested units: ' + str(tau_units(timer_units(tau_value))))
-    print('TAU requested value: ' + str(tau_value & 0b00011111))
-    active_time = int(vals[4].strip('\"'), 2)
-    print('Active time requested units: ' + str(at_units(timer_units(active_time))))
-    print('Active time requested value: ' + str(active_time & 0b00011111))
-    # Check on urc setting
-    psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose) # Check if urc enabled
-    vals = parse_response(psmsettings, '+QCFG: ')
-    print('PSM unsolicited response codes (urc): ' + vals[1])
+    if int(vals[0]) == 0:
+        print('PSM is disabled')
+    else:
+        print('PSM enabled: ' + vals[0])
+        print('Network-specified TAU: ' + vals[3])
+        print('Network-specified Active Time: ' + vals[4])
+        # Different way to query
+        psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose) # Check PSM settings
+        vals = parse_response(psmsettings, '+CPSMS:')
+        tau_value = int(vals[3].strip('\"'), 2)
+        print('PSM enabled: ' + vals[0])
+        print('TAU requested units: ' + str(tau_units(timer_units(tau_value))))
+        print('TAU requested value: ' + str(tau_value & 0b00011111))
+        active_time = int(vals[4].strip('\"'), 2)
+        print('Active time requested units: ' + str(at_units(timer_units(active_time))))
+        print('Active time requested value: ' + str(active_time & 0b00011111))
+        # Check on urc setting
+        psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose) # Check if urc enabled
+        vals = parse_response(psmsettings, '+QCFG: ')
+        print('PSM unsolicited response codes (urc): ' + vals[1])
 
 def psm_enable():
     #mycmd = 'AT+CPSMS=1,,,”00101000”,”00100100”'
@@ -233,7 +236,9 @@ def edrx_info(verbose):
     edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP', verbose=verbose) # Read eDRX settings requested and network-provided
     vals = parse_response(edrxsettings, '+CEDRXRDP: ')
     a_type = act_type(int(vals[0].strip('\"')))
-    if a_type is not None:
+    if a_type is None:
+        print('eDRX is disabled')
+    else:
         r_edrx = edrx_time(int(vals[1].strip('\"'), 2))
         n_edrx = edrx_time(int(vals[2].strip('\"'), 2))
         p_time = paging_time(int(vals[3].strip('\"'), 2))
