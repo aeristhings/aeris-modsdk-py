@@ -94,18 +94,26 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
 
 
 def wait_urc(ser, timeout):
-    myoutput = bytearray()
+    mybytes = bytearray()
+    myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
     while elapsed_time < timeout:
         while ser.inWaiting() > 0:
-            myoutput.append(ser.read()[0])
+            mybyte = ser.read()[0]
+            #print('Byte: ' + str(mybyte))
+            mybytes.append(mybyte)
+            if mybyte == 10:
+                oneline = mybytes.decode("utf-8")  # Change to utf-8
+                print("<< " + oneline.strip())
+                myfinalout = myfinalout + oneline
+                mybytes = bytearray()
         time.sleep(0.005)
         elapsed_time = time.time() - start_time
         #print("Elapsed time: " + str(elapsed_time))
-    out = myoutput.decode("utf-8")  # Change to utf-8
-    print("<< " + out.strip())
-    return out
+    #myfinalout = myoutput.decode("utf-8")  # Change to utf-8
+    #print("<< " + myfinalout.strip())
+    return myfinalout
 
 
 def interactive():

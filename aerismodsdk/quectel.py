@@ -43,7 +43,8 @@ def udp_echo():
     ser = create_packet_session()
     # Open UDP socket for listen
     rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
-    mycmd = 'AT+QIOPEN=1,0,"UDP SERVICE","127.0.0.1",0,3030,0'
+    #mycmd = 'AT+QIOPEN=1,0,"UDP SERVICE","127.0.0.1",0,3030,0'
+    mycmd = 'AT+QIOPEN=1,0,"UDP SERVICE","127.0.0.1",0,3030,1'
     rmutils.write(ser, mycmd, delay=1)  # Create UDP socket connection
     sostate = rmutils.write(ser, 'AT+QISTATE=1,0')  # Check socket state
     if "UDP" not in sostate:  # Try one more time with a delay if not connected
