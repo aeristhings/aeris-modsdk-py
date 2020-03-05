@@ -59,11 +59,12 @@ def http_get(url):
 
 def udp_echo():  
     ser = create_packet_session()
-    rmutils.write(ser, 'AT#SD=1,1,3030,"35.212.147.4",0,3030,1', delay=2)  #Opening Socket Connection on UDP Remote host/port
+    rmutils.write(ser, 'AT#SD=1,1,10510,"modules.telit.com",0,10510,1', delay=2)  #Opening Socket Connection on UDP Remote host/port
     command = 'AT#SSEND=1'    	
-    packet = 'AerisSDK'+chr(26)
+    packet = 'TestUDP'+chr(26)
     rmutils.write(ser, command, packet, delay=2, timeout=2)  #Sending packets to socket
     rmutils.wait_urc(ser, 5) 
+    rmutils.write(ser,'AT#SRECV=1,255,1', delay=2)
     rmutils.write(ser, 'AT#SI')  #Printing summary of sockets
     rmutils.write(ser, 'AT#SH=1') #shutdown socket
 
