@@ -144,9 +144,13 @@ def lookup(ctx, host):
 
 
 @packet.command()
+@click.option("--delay", "-d", default=1000,
+              help="Delay request to send to udp echo server. Units = ms")
+@click.option("--wait", "-w", default=2000,
+              help="Time to wait for udp echo to return. Units = ms")
 @click.pass_context
-def udp(ctx):
-    my_modem.udp_echo()
+def udp(ctx, delay, wait):
+    my_modem.udp_echo(delay, wait)
 
 
 # ========================================================================
@@ -226,13 +230,15 @@ def info(ctx):
 
 
 @edrx.command()
+@click.option("--time", "-t", default='0000',
+              help="Time setting for eDRX.")
 @click.pass_context
-def enable(ctx):
+def enable(ctx, time):
     """Enable eDRX
     \f
 
     """
-    my_modem.edrx_enable(ctx.obj['verbose'])
+    my_modem.edrx_enable(ctx.obj['verbose'], time)
 
 
 @edrx.command()

@@ -40,7 +40,7 @@ def http_get(host):
     rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
 
 
-def udp_echo():
+def udp_echo(echo_delay, echo_wait):
     host = '35.212.147.4'
     port = '3030'
     read_sock = '1'
@@ -62,12 +62,14 @@ def udp_echo():
     if "UDP" not in sostate:  # Try one more time with a delay if not connected
         sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
     # Send data
-    udppacket = 'hello'
+    udppacket = str(echo_delay)
     mycmd = 'AT+QISEND=0,' + str(len(udppacket))
     rmutils.write(ser, mycmd, udppacket, delay=0)  # Write udp packet
     rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
     # Wait for data
-    rmutils.wait_urc(ser, 30) # Wait up to X seconds for UDP data to come in
+    echo_wait = round((echo_wait + echo_delay)/1000)
+    print('Waiting ' + str(echo_wait) + ' seconds for more data to arrive ...')
+    rmutils.wait_urc(ser, echo_wait) # Wait up to X seconds for UDP data to come in
     print('Finished waiting for data to arrive ...')
 
 
@@ -267,9 +269,10 @@ def edrx_info(verbose):
         print('Paging time: ' + str(p_time))
 
 
-def edrx_enable(verbose):
+def edrx_enable(verbose, edrx_time):
     #mycmd = 'AT+CEDRXS=1,4,“1001”' # Does not work with 1 on LTE-M
-    mycmd = 'AT+CEDRXS=2,4,"1001"'
+    #mycmd = 'AT+CEDRXS=2,4,"1001"'
+    mycmd = 'AT+CEDRXS=2,4,"' + edrx_time + '"'
     #mycmd = 'AT+CEDRXS=0'
     #mycmd = 'AT+CEDRXS=0,5'
     #mycmd = 'AT+CEDRXS=1,5,"0000"'  # This works for CAT-NB with 1
