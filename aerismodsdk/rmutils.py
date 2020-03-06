@@ -8,7 +8,6 @@ modem_port = '/dev/ttyUSB2'
 
 getpacket = """GET / HTTP/1.1
 Host: <hostname>
-
 """
 
 
