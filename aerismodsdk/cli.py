@@ -177,13 +177,17 @@ def info(ctx):
 
 
 @psm.command()
+@click.option("--tau", "-t", default=60,
+              help="Time (s) setting for Tracking Area Update.")
+@click.option("--atime", "-a", default=30,
+              help="Time (s) setting for Active Time.")
 @click.pass_context
-def enable(ctx):
+def enable(ctx, tau, atime):
     """Enable PSM
     \f
 
     """
-    my_modem.psm_enable()
+    my_modem.psm_enable(ctx.obj['verbose'], tau, atime)
 
 
 @psm.command()

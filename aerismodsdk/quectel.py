@@ -161,14 +161,29 @@ def psm_info(verbose):
         vals = parse_response(psmsettings, '+QCFG: ')
         print('PSM unsolicited response codes (urc): ' + vals[1])
 
-def psm_enable():
-    #mycmd = 'AT+CPSMS=1,,,”00101000”,”00100100”'
-    #mycmd = 'AT+CPSMS=1,,,,'
-    #mycmd = 'AT+CPSMS=1,,,"01100000","00000000"'
-    #mycmd = 'AT+CPSMS=1,,,"01100001","00000001"'
-    #mycmd = 'AT+CPSMS=1,,,"10100001","00100001"'
-    #mycmd = 'AT+CPSMS=1,,,"01111110","00011110"'  # 2 sec * 30
-    mycmd = 'AT+CPSMS=1,,,"10000100","00000001"'  # TAU: 30 sec * 4 / Active Time: 2 sec * 1
+def get_tau_config(tau_time):
+    if tau_time > 1 and tau_time < (31*2):  # Use 2 seconds * up to 31
+        tau_config = 0b01100000 + int(tau_time / 2)
+    elif tau_time > 30 and tau_time < (31*30):  # Use 30 seconds * up to 15
+        tau_config = 0b10000000 + int(tau_time / 30)
+    print('TAU config: ' + "{0:08b}".format(tau_config))
+    return tau_config
+
+def get_active_config(atime):
+    if atime > 1 and atime < (31*2):  # Use 2 seconds * up to 31
+        atime_config = 0b00000000 + int(atime / 2)
+    elif atime > 60 and atime < (31*60):  # Use 60 seconds * up to 31
+        atime_config = 0b10000000 + int(atime / 30)
+    print('Active time config: ' + "{0:08b}".format(atime_config))
+    return atime_config
+
+def psm_enable(verbose, tau_time, atime):
+    print('TAU: {0} s'.format(str(tau_time)))
+    tau_config = get_tau_config(tau_time)
+    print('Active time: ' + str(atime))
+    atime_config = get_active_config(atime)
+    #mycmd = 'AT+CPSMS=1,,,"10000100","00000001"'  # TAU: 30 sec * 4 / Active Time: 2 sec * 1
+    mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
     ser = rmutils.init_modem()
     rmutils.write(ser, mycmd) # Enable PSM and set the timers
     # Enable urc setting
