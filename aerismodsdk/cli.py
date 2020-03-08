@@ -1,6 +1,8 @@
 import click
 import json
 import pathlib
+import time
+from datetime import datetime
 import aerismodsdk.rmutils as rmutils
 import aerismodsdk.ublox as ublox
 import aerismodsdk.quectel as quectel
@@ -76,7 +78,7 @@ def mycli(ctx, verbose, config_file):
 @mycli.command()
 @click.option('--modemmfg', prompt='Modem mfg', type=click.Choice(['ublox', 'quectel','telit']),
               cls=default_from_context('modemMfg', 'ublox'), help="Modem manufacturer.")
-@click.option('--comport', prompt='COM port', type=click.Choice(['USB0', 'USB1', 'USB2', 'USB3']),
+@click.option('--comport', prompt='COM port', type=click.Choice(['USB0', 'USB1', 'USB2', 'USB3', 'USB4']),
               cls=default_from_context('comPort', 'USB0'), help="Modem COM port.")
 @click.pass_context
 def config(ctx, modemmfg, comport):
@@ -97,7 +99,8 @@ def modem(ctx):
     \f
 
     """
-    #find_modem()    
+    #find_modem()
+    rmutils.find_serial(ctx.obj['comPort'])
     my_modem.check_modem()
 
 
@@ -144,10 +147,10 @@ def lookup(ctx, host):
 
 
 @packet.command()
-@click.option("--delay", "-d", default=1000,
-              help="Delay request to send to udp echo server. Units = ms")
-@click.option("--wait", "-w", default=2000,
-              help="Time to wait for udp echo to return. Units = ms")
+@click.option("--delay", "-d", default=1,
+              help="Delay request to send to udp echo server. Units = seconds")
+@click.option("--wait", "-w", default=2,
+              help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
 def udp(ctx, delay, wait):
     my_modem.udp_echo(delay, wait)
@@ -202,12 +205,46 @@ def disable(ctx):
 
 @psm.command()
 @click.pass_context
-def enternow(ctx):
-    """Enter PSM mode as soon as 
+def now(ctx):
+    """Enter PSM mode as soon as possible
     \f
 
     """
     my_modem.psm_now()
+
+@psm.command()
+@click.option("--timeout", "-t", default=60,
+              help="Time (s) to run test for.")
+@click.option("--delay", "-d", default=10,
+              help="Time (s) between samples.")
+@click.pass_context
+def test(ctx, timeout, delay):
+    """Test PSM mode 
+    \f
+
+    """
+    ser = rmutils.init_modem(False)
+    testlog_filename = home_directory + "/testlog.out"
+    mytestlog = open(testlog_filename, 'w', buffering=1)
+    start_time = time.time()
+    elapsed_time = 0
+    udp_delay = 10
+    print('Sending upd echo with wait of {0} seconds'.format(udp_delay))
+    my_modem.udp_echo(udp_delay, 5)
+    print('Starting test for {0} seconds'.format(timeout))
+    my_modem.psm_now()
+    while elapsed_time < timeout:
+        time.sleep(delay)
+        elapsed_time = time.time() - start_time
+        now = datetime.now()
+        current_time = now.strftime("%Y.%m.%d %H:%M:%S")
+        mycmd = 'AT+QIACT?'
+        atires = rmutils.write(ser, mycmd, verbose=False)
+        mytestlog.write("{0} {1}: {2}\r\n".format(current_time, mycmd, atires.strip()))
+        print('.', end='', flush=True)
+    print('\nFinished test')
+    mytestlog.close()
+
 
 
 # ========================================================================

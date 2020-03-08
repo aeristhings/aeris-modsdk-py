@@ -33,9 +33,15 @@ def find_modem():
       #print(str(cfg))
 
 # A function that tries to list serial ports on most common platforms
-def find_serial():
+def find_serial(com_port):
     # Assume Linux or something else
-    print(glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*'))
+    check_port = '/dev/tty' + com_port
+    ports = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*')
+    print(ports)
+    if check_port in ports:
+        print('COM port found: ' + check_port)
+    else:
+        print('COM port not found.')
 
 def open_serial():
     ser = None
@@ -79,8 +85,12 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
         time.sleep(0.005)
         elapsed_time = time.time() - start_time
         #print("Elapsed time: " + str(elapsed_time))
+    counter = 0
     while ser.inWaiting() > 0:
+        counter = counter + 1
         myoutput.append(ser.read()[0])
+        if counter > 100:
+            print('More than 100 chars read from serial port.')
     out = myoutput.decode("utf-8")  # Change to utf-8
     if(moredata != None):
         #print('More data length: ' + str(len(moredata)))

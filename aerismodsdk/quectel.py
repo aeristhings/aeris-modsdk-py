@@ -62,15 +62,16 @@ def udp_echo(echo_delay, echo_wait):
     if "UDP" not in sostate:  # Try one more time with a delay if not connected
         sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
     # Send data
-    udppacket = str(echo_delay)
+    udppacket = str(echo_delay*1000)
     mycmd = 'AT+QISEND=0,' + str(len(udppacket))
     rmutils.write(ser, mycmd, udppacket, delay=0)  # Write udp packet
     rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
     # Wait for data
-    echo_wait = round((echo_wait + echo_delay)/1000)
-    print('Waiting ' + str(echo_wait) + ' seconds for more data to arrive ...')
-    rmutils.wait_urc(ser, echo_wait) # Wait up to X seconds for UDP data to come in
-    print('Finished waiting for data to arrive ...')
+    if echo_wait > 0:
+        echo_wait = round(echo_wait + echo_delay)
+        print('Waiting ' + str(echo_wait) + ' seconds for more data to arrive ...')
+        rmutils.wait_urc(ser, echo_wait) # Wait up to X seconds for UDP data to come in
+        print('Finished waiting for data to arrive ...')
 
 
 def icmp_ping(host):
@@ -208,7 +209,7 @@ def psm_now():
     # Enable urc setting
     #rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
     # Let's try to wait for such a urc
-    rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
     
 
 
