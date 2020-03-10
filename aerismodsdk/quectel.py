@@ -1,21 +1,41 @@
 import aerismodsdk.rmutils as rmutils
 
+myserial = None
+my_ip = None
+
+
 def init(modem_port_config):
+    global myserial
     modem_port = '/dev/tty' + modem_port_config
     rmutils.init(modem_port)
+    myserial = rmutils.init_modem()
 
+def parse_constate(constate):
+    global my_ip
+    if len(constate) < len('+QIACT: '):
+        return None
+    else:
+        vals = constate.split(',')
+        vals2 = vals[3].split('"')
+        my_ip = vals2[1]
+        print('My IP: ' + my_ip)
+        return my_ip
+        
 
 def create_packet_session():
-    ser = rmutils.init_modem()
+    ser = myserial
     rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
     constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
+    parse_constate(constate)
     if len(constate) < len('+QIACT: '):  # Returns packet session info if in session 
         rmutils.write(ser, 'AT+QIACT=1')  # Activate context / create packet session
-        rmutils.write(ser, 'AT+QIACT?')  # Verify that we connected
+        constate = rmutils.write(ser, 'AT+QIACT?')  # Verify that we connected
+        parse_constate(constate)
     return ser
 
 def check_modem():
-    ser = rmutils.init_modem()
+    #ser = rmutils.init_modem()
+    ser = myserial
     rmutils.write(ser, 'ATI')
     rmutils.write(ser, 'AT+CREG?')
     rmutils.write(ser, 'AT+COPS?')
@@ -41,11 +61,12 @@ def http_get(host):
 
 
 def udp_echo(echo_delay, echo_wait):
-    host = '35.212.147.4'
+    ser = myserial
+    echo_host = '35.212.147.4'
     port = '3030'
     read_sock = '1'
     write_sock = '0'
-    ser = create_packet_session()
+    create_packet_session()
     # Open UDP socket for listen
     rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
     #mycmd = 'AT+QIOPEN=1,0,"UDP SERVICE","127.0.0.1",0,3030,0'
@@ -56,7 +77,7 @@ def udp_echo(echo_delay, echo_wait):
         sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock, delay=1)  # Check socket state
     # Open UDP socket to the host for sending
     rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
-    mycmd = 'AT+QIOPEN=1,0,\"UDP\",\"' + host + '\",' + port + ',0,1'
+    mycmd = 'AT+QIOPEN=1,0,\"UDP\",\"' + echo_host + '\",' + port + ',0,1'
     rmutils.write(ser, mycmd, delay=1)  # Create UDP socket connection as a client
     sostate = rmutils.write(ser, 'AT+QISTATE=1,0')  # Check socket state
     if "UDP" not in sostate:  # Try one more time with a delay if not connected

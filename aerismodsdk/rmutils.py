@@ -18,6 +18,7 @@ def vprint(verbose, mystr):
 
 
 def init(modem_port_in):
+    global modem_port
     modem_port = modem_port_in
 
 
