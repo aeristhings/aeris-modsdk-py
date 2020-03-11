@@ -83,7 +83,8 @@ def udp_echo(echo_delay, echo_wait):
     if "UDP" not in sostate:  # Try one more time with a delay if not connected
         sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
     # Send data
-    udppacket = str(echo_delay*1000)
+    udppacket = str('{"delay":' + str(echo_delay*1000) + ', "ip":"' + my_ip + '","port":' + str(port) + '}')
+    print('UDP packet: ' + udppacket)
     mycmd = 'AT+QISEND=0,' + str(len(udppacket))
     rmutils.write(ser, mycmd, udppacket, delay=0)  # Write udp packet
     rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
