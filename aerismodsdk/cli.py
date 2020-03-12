@@ -128,6 +128,11 @@ def packet(ctx):
 
 
 @packet.command()
+@click.pass_context
+def info(ctx):
+    my_modem.packet_info()
+
+@packet.command()
 @click.argument('host')
 @click.pass_context
 def get(ctx, host):

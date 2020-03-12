@@ -33,6 +33,11 @@ def create_packet_session():
         parse_constate(constate)
     return ser
 
+def packet_info():
+    ser = myserial
+    constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
+
+
 def check_modem():
     #ser = rmutils.init_modem()
     ser = myserial
@@ -206,7 +211,7 @@ def psm_enable(verbose, tau_time, atime):
     print('Active time: ' + str(atime))
     atime_config = get_active_config(atime)
     #mycmd = 'AT+CPSMS=1,,,"10000100","00000001"'  # TAU: 30 sec * 4 / Active Time: 2 sec * 1
-    mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
+    mycmd = 'AT+QPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
     ser = rmutils.init_modem()
     rmutils.write(ser, mycmd) # Enable PSM and set the timers
     # Enable urc setting
