@@ -116,6 +116,35 @@ def interactive(ctx):
 
 # ========================================================================
 #
+# Define the network group of commands
+#
+@mycli.group()
+@click.pass_context
+def network(ctx):
+    """Network commands
+    \f
+
+    """
+
+
+@network.command()
+@click.pass_context
+def info(ctx):
+    my_modem.network_info(ctx.obj['verbose'])
+
+
+@network.command()
+@click.argument('name', default='auto')
+@click.option("--format", "-f", default=0,
+              help="Format: 0=Long, 1=Short, 2=Numeric")
+@click.pass_context
+def set(ctx, name, format):
+    my_modem.network_set(name, format)
+
+
+
+# ========================================================================
+#
 # Define the packet group of commands
 #
 @mycli.group()
@@ -305,6 +334,12 @@ def disable(ctx):
 
     """
     my_modem.edrx_disable(ctx.obj['verbose'])
+
+
+# ========================================================================
+#
+# The main stuff ...
+#
 
 
 def main():

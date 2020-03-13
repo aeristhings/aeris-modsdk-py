@@ -11,6 +11,53 @@ def init(modem_port_config):
     rmutils.init(modem_port)
     myserial = rmutils.init_modem()
 
+def check_modem():
+    #ser = rmutils.init_modem()
+    ser = myserial
+    rmutils.write(ser, 'ATI')
+    rmutils.write(ser, 'AT+CIMI')
+    rmutils.write(ser, 'AT+QCCID')
+    rmutils.write(ser, 'AT+CREG?')
+    rmutils.write(ser, 'AT+COPS?')
+    rmutils.write(ser, 'AT+CSQ')
+
+
+# ========================================================================
+#
+# The network stuff
+#
+
+
+def network_info(verbose):
+    ser = myserial
+    rmutils.write(ser, 'AT+CREG?')
+    rmutils.write(ser, 'AT+COPS?')
+    rmutils.write(ser, 'AT+CSQ')
+    rmutils.write(ser, 'AT+CIND?')
+    if verbose:
+        rmutils.write(ser, 'AT+COPS=?')
+        rmutils.wait_urc(ser, 15)
+
+
+def network_set(operator_name, format):
+    ser = myserial
+    rmutils.write(ser, 'AT+COPS=2')
+    rmutils.wait_urc(ser, 10)
+    if operator_name == 'auto':
+        mycmd = 'AT+COPS=0'
+    else:
+        mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",8'
+    rmutils.write(ser, mycmd)
+    rmutils.wait_urc(ser, 10)
+
+
+
+# ========================================================================
+#
+# The packet stuff
+#
+
+
 def parse_constate(constate):
     global my_ip
     if len(constate) < len('+QIACT: '):
@@ -46,15 +93,6 @@ def packet_start():
 def packet_stop():
     ser = myserial
     rmutils.write(ser, 'AT+QIDEACT=1')  # Deactivate context
-
-
-def check_modem():
-    #ser = rmutils.init_modem()
-    ser = myserial
-    rmutils.write(ser, 'ATI')
-    rmutils.write(ser, 'AT+CREG?')
-    rmutils.write(ser, 'AT+COPS?')
-    rmutils.write(ser, 'AT+CSQ')
 
 
 def http_get(host):
@@ -106,9 +144,7 @@ def udp_echo(echo_delay, echo_wait):
     # Wait for data
     if echo_wait > 0:
         echo_wait = round(echo_wait + echo_delay)
-        print('Waiting ' + str(echo_wait) + ' seconds for more data to arrive ...')
         rmutils.wait_urc(ser, echo_wait) # Wait up to X seconds for UDP data to come in
-        print('Finished waiting for data to arrive ...')
 
 
 def icmp_ping(host):
@@ -132,6 +168,12 @@ def parse_response(response, prefix):
     vals = value.split(',')
     #print('Values: ' + str(vals))
     return vals
+
+
+# ========================================================================
+#
+# The PSM stuff
+#
 
 
 def psm_mode(i):  # PSM mode
@@ -200,10 +242,18 @@ def psm_info(verbose):
         print('PSM unsolicited response codes (urc): ' + vals[1])
 
 def get_tau_config(tau_time):
-    if tau_time > 1 and tau_time < (31*2):  # Use 2 seconds * up to 31
+    if tau_time > 1 and tau_time < (31*2):  # Use 2 seconds times up to 31
         tau_config = 0b01100000 + int(tau_time / 2)
-    elif tau_time > 30 and tau_time < (31*30):  # Use 30 seconds * up to 15
+    elif tau_time > 30 and tau_time < (31*30):  # Use 30 seconds times up to 31
         tau_config = 0b10000000 + int(tau_time / 30)
+    elif tau_time > 60 and tau_time < (31*60):  # Use 1 min times up to 31
+        tau_config = 0b11000000 + int(tau_time / 60)
+    elif tau_time > 600 and tau_time < (31*600):  # Use 10 min times up to 31
+        tau_config = 0b00000000 + int(tau_time / 600)
+    elif tau_time > 3600 and tau_time < (31*3600):  # Use 1 hour times up to 31
+        tau_config = 0b00100000 + int(tau_time / 3600)
+    elif tau_time > 36000 and tau_time < (31*36000):  # Use 10 hour times up to 31
+        tau_config = 0b01000000 + int(tau_time / 36000)
     print('TAU config: ' + "{0:08b}".format(tau_config))
     return tau_config
 
@@ -244,10 +294,16 @@ def psm_now():
     ser = rmutils.init_modem()
     rmutils.write(ser, mycmd)
     # Enable urc setting
-    #rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
+    rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
     # Let's try to wait for such a urc
     #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
     
+
+
+# ========================================================================
+#
+# The eDRX stuff
+#
 
 
 def act_type(i):  # Access technology type

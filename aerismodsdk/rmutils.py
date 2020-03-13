@@ -100,8 +100,8 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     while ser.inWaiting() > 0:
         counter = counter + 1
         myoutput.append(ser.read()[0])
-        if counter > 100:
-            print('More than 100 chars read from serial port.')
+        #if counter > 100:
+            #print('More than 100 chars read from serial port.')
     out = myoutput.decode("utf-8")  # Change to utf-8
     if(moredata != None):
         #print('More data length: ' + str(len(moredata)))
@@ -118,7 +118,7 @@ def wait_urc(ser, timeout):
     myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
-    print(aerisutils.get_date_time_str() + ' Starting to wait for URC.')
+    print(aerisutils.get_date_time_str() + ' Starting to wait {0}s for URC.'.format(timeout))
     while elapsed_time < timeout:
         try:
             while ser.inWaiting() > 0:
@@ -141,6 +141,7 @@ def wait_urc(ser, timeout):
         #print("Elapsed time: " + str(elapsed_time))
     #myfinalout = myoutput.decode("utf-8")  # Change to utf-8
     #print("<< " + myfinalout.strip())
+    print(aerisutils.get_date_time_str() + ' Finished waiting for URC.')
     return myfinalout
 
 
