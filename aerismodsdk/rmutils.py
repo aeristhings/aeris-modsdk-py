@@ -3,6 +3,7 @@ import serial
 import sys
 import usb.core
 import glob
+import aerismodsdk.aerisutils as aerisutils
 
 modem_port = '/dev/ttyUSB2'
 
@@ -34,15 +35,21 @@ def find_modem():
       #print(str(cfg))
 
 # A function that tries to list serial ports on most common platforms
-def find_serial(com_port):
+def find_serial(com_port, verbose=False, timeout=1):
     # Assume Linux or something else
     check_port = '/dev/tty' + com_port
-    ports = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*')
-    print(ports)
-    if check_port in ports:
-        print('COM port found: ' + check_port)
-    else:
-        print('COM port not found.')
+    start_time = time.time()
+    elapsed_time = 0
+    while elapsed_time < timeout:
+        ports = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*')
+        #print(ports)
+        if check_port in ports:
+            vprint(verbose, aerisutils.get_date_time_str() + ' COM port found: ' + check_port)
+            return True
+        time.sleep(1)
+        elapsed_time = time.time() - start_time
+    vprint(verbose, aerisutils.get_date_time_str() + ' COM port not found.')
+    return False
 
 def open_serial():
     ser = None
@@ -108,17 +115,22 @@ def wait_urc(ser, timeout):
     myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
+    print(aerisutils.get_date_time_str() + ' Starting to wait for URC.')
     while elapsed_time < timeout:
-        while ser.inWaiting() > 0:
-            mybyte = ser.read()[0]
-            #print('Byte: ' + str(mybyte))
-            mybytes.append(mybyte)
-            if mybyte == 10:
-                oneline = mybytes.decode("utf-8")  # Change to utf-8
-                print("<< " + oneline.strip())
-                myfinalout = myfinalout + oneline
-                mybytes = bytearray()
-        time.sleep(0.005)
+        try:
+            while ser.inWaiting() > 0:
+                mybyte = ser.read()[0]
+                #print('Byte: ' + str(mybyte))
+                mybytes.append(mybyte)
+                if mybyte == 10:  # Newline
+                    oneline = mybytes.decode("utf-8")  # Change to utf-8
+                    print("<< " + oneline.strip())
+                    myfinalout = myfinalout + oneline
+                    mybytes = bytearray()
+        except IOError:
+            print(aerisutils.get_date_time_str() + ' Exception while waiting for URC.')
+            return myfinalout
+        time.sleep(0.5)
         elapsed_time = time.time() - start_time
         #print("Elapsed time: " + str(elapsed_time))
     #myfinalout = myoutput.decode("utf-8")  # Change to utf-8

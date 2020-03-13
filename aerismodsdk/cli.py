@@ -100,8 +100,8 @@ def modem(ctx):
 
     """
     #find_modem()
-    rmutils.find_serial(ctx.obj['comPort'])
-    my_modem.check_modem()
+    if rmutils.find_serial(ctx.obj['comPort'], verbose=True, timeout=5):
+        my_modem.check_modem()
 
 
 @mycli.command()
@@ -131,6 +131,16 @@ def packet(ctx):
 @click.pass_context
 def info(ctx):
     my_modem.packet_info()
+
+@packet.command()
+@click.pass_context
+def start(ctx):
+    my_modem.packet_start()
+
+@packet.command()
+@click.pass_context
+def stop(ctx):
+    my_modem.packet_stop()
 
 @packet.command()
 @click.argument('host')
@@ -185,7 +195,7 @@ def info(ctx):
 
 
 @psm.command()
-@click.option("--tau", "-t", default=60,
+@click.option("--tau", "-t", default=180,
               help="Time (s) setting for Tracking Area Update.")
 @click.option("--atime", "-a", default=30,
               help="Time (s) setting for Active Time.")

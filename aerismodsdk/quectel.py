@@ -1,4 +1,5 @@
 import aerismodsdk.rmutils as rmutils
+import aerismodsdk.aerisutils as aerisutils
 
 myserial = None
 my_ip = None
@@ -36,6 +37,15 @@ def create_packet_session():
 def packet_info():
     ser = myserial
     constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
+
+
+def packet_start():
+    create_packet_session()
+
+
+def packet_stop():
+    ser = myserial
+    rmutils.write(ser, 'AT+QIDEACT=1')  # Deactivate context
 
 
 def check_modem():
@@ -198,10 +208,10 @@ def get_tau_config(tau_time):
     return tau_config
 
 def get_active_config(atime):
-    if atime > 1 and atime < (31*2):  # Use 2 seconds * up to 31
+    if atime > 1 and atime < (31*2):  # Use 2s * up to 31
         atime_config = 0b00000000 + int(atime / 2)
-    elif atime > 60 and atime < (31*60):  # Use 60 seconds * up to 31
-        atime_config = 0b10000000 + int(atime / 30)
+    elif atime > 60 and atime < (31*60):  # Use 60s * up to 31
+        atime_config = 0b00100000 + int(atime / 60)
     print('Active time config: ' + "{0:08b}".format(atime_config))
     return atime_config
 
