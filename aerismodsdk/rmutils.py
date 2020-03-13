@@ -5,6 +5,7 @@ import usb.core
 import glob
 import aerismodsdk.aerisutils as aerisutils
 
+com_port_short = 'USB2'
 modem_port = '/dev/ttyUSB2'
 
 getpacket = """GET / HTTP/1.1
@@ -37,6 +38,8 @@ def find_modem():
 # A function that tries to list serial ports on most common platforms
 def find_serial(com_port, verbose=False, timeout=1):
     # Assume Linux or something else
+    global com_port_short
+    com_port_short = com_port
     check_port = '/dev/tty' + com_port
     start_time = time.time()
     elapsed_time = 0
@@ -130,7 +133,7 @@ def wait_urc(ser, timeout):
         except IOError:
             print(aerisutils.get_date_time_str() + ' Exception while waiting for URC.')
             ser.close()
-            find_serial('USB2', verbose=True, timeout=200)
+            find_serial(com_port_short, verbose=True, timeout=200)
             ser.open()
             #return myfinalout
         time.sleep(0.5)
