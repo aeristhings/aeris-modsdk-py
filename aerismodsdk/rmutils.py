@@ -48,7 +48,7 @@ def find_serial(com_port, verbose=False, timeout=1):
             return True
         time.sleep(1)
         elapsed_time = time.time() - start_time
-    vprint(verbose, aerisutils.get_date_time_str() + ' COM port not found.')
+    vprint(verbose, aerisutils.get_date_time_str() + ' COM port not found: ' + check_port)
     return False
 
 def open_serial():
@@ -129,7 +129,10 @@ def wait_urc(ser, timeout):
                     mybytes = bytearray()
         except IOError:
             print(aerisutils.get_date_time_str() + ' Exception while waiting for URC.')
-            return myfinalout
+            ser.close()
+            find_serial('USB2', verbose=True, timeout=200)
+            ser.open()
+            #return myfinalout
         time.sleep(0.5)
         elapsed_time = time.time() - start_time
         #print("Elapsed time: " + str(elapsed_time))
