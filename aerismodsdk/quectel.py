@@ -197,7 +197,7 @@ def tau_units(i):  # Tracking Area Update
         0b01000000:'10 hrs',
         0b01100000:'2 sec',
         0b10000000:'30 secs',
-        0b11000000:'1 min',
+        0b10100000:'1 min',
         0b11100000:'invalid'}
     return switcher.get(i,"Invalid value")
 
@@ -247,7 +247,7 @@ def get_tau_config(tau_time):
     elif tau_time > 30 and tau_time < (31*30):  # Use 30 seconds times up to 31
         tau_config = 0b10000000 + int(tau_time / 30)
     elif tau_time > 60 and tau_time < (31*60):  # Use 1 min times up to 31
-        tau_config = 0b11000000 + int(tau_time / 60)
+        tau_config = 0b10100000 + int(tau_time / 60)
     elif tau_time > 600 and tau_time < (31*600):  # Use 10 min times up to 31
         tau_config = 0b00000000 + int(tau_time / 600)
     elif tau_time > 3600 and tau_time < (31*3600):  # Use 1 hour times up to 31
