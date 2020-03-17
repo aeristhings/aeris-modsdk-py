@@ -51,6 +51,11 @@ def network_set(operator_name, format):
     rmutils.wait_urc(ser, 10)
 
 
+def network_off(verbose):
+    ser = myserial
+    rmutils.write(ser, 'AT+COPS=2')
+    rmutils.wait_urc(ser, 10)
+
 
 # ========================================================================
 #
@@ -72,7 +77,8 @@ def parse_constate(constate):
 
 def create_packet_session():
     ser = myserial
-    rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
+    #rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
+    rmutils.write(ser, 'AT+QICSGP=1,1,\"lpiot.aer.net\",\"\",\"\",0')
     constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
     parse_constate(constate)
     if len(constate) < len('+QIACT: '):  # Returns packet session info if in session 

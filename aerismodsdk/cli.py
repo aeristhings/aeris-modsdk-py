@@ -142,6 +142,12 @@ def set(ctx, name, format):
     my_modem.network_set(name, format)
 
 
+@network.command()
+@click.pass_context
+def off(ctx):
+    my_modem.network_off(ctx.obj['verbose'])
+
+
 
 # ========================================================================
 #
