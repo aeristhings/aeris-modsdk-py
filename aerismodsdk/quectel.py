@@ -119,21 +119,26 @@ def http_get(host):
     rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
 
 
-def udp_echo(echo_delay, echo_wait):
+def udp_listen(listen_port, listen_wait):
     ser = myserial
-    echo_host = '35.212.147.4'
-    port = '3030'
-    read_sock = '1'
-    write_sock = '0'
+    read_sock = '1'  # Use socket 1 for listen
     create_packet_session()
     # Open UDP socket for listen
-    rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
-    #mycmd = 'AT+QIOPEN=1,0,"UDP SERVICE","127.0.0.1",0,3030,0'
     mycmd = 'AT+QIOPEN=1,' + read_sock + ',"UDP SERVICE","127.0.0.1",0,3030,1'
     rmutils.write(ser, mycmd, delay=1)  # Create UDP socket connection
     sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock)  # Check socket state
     if "UDP" not in sostate:  # Try one more time with a delay if not connected
         sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock, delay=1)  # Check socket state
+    # Wait for data
+    if listen_wait > 0:
+        rmutils.wait_urc(ser, listen_wait, returnonreset=True) # Wait up to X seconds for UDP data to come in
+
+def udp_echo(echo_delay, echo_wait):
+    ser = myserial
+    echo_host = '35.212.147.4'
+    port = '3030'
+    write_sock = '0'  # Use socket 0 for sending
+    udp_listen(port, 0)  # Open listen port
     # Open UDP socket to the host for sending
     rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
     mycmd = 'AT+QIOPEN=1,0,\"UDP\",\"' + echo_host + '\",' + port + ',0,1'
@@ -143,14 +148,14 @@ def udp_echo(echo_delay, echo_wait):
         sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
     # Send data
     udppacket = str('{"delay":' + str(echo_delay*1000) + ', "ip":"' + my_ip + '","port":' + str(port) + '}')
-    print('UDP packet: ' + udppacket)
+    #print('UDP packet: ' + udppacket)
     mycmd = 'AT+QISEND=0,' + str(len(udppacket))
     rmutils.write(ser, mycmd, udppacket, delay=0)  # Write udp packet
     rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
     # Wait for data
     if echo_wait > 0:
         echo_wait = round(echo_wait + echo_delay)
-        rmutils.wait_urc(ser, echo_wait) # Wait up to X seconds for UDP data to come in
+        rmutils.wait_urc(ser, echo_wait, returnonreset=True) # Wait up to X seconds for UDP data to come in
 
 
 def icmp_ping(host):

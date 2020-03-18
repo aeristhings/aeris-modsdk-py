@@ -113,7 +113,7 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     return out
 
 
-def wait_urc(ser, timeout):
+def wait_urc(ser, timeout, returnonreset = False):
     mybytes = bytearray()
     myfinalout = ''
     start_time = time.time()
@@ -133,9 +133,10 @@ def wait_urc(ser, timeout):
         except IOError:
             print(aerisutils.get_date_time_str() + ' Exception while waiting for URC.')
             ser.close()
-            find_serial(com_port_short, verbose=True, timeout=200)
+            find_serial(com_port_short, verbose=True, timeout=(timeout-elapsed_time))
             ser.open()
-            #return myfinalout
+            if returnonreset:
+                return myfinalout
         time.sleep(0.5)
         elapsed_time = time.time() - start_time
         #print("Elapsed time: " + str(elapsed_time))

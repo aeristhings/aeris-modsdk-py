@@ -205,6 +205,14 @@ def lookup(ctx, host):
 def udp(ctx, delay, wait):
     my_modem.udp_echo(delay, wait)
 
+@packet.command()
+@click.option("--wait", "-w", default=200,
+              help="Time to wait for udp echo to return. Units = seconds")
+@click.pass_context
+def listen(ctx, wait):
+    my_modem.udp_listen('3030', wait)
+
+
 
 # ========================================================================
 #
