@@ -25,6 +25,7 @@ git --version = 2.17.1
 python --version = 3.7.5
 pip --version = 19.3.1
 poetry --version = 1.0.0
+See: https://github.com/python-poetry/poetry
 ```
 
 ### Installing
