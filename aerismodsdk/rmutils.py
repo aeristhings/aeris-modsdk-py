@@ -60,11 +60,13 @@ def open_serial():
     try:
         ser = serial.Serial(
             port = modem_port,
-            baudrate=9600,
+            baudrate=115200,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS,
-            timeout=1
+            timeout=1,
+         	rtscts=False,
+            dsrdtr=False
         )
         ser.isOpen()
     except serial.serialutil.SerialException:
@@ -127,7 +129,7 @@ def wait_urc(ser, timeout, returnonreset = False):
                 mybytes.append(mybyte)
                 if mybyte == 10:  # Newline
                     oneline = mybytes.decode("utf-8")  # Change to utf-8
-                    print("<< " + oneline.strip())
+                    print(aerisutils.get_date_time_str() + " << " + oneline.strip())
                     myfinalout = myfinalout + oneline
                     mybytes = bytearray()
         except IOError:

@@ -3,9 +3,12 @@ import aerismodsdk.aerisutils as aerisutils
 
 myserial = None
 my_ip = None
+my_apn = None
 
 
-def init(modem_port_config):
+def init(modem_port_config, apn):
+    global my_apn
+    my_apn = apn
     global myserial
     modem_port = '/dev/tty' + modem_port_config
     rmutils.init(modem_port)
@@ -77,8 +80,8 @@ def parse_constate(constate):
 
 def create_packet_session():
     ser = myserial
-    #rmutils.write(ser, 'AT+QICSGP=1,1,\"iot.aer.net\",\"\",\"\",0')
-    rmutils.write(ser, 'AT+QICSGP=1,1,\"lpiot.aer.net\",\"\",\"\",0')
+    rmutils.write(ser, 'AT+QICSGP=1,1,"' + my_apn + '","","",0')
+    #rmutils.write(ser, 'AT+QICSGP=1,1,\"lpiot.aer.net\",\"\",\"\",0')
     constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
     parse_constate(constate)
     if len(constate) < len('+QIACT: '):  # Returns packet session info if in session 

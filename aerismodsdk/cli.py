@@ -8,6 +8,7 @@ import aerismodsdk.ublox as ublox
 import aerismodsdk.quectel as quectel
 import aerismodsdk.telit as telit
 import aerismodsdk.aerisutils as aerisutils
+import aerismodsdk.gpioutils as gpioutils
 
 
 # Resolve this user's home directory path
@@ -65,7 +66,7 @@ def mycli(ctx, verbose, config_file):
     if load_config(ctx, config_file):
         global my_modem
         my_modem  = modules.get(ctx.obj['modemMfg'])
-        my_modem.init(ctx.obj['comPort'])
+        my_modem.init(ctx.obj['comPort'], ctx.obj['apn'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
     elif ctx.invoked_subcommand not in ['config',
                                         'ping']:  # This is not ok unless we are doing a config or ping command
@@ -78,16 +79,18 @@ def mycli(ctx, verbose, config_file):
 @mycli.command()
 @click.option('--modemmfg', prompt='Modem mfg', type=click.Choice(['ublox', 'quectel','telit']),
               cls=default_from_context('modemMfg', 'ublox'), help="Modem manufacturer.")
-@click.option('--comport', prompt='COM port', type=click.Choice(['USB0', 'USB1', 'USB2', 'USB3', 'USB4']),
+@click.option('--comport', prompt='COM port', type=click.Choice(['S0','S1','USB0', 'USB1', 'USB2', 'USB3', 'USB4']),
               cls=default_from_context('comPort', 'USB0'), help="Modem COM port.")
+@click.option('--apn', prompt='APN', cls=default_from_context('apn','lpiot.aer.net'), help="APN to use")
 @click.pass_context
-def config(ctx, modemmfg, comport):
+def config(ctx, modemmfg, comport, apn):
     """Set up the configuration for using this tool
     \f
 
     """
     config_values = {"modemMfg": modemmfg,
-                     "comPort": comport}
+                     "comPort": comport,
+                     "apn": apn}
     with open(default_config_filename, 'w') as myconfigfile:
         json.dump(config_values, myconfigfile, indent=4)
 
@@ -348,6 +351,30 @@ def disable(ctx):
 
     """
     my_modem.edrx_disable(ctx.obj['verbose'])
+
+
+# ========================================================================
+#
+# Define the pi group of commands
+#
+@mycli.group()
+@click.pass_context
+def pi(ctx):
+    """pi commands
+    \f
+
+    """
+
+
+@pi.command()
+@click.pass_context
+def info(ctx):
+    """Get current pi / sixfab settings
+    \f
+
+    """
+    gpioutils.print_status()
+
 
 
 # ========================================================================
