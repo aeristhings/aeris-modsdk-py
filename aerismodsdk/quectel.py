@@ -6,16 +6,14 @@ my_ip = None
 my_apn = None
 
 
-def init(modem_port_config, apn):
+def init(modem_port_config, apn, verbose=True):
     global my_apn
     my_apn = apn
     global myserial
     modem_port = '/dev/tty' + modem_port_config
-    rmutils.init(modem_port)
-    myserial = rmutils.init_modem()
+    myserial = rmutils.init_modem(modem_port, verbose=verbose)
 
 def check_modem():
-    #ser = rmutils.init_modem()
     ser = myserial
     rmutils.write(ser, 'ATI')
     rmutils.write(ser, 'AT+CIMI')
@@ -23,6 +21,9 @@ def check_modem():
     rmutils.write(ser, 'AT+CREG?')
     rmutils.write(ser, 'AT+COPS?')
     rmutils.write(ser, 'AT+CSQ')
+
+def wait_urc(timeout, returnonreset = False, returnonvalue = False, verbose=True):
+    rmutils.wait_urc(myserial, timeout, returnonreset, returnonvalue, verbose=verbose) # Wait up to X seconds for URC
 
 
 # ========================================================================
@@ -69,43 +70,46 @@ def network_off(verbose):
 def parse_constate(constate):
     global my_ip
     if len(constate) < len('+QIACT: '):
-        return None
+        return False
     else:
         vals = constate.split(',')
         vals2 = vals[3].split('"')
         my_ip = vals2[1]
-        print('My IP: ' + my_ip)
+        #print('My IP: ' + my_ip)
         return my_ip
         
 
-def create_packet_session():
+def create_packet_session(verbose=True):
     ser = myserial
-    rmutils.write(ser, 'AT+QICSGP=1,1,"' + my_apn + '","","",0')
+    rmutils.write(ser, 'AT+QICSGP=1,1,"' + my_apn + '","","",0', verbose=verbose)
     #rmutils.write(ser, 'AT+QICSGP=1,1,\"lpiot.aer.net\",\"\",\"\",0')
-    constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
-    parse_constate(constate)
-    if len(constate) < len('+QIACT: '):  # Returns packet session info if in session 
-        rmutils.write(ser, 'AT+QIACT=1')  # Activate context / create packet session
-        constate = rmutils.write(ser, 'AT+QIACT?')  # Verify that we connected
+    constate = rmutils.write(ser, 'AT+QIACT?', verbose=verbose)  # Check if we are already connected
+    if not parse_constate(constate):  # Returns packet session info if in session 
+        rmutils.write(ser, 'AT+QIACT=1', verbose=verbose)  # Activate context / create packet session
+        constate = rmutils.write(ser, 'AT+QIACT?', verbose=verbose)  # Verify that we connected
         parse_constate(constate)
-    return ser
+        if not parse_constate(constate):
+            return False
+    return True
 
-def packet_info():
+def packet_info(verbose=True):
     ser = myserial
-    constate = rmutils.write(ser, 'AT+QIACT?')  # Check if we are already connected
+    constate = rmutils.write(ser, 'AT+QIACT?', verbose=verbose)  # Check if we are already connected
+    return parse_constate(constate)
 
 
-def packet_start():
+def packet_start(verbose=True):
     create_packet_session()
 
 
-def packet_stop():
+def packet_stop(verbose=True):
     ser = myserial
     rmutils.write(ser, 'AT+QIDEACT=1')  # Deactivate context
 
 
 def http_get(host):
-    ser = create_packet_session()
+    ser = myserial
+    create_packet_session()
     # Open TCP socket to the host
     rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
     mycmd = 'AT+QIOPEN=1,0,\"TCP\",\"' + host + '\",80,0,0'
@@ -122,43 +126,54 @@ def http_get(host):
     rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
 
 
-def udp_listen(listen_port, listen_wait):
+def udp_listen(listen_port, listen_wait, verbose=True):
     ser = myserial
     read_sock = '1'  # Use socket 1 for listen
-    create_packet_session()
+    if create_packet_session(verbose=verbose):
+        aerisutils.print_log('Packet session active: ' + my_ip)
+    else:
+        return False
     # Open UDP socket for listen
     mycmd = 'AT+QIOPEN=1,' + read_sock + ',"UDP SERVICE","127.0.0.1",0,3030,1'
-    rmutils.write(ser, mycmd, delay=1)  # Create UDP socket connection
-    sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock)  # Check socket state
+    rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create UDP socket connection
+    sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock, verbose=verbose)  # Check socket state
     if "UDP" not in sostate:  # Try one more time with a delay if not connected
-        sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock, delay=1)  # Check socket state
+        sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock, delay=1, verbose=verbose)  # Check socket state
+        if "UDP" not in sostate:
+            return False
     # Wait for data
     if listen_wait > 0:
         rmutils.wait_urc(ser, listen_wait, returnonreset=True) # Wait up to X seconds for UDP data to come in
+    return True
 
-def udp_echo(echo_delay, echo_wait):
+def udp_echo(echo_delay, echo_wait, verbose=True):
     ser = myserial
     echo_host = '35.212.147.4'
     port = '3030'
     write_sock = '0'  # Use socket 0 for sending
-    udp_listen(port, 0)  # Open listen port
-    # Open UDP socket to the host for sending
-    rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
+    if udp_listen(port, 0, verbose=verbose):  # Open listen port
+        aerisutils.print_log('Listening on port: ' + port)
+    else:
+        return False
+    # Open UDP socket to the host for sending echo command
+    rmutils.write(ser, 'AT+QICLOSE=0', delay=1, verbose=verbose)  # Make sure no sockets open
     mycmd = 'AT+QIOPEN=1,0,\"UDP\",\"' + echo_host + '\",' + port + ',0,1'
-    rmutils.write(ser, mycmd, delay=1)  # Create UDP socket connection as a client
-    sostate = rmutils.write(ser, 'AT+QISTATE=1,0')  # Check socket state
+    rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create UDP socket connection as a client
+    sostate = rmutils.write(ser, 'AT+QISTATE=1,0', verbose=verbose)  # Check socket state
     if "UDP" not in sostate:  # Try one more time with a delay if not connected
-        sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
+        sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1, verbose=verbose)  # Check socket state
     # Send data
     udppacket = str('{"delay":' + str(echo_delay*1000) + ', "ip":"' + my_ip + '","port":' + str(port) + '}')
     #print('UDP packet: ' + udppacket)
     mycmd = 'AT+QISEND=0,' + str(len(udppacket))
-    rmutils.write(ser, mycmd, udppacket, delay=0)  # Write udp packet
-    rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
+    rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
+    rmutils.write(ser, 'AT+QISEND=0,0', verbose=verbose)  # Check how much data sent
+    aerisutils.print_log('Sent echo command: ' + udppacket)
     # Wait for data
     if echo_wait > 0:
         echo_wait = round(echo_wait + echo_delay)
-        rmutils.wait_urc(ser, echo_wait, returnonreset=True) # Wait up to X seconds for UDP data to come in
+        #rmutils.wait_urc(ser, echo_wait, returnonreset=True) # Wait up to X seconds for UDP data to come in
+        rmutils.wait_urc(ser, echo_wait, returnonreset=True, returnonvalue='APP RDY') # Wait up to X seconds for UDP data to come in
 
 
 def icmp_ping(host):
@@ -226,7 +241,7 @@ def at_units(i):  # Active Time
 
 
 def psm_info(verbose):
-    ser = rmutils.init_modem(verbose=verbose)
+    ser = myserial
     psmsettings = rmutils.write(ser, 'AT+QPSMCFG?', verbose=verbose) # Check PSM feature mode and min time threshold
     vals = parse_response(psmsettings, '+QPSMCFG:')
     print('Minimum seconds to enter PSM: ' + vals[0])
@@ -279,33 +294,34 @@ def get_active_config(atime):
     print('Active time config: ' + "{0:08b}".format(atime_config))
     return atime_config
 
-def psm_enable(verbose, tau_time, atime):
-    print('TAU: {0} s'.format(str(tau_time)))
+def psm_enable(tau_time, atime, verbose=True):
+    #aerisutils.print_log('Setting TAU: {0} s'.format(str(tau_time)))
     tau_config = get_tau_config(tau_time)
-    print('Active time: ' + str(atime))
+    #aerisutils.print_log('Setting Active Time: ' + str(atime))
     atime_config = get_active_config(atime)
     #mycmd = 'AT+CPSMS=1,,,"10000100","00000001"'  # TAU: 30 sec * 4 / Active Time: 2 sec * 1
     mycmd = 'AT+QPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
-    ser = rmutils.init_modem()
-    rmutils.write(ser, mycmd) # Enable PSM and set the timers
+    ser = myserial
+    rmutils.write(ser, mycmd, verbose=verbose) # Enable PSM and set the timers
     # Enable urc setting
-    rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
+    rmutils.write(ser, 'AT+QCFG="psm/urc",1', verbose=verbose) # Enable urc for PSM
     # Let's try to wait for such a urc
     #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
     
 
 def psm_disable(verbose):
     mycmd = 'AT+CPSMS=0'  # Disable PSM
-    ser = rmutils.init_modem(verbose=verbose)
+    ser = myserial
     rmutils.write(ser, mycmd, verbose=verbose)
     # Disable urc setting
     rmutils.write(ser, 'AT+QCFG="psm/urc",0', verbose=verbose)
-    print('PSM and PSM/URC disabled')
+    aerisutils.print_log('PSM and PSM/URC disabled')
     
 
 def psm_now():
     mycmd = 'AT+QCFG="psm/enter",1'  # Enter PSM right after RRC
-    ser = rmutils.init_modem()
+    ser = myserial
     rmutils.write(ser, mycmd)
     # Enable urc setting
     rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
@@ -373,7 +389,7 @@ def paging_time(i):  # eDRX paging time duration
 
 
 def edrx_info(verbose):
-    ser = rmutils.init_modem(verbose=verbose)
+    ser = myserial
     if ser is None:
         return None
     edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose) # Check eDRX settings
@@ -399,7 +415,7 @@ def edrx_enable(verbose, edrx_time):
     #mycmd = 'AT+CEDRXS=0'
     #mycmd = 'AT+CEDRXS=0,5'
     #mycmd = 'AT+CEDRXS=1,5,"0000"'  # This works for CAT-NB with 1
-    ser = rmutils.init_modem(verbose=verbose)
+    ser = myserial
     rmutils.write(ser, mycmd, verbose=verbose) # Enable eDRX and set the timers
     print('edrx is now enabled for LTE-M')
 
@@ -407,7 +423,7 @@ def edrx_enable(verbose, edrx_time):
 def edrx_disable(verbose):
     mycmd = 'AT+CEDRXS=0'
     #mycmd = 'AT+CEDRXS=0,5'
-    ser = rmutils.init_modem(verbose=verbose)
+    ser = myserial
     rmutils.write(ser, mycmd, verbose=verbose) # Enable eDRX and set the timers
     print('edrx is now disabled')
 

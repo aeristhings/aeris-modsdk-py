@@ -15,3 +15,12 @@ def print_http_error(r):
 def get_date_time_str():
     now = datetime.datetime.now()
     return now.strftime("%Y-%m-%d %H:%M:%S")
+    
+def print_log(logstr):
+    print(get_date_time_str() + ' ' + logstr)    
+
+# Log if verbose flag set
+def vlog(verbose, logstr):
+    if verbose:
+        print_log(logstr)
+

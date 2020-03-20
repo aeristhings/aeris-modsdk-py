@@ -66,7 +66,7 @@ def mycli(ctx, verbose, config_file):
     if load_config(ctx, config_file):
         global my_modem
         my_modem  = modules.get(ctx.obj['modemMfg'])
-        my_modem.init(ctx.obj['comPort'], ctx.obj['apn'])
+        my_modem.init(ctx.obj['comPort'], ctx.obj['apn'], verbose=ctx.obj['verbose'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
     elif ctx.invoked_subcommand not in ['config',
                                         'ping']:  # This is not ok unless we are doing a config or ping command
@@ -168,7 +168,7 @@ def packet(ctx):
 @packet.command()
 @click.pass_context
 def info(ctx):
-    my_modem.packet_info()
+    print('Connection state: ' + str(my_modem.packet_info(verbose=ctx.obj['verbose'])))
 
 @packet.command()
 @click.pass_context
@@ -206,7 +206,7 @@ def lookup(ctx, host):
               help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
 def udp(ctx, delay, wait):
-    my_modem.udp_echo(delay, wait)
+    my_modem.udp_echo(delay, wait, verbose=ctx.obj['verbose'])
 
 @packet.command()
 @click.option("--wait", "-w", default=200,
@@ -251,7 +251,7 @@ def enable(ctx, tau, atime):
     \f
 
     """
-    my_modem.psm_enable(ctx.obj['verbose'], tau, atime)
+    my_modem.psm_enable(tau, atime, verbose=ctx.obj['verbose'])
 
 
 @psm.command()
@@ -274,37 +274,31 @@ def now(ctx):
     my_modem.psm_now()
 
 @psm.command()
-@click.option("--timeout", "-t", default=60,
+@click.option("--timeout", "-t", default=500,
               help="Time (s) to run test for.")
-@click.option("--delay", "-d", default=10,
-              help="Time (s) between samples.")
+@click.option("--psm", "-p", default=180,
+              help="PSM TAU")
 @click.pass_context
-def test(ctx, timeout, delay):
+def test(ctx, timeout, psm):
     """Test PSM mode 
     \f
 
     """
-    ser = rmutils.init_modem(False)
-    testlog_filename = home_directory + "/testlog.out"
-    mytestlog = open(testlog_filename, 'w', buffering=1)
+    # Do some setup tasks
+    my_modem.psm_enable(psm, 30, verbose=ctx.obj['verbose'])
+    # Get ready to do some timing
     start_time = time.time()
     elapsed_time = 0
-    udp_delay = 10
-    print('Sending upd echo with wait of {0} seconds'.format(udp_delay))
-    my_modem.udp_echo(udp_delay, 5)
-    print('Starting test for {0} seconds'.format(timeout))
-    my_modem.psm_now()
+    aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
     while elapsed_time < timeout:
-        time.sleep(delay)
+        my_modem.udp_echo(5, 0, verbose=ctx.obj['verbose'])
+        my_modem.wait_urc(timeout, returnonreset=True, returnonvalue='APP RDY', verbose=ctx.obj['verbose']) # Wait up to X seconds for app rdy
+        my_modem.init(ctx.obj['comPort'], ctx.obj['apn'], verbose=ctx.obj['verbose'])
+        print('Connection state: ' + str(my_modem.packet_info(verbose=ctx.obj['verbose'])))
         elapsed_time = time.time() - start_time
-        now = datetime.now()
-        current_time = now.strftime("%Y.%m.%d %H:%M:%S")
-        mycmd = 'AT+QIACT?'
-        atires = rmutils.write(ser, mycmd, verbose=False)
-        mytestlog.write("{0} {1}: {2}\r\n".format(current_time, mycmd, atires.strip()))
-        print('.', end='', flush=True)
-    print('\nFinished test')
-    mytestlog.close()
+    # Do some cleanup tasks
+    my_modem.psm_disable(verbose=ctx.obj['verbose'])
+    aerisutils.print_log('Finished test')
 
 
 
@@ -374,6 +368,30 @@ def info(ctx):
 
     """
     gpioutils.print_status()
+
+
+@pi.command()
+@click.pass_context
+def poweron(ctx):
+    """Power on pi / sixfab
+    \f
+
+    """
+    gpioutils.setupGPIO()
+    gpioutils.disable()
+    gpioutils.enable()
+    gpioutils.poweron()
+
+
+@pi.command()
+@click.pass_context
+def poweroff(ctx):
+    """Power off pi / sixfab
+    \f
+
+    """
+    gpioutils.setupGPIO()
+    gpioutils.disable()
 
 
 

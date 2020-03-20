@@ -14,7 +14,7 @@ def setupGPIO():
     GPIO.setwarnings(False)
     GPIO.setup(BG96_DISABLE, GPIO.OUT) # Note that 1 value is disable
     GPIO.setup(BG96_POWERKEY, GPIO.OUT) # Note that 1 takes pwrkey to ground
-    GPIO.setup(BG96_STATUS, GPIO.IN)  # Note that 1 value is disable
+    GPIO.setup(BG96_STATUS, GPIO.IN)  # Note that 1 value indicates powered down
     GPIO.setup(USER_BUTTON, GPIO.IN)
     GPIO.setup(USER_LED, GPIO.OUT)
 
@@ -23,23 +23,25 @@ def setupGPIO():
 # -- note that pin is DISABLE so zero value is ENABLE
 def enable():
     GPIO.output(BG96_DISABLE,0)
+    time.sleep(.1)
     print("BG96 module enabled!")
 
 # Function for powering down BG96 module and all peripherals from voltage regulator 
 def disable():
     GPIO.output(BG96_DISABLE,1)
+    time.sleep(.1)
     print("BG96 module disabled!")
 
 # Function for powering up or down BG96 module
 # We need to start high / take low (at least 100ms) / bring high / wait for status
-def powerUp():
+def poweron():
     GPIO.output(BG96_POWERKEY,0) # Start high
     time.sleep(.1)
     GPIO.output(BG96_POWERKEY,1) # Take low
     time.sleep(.1)
     GPIO.output(BG96_POWERKEY,0) # Bring back high
     print("Waiting for BG96 powered up status ...")
-    while get_status:
+    while get_status():
         pass
     #time.sleep(5)
     print("BG96 module powered up!")

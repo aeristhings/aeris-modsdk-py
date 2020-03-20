@@ -19,9 +19,18 @@ def vprint(verbose, mystr):
         print(mystr)
 
 
-def init(modem_port_in):
+# Consolidated with init_modem
+#def init(modem_port_in):
+#    global modem_port
+#    modem_port = modem_port_in
+
+
+def init_modem(modem_port_in=modem_port, verbose=True):
     global modem_port
     modem_port = modem_port_in
+    ser = open_serial()
+    write(ser, 'ATE0', verbose=verbose) # Turn off echo
+    return ser
 
 
 def get_http_packet(hostname):
@@ -73,11 +82,6 @@ def open_serial():
         print("Could not open serial port")
     return ser
 
-def init_modem(verbose=True):
-    ser = open_serial()
-    write(ser, 'ATE0', verbose=verbose) # Turn off echo
-    return ser
-
 def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     if ser is None:
         print('Serial port is not open')
@@ -107,7 +111,7 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     out = myoutput.decode("utf-8")  # Change to utf-8
     if(moredata != None):
         #print('More data length: ' + str(len(moredata)))
-        print('More data: ' + moredata)
+        vprint(verbose, 'More data: ' + moredata)
         time.sleep(1)
         ser.write(moredata.encode())
         time.sleep(1)
@@ -115,25 +119,27 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     return out
 
 
-def wait_urc(ser, timeout, returnonreset = False):
+def wait_urc(ser, timeout, returnonreset = False, returnonvalue = False, verbose=True):
     mybytes = bytearray()
     myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
-    print(aerisutils.get_date_time_str() + ' Starting to wait {0}s for URC.'.format(timeout))
+    aerisutils.print_log('Starting to wait {0}s for URC.'.format(timeout))
     while elapsed_time < timeout:
         try:
             while ser.inWaiting() > 0:
                 mybyte = ser.read()[0]
-                #print('Byte: ' + str(mybyte))
                 mybytes.append(mybyte)
                 if mybyte == 10:  # Newline
                     oneline = mybytes.decode("utf-8")  # Change to utf-8
-                    print(aerisutils.get_date_time_str() + " << " + oneline.strip())
+                    aerisutils.print_log("<< " + oneline.strip())
                     myfinalout = myfinalout + oneline
+                    if returnonvalue:
+                        if oneline.find(returnonvalue) > -1:
+                            return myfinalout
                     mybytes = bytearray()
         except IOError:
-            print(aerisutils.get_date_time_str() + ' Exception while waiting for URC.')
+            aerisutils.print_log('Exception while waiting for URC.')
             ser.close()
             find_serial(com_port_short, verbose=True, timeout=(timeout-elapsed_time))
             ser.open()
@@ -141,10 +147,7 @@ def wait_urc(ser, timeout, returnonreset = False):
                 return myfinalout
         time.sleep(0.5)
         elapsed_time = time.time() - start_time
-        #print("Elapsed time: " + str(elapsed_time))
-    #myfinalout = myoutput.decode("utf-8")  # Change to utf-8
-    #print("<< " + myfinalout.strip())
-    print(aerisutils.get_date_time_str() + ' Finished waiting for URC.')
+    aerisutils.print_log('Finished waiting for URC.')
     return myfinalout
 
 
