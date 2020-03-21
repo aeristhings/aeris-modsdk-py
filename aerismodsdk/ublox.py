@@ -1,19 +1,47 @@
 import aerismodsdk.rmutils as rmutils
+import aerismodsdk.aerisutils as aerisutils
 
 
-getpacket = """GET / HTTP/1.1
-Host: www.aeris.com
-
-"""
-
-def init(modem_port_config):
-    modem_port = '/dev/tty' + modem_port_config
-    rmutils.init(modem_port)
+def init(modem_port_config, apn, verbose=True):
+    global myserial
+    myserial = rmutils.init_modem('/dev/tty' + modem_port_config, apn, verbose=verbose)
 
 
 def check_modem():
-    ser = rmutils.init_modem()
+    ser = myserial
     rmutils.write(ser, 'ATI')
+    rmutils.write(ser, 'AT+CIMI')
+    rmutils.write(ser, 'AT+CCID')
+    rmutils.write(ser, 'AT+CREG?')
+    rmutils.write(ser, 'AT+COPS?')
+    rmutils.write(ser, 'AT+CSQ')
+
+
+def wait_urc(timeout, returnonreset = False, returnonvalue = False, verbose=True):
+    rmutils.wait_urc(myserial, timeout, returnonreset, returnonvalue, verbose=verbose) # Wait up to X seconds for URC
+
+# ========================================================================
+#
+# The network stuff
+#
+
+def network_info(verbose):
+    rmutils.network_info(verbose)
+
+
+def network_set(operator_name, format):
+    rmutils.network_set(operator_name, format)
+
+
+def network_off(verbose):
+    rmutils.network_off(verbose)
+
+
+# ========================================================================
+#
+# The packet stuff
+#
+
 
 def http_get(host):
     ser = init_modem()

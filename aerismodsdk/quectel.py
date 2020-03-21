@@ -3,15 +3,12 @@ import aerismodsdk.aerisutils as aerisutils
 
 myserial = None
 my_ip = None
-my_apn = None
 
 
 def init(modem_port_config, apn, verbose=True):
-    global my_apn
-    my_apn = apn
     global myserial
-    modem_port = '/dev/tty' + modem_port_config
-    myserial = rmutils.init_modem(modem_port, verbose=verbose)
+    myserial = rmutils.init_modem('/dev/tty' + modem_port_config, apn, verbose=verbose)
+
 
 def check_modem():
     ser = myserial
@@ -33,32 +30,15 @@ def wait_urc(timeout, returnonreset = False, returnonvalue = False, verbose=True
 
 
 def network_info(verbose):
-    ser = myserial
-    rmutils.write(ser, 'AT+CREG?')
-    rmutils.write(ser, 'AT+COPS?')
-    rmutils.write(ser, 'AT+CSQ')
-    rmutils.write(ser, 'AT+CIND?')
-    if verbose:
-        rmutils.write(ser, 'AT+COPS=?')
-        rmutils.wait_urc(ser, 15)
+    rmutils.network_info(verbose)
 
 
 def network_set(operator_name, format):
-    ser = myserial
-    rmutils.write(ser, 'AT+COPS=2')
-    rmutils.wait_urc(ser, 10)
-    if operator_name == 'auto':
-        mycmd = 'AT+COPS=0'
-    else:
-        mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",8'
-    rmutils.write(ser, mycmd)
-    rmutils.wait_urc(ser, 10)
+    rmutils.network_set(operator_name, format)
 
 
 def network_off(verbose):
-    ser = myserial
-    rmutils.write(ser, 'AT+COPS=2')
-    rmutils.wait_urc(ser, 10)
+    rmutils.network_off(verbose)
 
 
 # ========================================================================
@@ -83,7 +63,7 @@ def parse_constate(constate):
 
 def create_packet_session(verbose=True):
     ser = myserial
-    rmutils.write(ser, 'AT+QICSGP=1,1,"' + my_apn + '","","",0', verbose=verbose)
+    rmutils.write(ser, 'AT+QICSGP=1,1,"' + rmutils.apn + '","","",0', verbose=verbose)
     constate = rmutils.write(ser, 'AT+QIACT?', verbose=verbose)  # Check if we are already connected
     if not parse_constate(constate):  # Returns packet session info if in session 
         rmutils.write(ser, 'AT+QIACT=1', verbose=verbose)  # Activate context / create packet session

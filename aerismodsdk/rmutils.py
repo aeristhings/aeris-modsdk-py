@@ -7,6 +7,9 @@ import aerismodsdk.aerisutils as aerisutils
 
 com_port_short = 'USB2'
 modem_port = '/dev/ttyUSB2'
+apn = None
+myserial = None
+
 
 getpacket = """GET / HTTP/1.1
 Host: <hostname>
@@ -25,9 +28,11 @@ def vprint(verbose, mystr):
 #    modem_port = modem_port_in
 
 
-def init_modem(modem_port_in, verbose=True):
+def init_modem(modem_port_in, apn_in, verbose=True):
     global modem_port
     modem_port = modem_port_in
+    global apn
+    apn = apn_in
     vprint(verbose, 'Using modem port: ' + modem_port)
     ser = open_serial()
     write(ser, 'ATE0', verbose=verbose) # Turn off echo
@@ -65,10 +70,11 @@ def find_serial(com_port, verbose=False, timeout=1):
     return False
 
 def open_serial():
-    ser = None
+    global myserial
+    myserial = None
     # configure the serial connections (the parameters differs on the device you are connecting to)
     try:
-        ser = serial.Serial(
+        myserial = serial.Serial(
             port = modem_port,
             baudrate=115200,
             parity=serial.PARITY_NONE,
@@ -78,10 +84,10 @@ def open_serial():
          	rtscts=False,
             dsrdtr=False
         )
-        ser.isOpen()
+        myserial.isOpen()
     except serial.serialutil.SerialException:
         print("Could not open serial port")
-    return ser
+    return myserial
 
 def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     if ser is None:
@@ -163,3 +169,39 @@ def interactive():
             exit()
         else:
             out = write(ser, myinput)
+
+
+# ========================================================================
+#
+# The network stuff
+#
+
+def network_info(verbose):
+    ser = myserial
+    write(ser, 'AT+CREG?')
+    write(ser, 'AT+COPS?')
+    write(ser, 'AT+CSQ')
+    write(ser, 'AT+CIND?')
+    if verbose:
+        write(ser, 'AT+COPS=?')
+        wait_urc(ser, 15)
+
+
+def network_set(operator_name, format, verbose=True):
+    ser = myserial
+    write(ser, 'AT+COPS=2')
+    wait_urc(ser, 10)
+    if operator_name == 'auto':
+        mycmd = 'AT+COPS=0'
+    else:
+        mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",8'
+    write(ser, mycmd)
+    wait_urc(ser, 10)
+
+
+def network_off(verbose):
+    ser = myserial
+    write(ser, 'AT+COPS=2')
+    wait_urc(ser, 10)
+
+
