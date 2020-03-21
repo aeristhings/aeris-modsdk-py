@@ -202,7 +202,7 @@ def lookup(ctx, host):
 @packet.command()
 @click.option("--delay", "-d", default=1,
               help="Delay request to send to udp echo server. Units = seconds")
-@click.option("--wait", "-w", default=2,
+@click.option("--wait", "-w", default=4,
               help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
 def udp(ctx, delay, wait):
@@ -278,8 +278,10 @@ def now(ctx):
               help="Time (s) to run test for.")
 @click.option("--psm", "-p", default=180,
               help="PSM TAU")
+@click.option("--delay", "-d", default=5,
+              help="Echo delay")
 @click.pass_context
-def test(ctx, timeout, psm):
+def test(ctx, timeout, psm, delay):
     """Test PSM mode 
     \f
 
@@ -291,7 +293,7 @@ def test(ctx, timeout, psm):
     elapsed_time = 0
     aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
     while elapsed_time < timeout:
-        my_modem.udp_echo(5, 0, verbose=ctx.obj['verbose'])
+        my_modem.udp_echo(delay, 0, verbose=ctx.obj['verbose'])
         my_modem.wait_urc(timeout, returnonreset=True, returnonvalue='APP RDY', verbose=ctx.obj['verbose']) # Wait up to X seconds for app rdy
         my_modem.init(ctx.obj['comPort'], ctx.obj['apn'], verbose=ctx.obj['verbose'])
         print('Connection state: ' + str(my_modem.packet_info(verbose=ctx.obj['verbose'])))

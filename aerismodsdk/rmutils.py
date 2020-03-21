@@ -25,9 +25,10 @@ def vprint(verbose, mystr):
 #    modem_port = modem_port_in
 
 
-def init_modem(modem_port_in=modem_port, verbose=True):
+def init_modem(modem_port_in, verbose=True):
     global modem_port
     modem_port = modem_port_in
+    vprint(verbose, 'Using modem port: ' + modem_port)
     ser = open_serial()
     write(ser, 'ATE0', verbose=verbose) # Turn off echo
     return ser
@@ -152,7 +153,7 @@ def wait_urc(ser, timeout, returnonreset = False, returnonvalue = False, verbose
 
 
 def interactive():
-    ser = init_modem()
+    ser = init_modem(modem_port)
     myinput = None
     print('Enter AT command or type exit')
     while 1 :

@@ -73,6 +73,8 @@ def parse_constate(constate):
         return False
     else:
         vals = constate.split(',')
+        if len(vals)<4:
+            return False
         vals2 = vals[3].split('"')
         my_ip = vals2[1]
         #print('My IP: ' + my_ip)
@@ -82,7 +84,6 @@ def parse_constate(constate):
 def create_packet_session(verbose=True):
     ser = myserial
     rmutils.write(ser, 'AT+QICSGP=1,1,"' + my_apn + '","","",0', verbose=verbose)
-    #rmutils.write(ser, 'AT+QICSGP=1,1,\"lpiot.aer.net\",\"\",\"\",0')
     constate = rmutils.write(ser, 'AT+QIACT?', verbose=verbose)  # Check if we are already connected
     if not parse_constate(constate):  # Returns packet session info if in session 
         rmutils.write(ser, 'AT+QIACT=1', verbose=verbose)  # Activate context / create packet session
