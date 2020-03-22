@@ -94,8 +94,10 @@ def http_get(host):
     ser = myserial
     create_packet_session()
     # Open TCP socket to the host
-    rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
-    mycmd = 'AT+QIOPEN=1,0,\"TCP\",\"' + host + '\",80,0,0'
+    rmutils.write(ser, 'AT+USOCL=0', delay=1, verbose=verbose)  # Make sure our socket closed
+    mycmd = 'AT+USOCR=6,' + 80
+    rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create TCP socket connection
+    #mycmd = 'AT+QIOPEN=1,0,\"TCP\",\"' + host + '\",80,0,0'
     rmutils.write(ser, mycmd, delay=1)  # Create TCP socket connection as a client
     sostate = rmutils.write(ser, 'AT+QISTATE=1,0')  # Check socket state
     if "TCP" not in sostate:  # Try one more time with a delay if not connected
@@ -131,31 +133,26 @@ def udp_listen(listen_port, listen_wait, verbose=True):
 
 def udp_echo(echo_delay, echo_wait, verbose=True):
     ser = myserial
-    echo_host = '35.212.147.4'
-    port = '3030'
+    echo_host = '35.212.147.4'  # aeris echo server
+    port = '3030'  # aeris echo server port
+    listen_port = '3032'
     #echo_host = '195.34.89.241' # ublox echo server
-    #port = '7' # ublox echo port
+    #port = '7' # ublox echo server port
     create_packet_session(verbose=verbose)
     rmutils.write(ser, 'AT+USOCL=0', delay=1, verbose=verbose)  # Make sure our socket closed
-    #mycmd = 'AT+USOCR=17,' + port
-    mycmd = 'AT+USOCR=17'
+    mycmd = 'AT+USOCR=17,' + listen_port
     rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create UDP socket connection
-    #sostate = rmutils.write(ser, 'AT+USOCR?', verbose=verbose)  # Check socket state
     # Send data
-    udppacket = str('{"delay":' + str(echo_delay*1000) + ', "ip":"' + my_ip + '","port":' + str(port) + '}')
-    udppacket = udppacket.replace('"', r'\"')
-    udppacket = 'hello'
-    #print('UDP packet: ' + udppacket)
-    mycmd = 'AT+USOST=0,"' + echo_host + '",' + port + ',' + str(len(udppacket)) + ',"' + udppacket + '"'
-    rmutils.write(ser, mycmd, delay=0, verbose=verbose)  # Write udp packet
-    #rmutils.write(ser, 'AT+QISEND=0,0', verbose=verbose)  # Check how much data sent
+    udppacket = str('{"delay":' + str(echo_delay*1000) + ', "ip":"' + my_ip + '","port":' + str(listen_port) + '}')
+    mycmd = 'AT+USOST=0,"' + echo_host + '",' + port + ',' + str(len(udppacket))
+    rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
     aerisutils.print_log('Sent echo command: ' + udppacket)
     # Wait for data
     if echo_wait > 0:
         echo_wait = round(echo_wait + echo_delay)
-        #rmutils.wait_urc(ser, echo_wait, returnonreset=True) # Wait up to X seconds for UDP data to come in
         rmutils.wait_urc(ser, echo_wait, returnonreset=True, returnonvalue='APP RDY') # Wait up to X seconds for UDP data to come in
-        rmutils.write(ser, 'AT+USORF=0,5', delay=1, verbose=verbose)  # Read from socket
+        mycmd = 'AT+USORF=0,' + str(len(udppacket))
+        #rmutils.write(ser, mycmd, verbose=verbose)  # Read from socket
 
 
 def icmp_ping(host):
@@ -188,3 +185,128 @@ def parse_response(response, prefix):
 # The PSM stuff
 #
 
+
+def psm_mode(i):  # PSM mode
+    switcher={
+        0b0001:'PSM without network coordination',
+        0b0010:'Rel 12 PSM without context retention',
+        0b0100:'Rel 12 PSM with context retention',
+        0b1000:'PSM in between eDRX cycles'}
+    return switcher.get(i,"Invalid value")
+
+
+def timer_units(value):
+    units = value & 0b11100000
+    return units
+
+    
+def tau_units(i):  # Tracking Area Update
+    switcher={
+        0b00000000:'10 min',
+        0b00100000:'1 hr',
+        0b01000000:'10 hrs',
+        0b01100000:'2 sec',
+        0b10000000:'30 secs',
+        0b10100000:'1 min',
+        0b11100000:'invalid'}
+    return switcher.get(i,"Invalid value")
+
+
+def at_units(i):  # Active Time
+    switcher={
+        0b00000000:'2 sec',
+        0b00100000:'1 min',
+        0b01000000:'decihour (6 min)',
+        0b11100000:'deactivated'}
+    return switcher.get(i,"Invalid value")
+
+
+def psm_info(verbose):
+    ser = myserial
+    # Query settings provided by network
+    psmsettings = rmutils.write(ser, 'AT+UCPSMS?', verbose=verbose) # Check PSM settings
+    vals = parse_response(psmsettings, '+UCPSMS:')
+    if int(vals[0]) == 0:
+        print('PSM is disabled')
+    else:
+        print('PSM enabled: ' + vals[0])
+        print('Network-specified TAU: ' + vals[3])
+        print('Network-specified Active Time: ' + vals[4])
+        # Query settings we requested
+        psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose) # Check PSM settings
+        vals = parse_response(psmsettings, '+CPSMS:')
+        tau_value = int(vals[3].strip('\"'), 2)
+        print('PSM enabled: ' + vals[0])
+        print('TAU requested units: ' + str(tau_units(timer_units(tau_value))))
+        print('TAU requested value: ' + str(tau_value & 0b00011111))
+        active_time = int(vals[4].strip('\"'), 2)
+        print('Active time requested units: ' + str(at_units(timer_units(active_time))))
+        print('Active time requested value: ' + str(active_time & 0b00011111))
+        # Check on urc setting
+        #psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose) # Check if urc enabled
+        #vals = parse_response(psmsettings, '+QCFG: ')
+        #print('PSM unsolicited response codes (urc): ' + vals[1])
+
+def get_tau_config(tau_time):
+    if tau_time > 1 and tau_time < (31*2):  # Use 2 seconds times up to 31
+        tau_config = 0b01100000 + int(tau_time / 2)
+    elif tau_time > 30 and tau_time < (31*30):  # Use 30 seconds times up to 31
+        tau_config = 0b10000000 + int(tau_time / 30)
+    elif tau_time > 60 and tau_time < (31*60):  # Use 1 min times up to 31
+        tau_config = 0b10100000 + int(tau_time / 60)
+    elif tau_time > 600 and tau_time < (31*600):  # Use 10 min times up to 31
+        tau_config = 0b00000000 + int(tau_time / 600)
+    elif tau_time > 3600 and tau_time < (31*3600):  # Use 1 hour times up to 31
+        tau_config = 0b00100000 + int(tau_time / 3600)
+    elif tau_time > 36000 and tau_time < (31*36000):  # Use 10 hour times up to 31
+        tau_config = 0b01000000 + int(tau_time / 36000)
+    print('TAU config: ' + "{0:08b}".format(tau_config))
+    return tau_config
+
+def get_active_config(atime):
+    if atime > 1 and atime < (31*2):  # Use 2s * up to 31
+        atime_config = 0b00000000 + int(atime / 2)
+    elif atime > 60 and atime < (31*60):  # Use 60s * up to 31
+        atime_config = 0b00100000 + int(atime / 60)
+    print('Active time config: ' + "{0:08b}".format(atime_config))
+    return atime_config
+
+def psm_enable(tau_time, atime, verbose=True):
+    #aerisutils.print_log('Setting TAU: {0} s'.format(str(tau_time)))
+    tau_config = get_tau_config(tau_time)
+    #aerisutils.print_log('Setting Active Time: ' + str(atime))
+    atime_config = get_active_config(atime)
+    mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
+    ser = myserial
+    rmutils.write(ser, mycmd, verbose=verbose) # Enable PSM and set the timers
+    # Enable urc setting
+    #rmutils.write(ser, 'AT+QCFG="psm/urc",1', verbose=verbose) # Enable urc for PSM
+    # Let's try to wait for such a urc
+    #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
+    
+
+def psm_disable(verbose):
+    mycmd = 'AT+CPSMS=0'  # Disable PSM
+    ser = myserial
+    rmutils.write(ser, mycmd, verbose=verbose)
+    # Disable urc setting
+    #rmutils.write(ser, 'AT+QCFG="psm/urc",0', verbose=verbose)
+    #aerisutils.print_log('PSM and PSM/URC disabled')
+    
+
+def psm_now():
+    mycmd = 'AT+QCFG="psm/enter",1'  # Enter PSM right after RRC
+    ser = myserial
+    rmutils.write(ser, mycmd)
+    # Enable urc setting
+    rmutils.write(ser, 'AT+QCFG="psm/urc",1') # Enable urc for PSM
+    # Let's try to wait for such a urc
+    #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    
+
+
+# ========================================================================
+#
+# The eDRX stuff
+#
