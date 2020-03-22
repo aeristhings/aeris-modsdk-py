@@ -159,7 +159,7 @@ def wait_urc(ser, timeout, returnonreset = False, returnonvalue = False, verbose
 
 
 def interactive():
-    ser = init_modem(modem_port)
+    ser = init_modem(modem_port, apn)
     myinput = None
     print('Enter AT command or type exit')
     while 1 :

@@ -158,13 +158,15 @@ def udp_echo(echo_delay, echo_wait, verbose=True):
 
 
 def icmp_ping(host):
-    ser = create_packet_session()
+    ser = myserial
+    create_packet_session()
     mycmd = 'AT+QPING=1,\"' + host + '\",4,4'  # Context, host, timeout, pingnum
     rmutils.write(ser, mycmd, delay=6) # Write a ping command; Wait timeout plus 2 seconds
 
 
 def dns_lookup(host):
-    ser = create_packet_session()
+    ser = myserial
+    create_packet_session()
     rmutils.write(ser, 'AT+QIDNSCFG=1') # Check DNS server
     mycmd = 'AT+QIDNSGIP=1,\"' + host + '\"'
     rmutils.write(ser, mycmd, timeout=0) # Write a dns lookup command
