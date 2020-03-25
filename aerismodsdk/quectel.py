@@ -278,18 +278,12 @@ def get_active_config(atime):
     return atime_config
 
 def psm_enable(tau_time, atime, verbose=True):
-    #aerisutils.print_log('Setting TAU: {0} s'.format(str(tau_time)))
     tau_config = get_tau_config(tau_time)
-    #aerisutils.print_log('Setting Active Time: ' + str(atime))
     atime_config = get_active_config(atime)
-    #mycmd = 'AT+CPSMS=1,,,"10000100","00000001"'  # TAU: 30 sec * 4 / Active Time: 2 sec * 1
     mycmd = 'AT+QPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
     ser = myserial
     rmutils.write(ser, mycmd, verbose=verbose) # Enable PSM and set the timers
-    # Enable urc setting
     rmutils.write(ser, 'AT+QCFG="psm/urc",1', verbose=verbose) # Enable urc for PSM
-    # Let's try to wait for such a urc
-    #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
     aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
     
 
