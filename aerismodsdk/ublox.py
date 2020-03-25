@@ -1,10 +1,12 @@
 import aerismodsdk.rmutils as rmutils
 import aerismodsdk.aerisutils as aerisutils
+from xmodem import XMODEM
 
 
 def init(modem_port_config, apn, verbose=True):
     global myserial
     myserial = rmutils.init_modem('/dev/tty' + modem_port_config, apn, verbose=verbose)
+    rmutils.write(myserial, 'AT+CGEREP=1,1', verbose=verbose) # Enable URCs
 
 
 def check_modem():
@@ -139,9 +141,9 @@ def udp_echo(echo_delay, echo_wait, verbose=True):
     #echo_host = '195.34.89.241' # ublox echo server
     #port = '7' # ublox echo server port
     create_packet_session(verbose=verbose)
-    rmutils.write(ser, 'AT+USOCL=0', delay=1, verbose=verbose)  # Make sure our socket closed
+    rmutils.write(ser, 'AT+USOCL=0', verbose=verbose)  # Make sure our socket closed
     mycmd = 'AT+USOCR=17,' + listen_port
-    rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create UDP socket connection
+    rmutils.write(ser, mycmd, verbose=verbose)  # Create UDP socket connection
     # Send data
     udppacket = str('{"delay":' + str(echo_delay*1000) + ', "ip":"' + my_ip + '","port":' + str(listen_port) + '}')
     mycmd = 'AT+USOST=0,"' + echo_host + '",' + port + ',' + str(len(udppacket))
@@ -163,12 +165,8 @@ def icmp_ping(host):
 
 
 def dns_lookup(host):
-    ser = myserial
-    create_packet_session()
-    #rmutils.write(ser, 'AT+QIDNSCFG=1') # Check DNS server
-    mycmd = 'AT+UDNSRN=0,"' + host + '",0'
-    rmutils.write(ser, mycmd, timeout=5) # Write a dns lookup command
-    #rmutils.wait_urc(ser, 4) # Wait up to 4 seconds for results to come back via urc
+    print("Not supported by this radio module")
+    return False
 
 
 def parse_response(response, prefix):
@@ -230,8 +228,12 @@ def psm_info(verbose):
         print('PSM is disabled')
     else:
         print('PSM enabled: ' + vals[0])
-        print('Network-specified TAU: ' + vals[3])
-        print('Network-specified Active Time: ' + vals[4])
+        tau_value = int(vals[3].strip('\"'), 2)
+        print('TAU network-specified units: ' + str(tau_units(timer_units(tau_value))))
+        print('TAU network-specified value: ' + str(tau_value & 0b00011111))
+        active_time = int(vals[4].strip('\"'), 2)
+        print('Active time network-specified units: ' + str(at_units(timer_units(active_time))))
+        print('Active time network-specified value: ' + str(active_time & 0b00011111))
         # Query settings we requested
         psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose) # Check PSM settings
         vals = parse_response(psmsettings, '+CPSMS:')
@@ -243,7 +245,7 @@ def psm_info(verbose):
         print('Active time requested units: ' + str(at_units(timer_units(active_time))))
         print('Active time requested value: ' + str(active_time & 0b00011111))
         # Check on urc setting
-        #psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose) # Check if urc enabled
+        psmsettings = rmutils.write(ser, 'AT+CGEREP?', verbose=verbose) # Check if urc enabled
         #vals = parse_response(psmsettings, '+QCFG: ')
         #print('PSM unsolicited response codes (urc): ' + vals[1])
 
@@ -272,17 +274,16 @@ def get_active_config(atime):
     return atime_config
 
 def psm_enable(tau_time, atime, verbose=True):
-    #aerisutils.print_log('Setting TAU: {0} s'.format(str(tau_time)))
+    ser = myserial
+    rmutils.write(ser, 'AT+CMEE=2', verbose=verbose) # Enable verbose errors
+    #rmutils.write(ser, 'AT+CPIN=""', verbose=verbose) # Enable SIM (see app note; but does not seem to be needed)
+    #rmutils.write(ser, 'AT+CFUN=0', verbose=verbose) # De-Register from network
     tau_config = get_tau_config(tau_time)
-    #aerisutils.print_log('Setting Active Time: ' + str(atime))
     atime_config = get_active_config(atime)
     mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
-    ser = myserial
     rmutils.write(ser, mycmd, verbose=verbose) # Enable PSM and set the timers
-    # Enable urc setting
-    #rmutils.write(ser, 'AT+QCFG="psm/urc",1', verbose=verbose) # Enable urc for PSM
-    # Let's try to wait for such a urc
-    #rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+    rmutils.write(ser, 'AT+CGEREP=1,1', verbose=verbose) # Enable URCs
+    #rmutils.write(ser, 'AT+CFUN=15', verbose=verbose) # Reboot module to fully enable
     aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
     
 
@@ -310,3 +311,25 @@ def psm_now():
 #
 # The eDRX stuff
 #
+
+
+def getc(size, timeout=1):
+    return myserial.read(size) or None
+
+def putc(data, timeout=1):
+    return myserial.write(data)  # note that this ignores the timeout
+
+def fw_update():
+    ser = myserial
+    modem = XMODEM(getc, putc)
+    #stream = open('/home/pi/share/fw/0bb_stg1_pkg1-0m_L56A0200_to_L58A0204.bin', 'rb')
+    stream = open('/home/pi/share/fw/0bb_stg2_L56A0200_to_L58A0204.bin', 'rb')
+    rmutils.write(ser, 'AT+UFWUPD=3')
+    rmutils.wait_urc(ser, 20)
+    modem.send(stream)
+    stream.close()
+    ser.flushOutput()
+    rmutils.wait_urc(ser, 20)
+    #print(stream)
+    rmutils.write(ser, 'AT+UFWINSTALL')
+    rmutils.write(ser, 'AT+UFWINSTALL?')

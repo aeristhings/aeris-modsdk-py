@@ -173,6 +173,14 @@ python-versions = "*"
 version = "0.1.8"
 
 [[package]]
+category = "main"
+description = "XMODEM protocol implementation."
+name = "xmodem"
+optional = false
+python-versions = "*"
+version = "0.4.5"
+
+[[package]]
 category = "dev"
 description = "Backport of pathlib-compatible object wrapper for zip files"
 marker = "python_version < \"3.8\""
@@ -186,7 +194,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "c01c4f8ed2769e1870198973b06369e4358e05446107053b3cba05aa50de2d79"
+content-hash = "4110807dc5004ea69454a805d77483e04e92c69ce73071a72727a14db1a78305"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -251,6 +259,10 @@ six = [
 wcwidth = [
     {file = "wcwidth-0.1.8-py2.py3-none-any.whl", hash = "sha256:8fd29383f539be45b20bd4df0dc29c20ba48654a41e661925e612311e9f3c603"},
     {file = "wcwidth-0.1.8.tar.gz", hash = "sha256:f28b3e8a6483e5d49e7f8949ac1a78314e740333ae305b4ba5defd3e74fb37a8"},
+]
+xmodem = [
+    {file = "xmodem-0.4.5-py3-none-any.whl", hash = "sha256:99fc276d36dd5ce526889c3fe3e011de30275c675913540983d96979f152fed1"},
+    {file = "xmodem-0.4.5.tar.gz", hash = "sha256:8b7ca0f45cdf0f5e7212a60931c98b333da5ef2fc6702a5d10c51b9fc52ce91c"},
 ]
 zipp = [
     {file = "zipp-2.2.0-py36-none-any.whl", hash = "sha256:d65287feb793213ffe11c0f31b81602be31448f38aeb8ffc2eb286c4f6f6657e"},

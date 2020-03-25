@@ -276,18 +276,20 @@ def now(ctx):
 @psm.command()
 @click.option("--timeout", "-t", default=500,
               help="Time (s) to run test for.")
-@click.option("--psm", "-p", default=180,
+@click.option("--psmtau", "-p", default=180,
               help="PSM TAU")
+@click.option("--psmat", "-a", default=30,
+              help="PSM Active Time")
 @click.option("--delay", "-d", default=5,
               help="Echo delay")
 @click.pass_context
-def test(ctx, timeout, psm, delay):
+def test(ctx, timeout, psmtau, psmat, delay):
     """Test PSM mode 
     \f
 
     """
     # Do some setup tasks
-    my_modem.psm_enable(psm, 30, verbose=ctx.obj['verbose'])
+    my_modem.psm_enable(psmtau, psmat, verbose=ctx.obj['verbose'])
     # Get ready to do some timing
     start_time = time.time()
     elapsed_time = 0
@@ -394,6 +396,30 @@ def poweroff(ctx):
     """
     gpioutils.setupGPIO()
     gpioutils.disable()
+
+
+
+# ========================================================================
+#
+# Define the firmware group of commands
+#
+@mycli.group()
+@click.pass_context
+def fw(ctx):
+    """firmware commands
+    \f
+
+    """
+
+
+@fw.command()
+@click.pass_context
+def update(ctx):
+    """Upload firmware to radio module
+    \f
+
+    """
+    my_modem.fw_update()
 
 
 
