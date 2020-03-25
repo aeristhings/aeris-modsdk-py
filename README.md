@@ -81,44 +81,27 @@ Package operations: 18 installs, 0 updates, 0 removals
 
 Step 3: Verify development environment working
 
-```
-$ poetry run aeriscli
+~~~
+$ poetry run aeriscli --help
 
 Usage: aeriscli [OPTIONS] COMMAND [ARGS]...
 
 Options:
   -v, --verbose             Verbose output
-  -cfg, --config-file TEXT  Path to aservices config file.
+  -cfg, --config-file TEXT  Path to config file.
   --help                    Show this message and exit.
 
 Commands:
-  aeradmin    AerAdmin API Services
-  aerframe    AerFrame API Services
-  aertraffic  AerTraffic API Services
-  config      Set up the configuration for using this tool
-```
+  config       Set up the configuration for using this tool
+  edrx         eDRX commands
+  interactive  Interactive mode
+  modem        Modem information
+  network      Network commands
+  packet       Packet commands
+  pi           pi commands
+  psm          PSM commands
+~~~
 
-
-
-## Running the tests
-
-This section covers the automated tests for this system
-
-### Functional tests
-
-This project uses pytest for running functional tests
-
-```
-$ poetry run pytest
-================================================= test session starts ==================================================
-platform linux -- Python 3.7.5, pytest-5.3.2, py-1.8.1, pluggy-0.13.1
-rootdir: ~/aeris-apisdk-py
-collected 1 item
-
-tests/test_aerisapisdk.py .                                                                                      [100%]
-
-================================================== 1 passed in 0.04s ===================================================
-```
 
 ### Coding style tests
 
@@ -127,7 +110,7 @@ This project used pycodestyle to ensure adherence to PEP 8 coding style rules.
 Running pycodestyle as below should return with no errors.
 
 ```
-$ pycodestyle --max-line-length=120 aerisapisdk/
+$ pycodestyle --max-line-length=120 aeris-modsdk-py/
 ```
 
 ### Integration tests
@@ -152,12 +135,12 @@ I have not found a way to clean out the previous build distribution. You may hav
 
 ```
 $ poetry build
-Building aerismodsdk (0.1.3)
+Building aerismodsdk (0.1.1)
  - Building sdist
- - Built aerismodsdk-0.1.3.tar.gz
+ - Built aerismodsdk-0.1.1.tar.gz
 
  - Building wheel
- - Built aerismodsdk-0.1.3-py3-none-any.whl
+ - Built aerismodsdk-0.1.1-py3-none-any.whl
 ```
 
 ## Publishing
