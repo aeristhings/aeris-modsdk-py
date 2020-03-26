@@ -1,6 +1,5 @@
 import aerismodsdk.rmutils as rmutils
 from urllib.parse import urlsplit
-import time
 import aerismodsdk.aerisutils as aerisutils
 
 

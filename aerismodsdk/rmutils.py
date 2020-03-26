@@ -1,6 +1,5 @@
 import time
 import serial
-import sys
 import usb.core
 import glob
 import aerismodsdk.aerisutils as aerisutils
@@ -47,7 +46,7 @@ def find_modem():
     dev = usb.core.find(find_all=True)
     # loop through devices, printing vendor and product ids in decimal and hex
     for cfg in dev:
-      print('Hexadecimal VendorID=' + hex(cfg.idVendor) + ' & ProductID=' + hex(cfg.idProduct))
+        print('Hexadecimal VendorID=' + hex(cfg.idVendor) + ' & ProductID=' + hex(cfg.idProduct))
       #print(str(cfg))
 
 # A function that tries to list serial ports on most common platforms
@@ -75,7 +74,7 @@ def open_serial():
     # configure the serial connections (the parameters differs on the device you are connecting to)
     try:
         myserial = serial.Serial(
-            port = modem_port,
+            port=modem_port,
             baudrate=115200,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
@@ -126,7 +125,7 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     return out
 
 
-def wait_urc(ser, timeout, returnonreset = False, returnonvalue = False, verbose=True):
+def wait_urc(ser, timeout, returnonreset=False, returnonvalue=False, verbose=True):
     mybytes = bytearray()
     myfinalout = ''
     start_time = time.time()

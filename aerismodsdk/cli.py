@@ -2,7 +2,6 @@ import click
 import json
 import pathlib
 import time
-from datetime import datetime
 import aerismodsdk.rmutils as rmutils
 import aerismodsdk.ublox as ublox
 import aerismodsdk.quectel as quectel
