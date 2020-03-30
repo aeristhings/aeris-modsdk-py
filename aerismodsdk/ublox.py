@@ -2,6 +2,7 @@ import aerismodsdk.rmutils as rmutils
 import aerismodsdk.aerisutils as aerisutils
 from xmodem import XMODEM
 import time
+import ipaddress
 
 
 def init(modem_port_config, apn, verbose=True):
@@ -33,7 +34,7 @@ def network_info(verbose):
 
 
 def network_set(operator_name, format):
-    rmutils.network_set(operator_name, format)
+    rmutils.network_set(operator_name, format, act=7)
 
 
 def network_off(verbose):
@@ -93,25 +94,28 @@ def packet_stop(verbose=True):
 
 
 
-def http_get(host):
+def http_get(host, verbose=True):
     ser = myserial
     create_packet_session()
-    # Open TCP socket to the host
-    rmutils.write(ser, 'AT+USOCL=0', delay=1, verbose=verbose)  # Make sure our socket closed
-    mycmd = 'AT+USOCR=6,' + 80
-    rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create TCP socket connection
-    #mycmd = 'AT+QIOPEN=1,0,\"TCP\",\"' + host + '\",80,0,0'
-    rmutils.write(ser, mycmd, delay=1)  # Create TCP socket connection as a client
-    sostate = rmutils.write(ser, 'AT+QISTATE=1,0')  # Check socket state
-    if "TCP" not in sostate:  # Try one more time with a delay if not connected
-        sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1)  # Check socket state
-    # Send HTTP GET
-    getpacket = rmutils.get_http_packet(host)
-    mycmd = 'AT+QISEND=0,' + str(len(getpacket))
-    rmutils.write(ser, mycmd, getpacket, delay=0)  # Write an http get command
-    rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
-    # Read the response
-    rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
+    rmutils.write(ser, 'AT+CMEE=2', verbose=verbose)  # Enable verbose errors
+    rmutils.write(ser, 'AT+UHTTP=0', verbose=verbose)  # Reset http profile #0
+    try:
+        network = ipaddress.IPv4Network(host)
+        mycmd = 'AT+UHTTP=0,0,"' + host + '"' # Set by IP address
+        mylookup = None
+    except ValueError:
+        mycmd = 'AT+UHTTP=0,1,"' + host + '"' # Set by dns name
+        mylookup = 'AT+UDNSRN=0,"' + host + '"' # Perform lookup
+    rmutils.write(ser, mycmd, verbose=verbose)  # Set server
+    if mylookup:
+        rmutils.write(ser, mylookup, delay=1, verbose=verbose)  # Do DNS lookup
+    rmutils.write(ser, 'AT+UHTTP=0,5,80', verbose=verbose)  # Set server IP address
+    rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)  # List files before the request
+    rmutils.write(ser, 'AT+UHTTPC=0,1,"/","get.ffs"', delay=1, verbose=verbose)  # Make get request; store in get.ffs file
+    rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)  # List files before the request
+    rmutils.write(ser, 'AT+URDFILE="get.ffs"', delay=1, verbose=verbose)  # Read the file
+    rmutils.write(ser, 'AT+UDELFILE="get.ffs"', delay=1, verbose=verbose)  # Delete the file
+    
 
 
 def udp_listen(listen_port, listen_wait, verbose=True):
@@ -249,6 +253,9 @@ def psm_info(verbose):
         psmsettings = rmutils.write(ser, 'AT+CGEREP?', verbose=verbose) # Check if urc enabled
         #vals = parse_response(psmsettings, '+QCFG: ')
         #print('PSM unsolicited response codes (urc): ' + vals[1])
+        # Check general Power Savings setting
+        rmutils.write(ser, 'AT+UPSV=0', verbose=verbose) # Disable power savings generally 
+        
 
 def get_tau_config(tau_time):
     if tau_time > 1 and tau_time < (31*2):  # Use 2 seconds times up to 31
@@ -285,6 +292,7 @@ def psm_enable(tau_time, atime, verbose=True):
     mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
     rmutils.write(ser, mycmd, verbose=verbose) # Enable PSM and set the timers
     rmutils.write(ser, 'AT+CGEREP=1,1', verbose=verbose) # Enable URCs
+    rmutils.write(ser, 'AT+UPSV=4', verbose=verbose) # Enable power savings generally 
     rmutils.write(ser, 'AT+CFUN=15', verbose=verbose) # Reboot module to fully enable
     ser.close()
     time.sleep(20)
@@ -297,6 +305,7 @@ def psm_disable(verbose):
     mycmd = 'AT+CPSMS=0'  # Disable PSM
     ser = myserial
     rmutils.write(ser, mycmd, verbose=verbose)
+    rmutils.write(ser, 'AT+UPSV=0', verbose=verbose) # Disable power savings generally 
     # Disable urc setting
     #rmutils.write(ser, 'AT+QCFG="psm/urc",0', verbose=verbose)
     #aerisutils.print_log('PSM and PSM/URC disabled')

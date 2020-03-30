@@ -180,10 +180,10 @@ def stop(ctx):
     my_modem.packet_stop()
 
 @packet.command()
-@click.argument('host')
+@click.argument('host') # Use httpbin.org to test
 @click.pass_context
 def get(ctx, host):
-    my_modem.http_get(host)
+    my_modem.http_get(host, verbose=ctx.obj['verbose'])
 
 @packet.command()
 @click.argument('host')
