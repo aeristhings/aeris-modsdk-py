@@ -162,16 +162,19 @@ def udp_echo(echo_delay, echo_wait, verbose=True):
         #rmutils.write(ser, mycmd, verbose=verbose)  # Read from socket
 
 
-def icmp_ping(host):
+def icmp_ping(host, verbose=True):
+    print('ICMP Ping not supported by this module')
+    return None
+
+
+def dns_lookup(host, verbose=True):
     ser = myserial
     create_packet_session()
-    mycmd = 'AT+QPING=1,\"' + host + '\",4,4'  # Context, host, timeout, pingnum
-    rmutils.write(ser, mycmd, delay=6) # Write a ping command; Wait timeout plus 2 seconds
-
-
-def dns_lookup(host):
-    print("Not supported by this radio module")
-    return False
+    mycmd = 'AT+UDNSRN=0,"' + host + '"' # Perform lookup
+    ipvals = rmutils.write(ser, mycmd, delay=6) # Write a ping command; Wait timeout plus 2 seconds
+    ipvals = parse_response(ipvals.replace('\"','').replace(' ',''), '+UDNSRN:')
+    #print('ipvals: ' + str(ipvals))
+    return ipvals
 
 
 def parse_response(response, prefix):

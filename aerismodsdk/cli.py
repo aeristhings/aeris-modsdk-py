@@ -189,13 +189,13 @@ def get(ctx, host):
 @click.argument('host')
 @click.pass_context
 def ping(ctx, host):
-    my_modem.icmp_ping(host)
+    my_modem.icmp_ping(host, verbose=ctx.obj['verbose'])
 
 @packet.command()
 @click.argument('host')
 @click.pass_context
 def lookup(ctx, host):
-    my_modem.dns_lookup(host)
+    my_modem.dns_lookup(host, verbose=ctx.obj['verbose'])
 
 
 @packet.command()
