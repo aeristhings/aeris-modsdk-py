@@ -97,9 +97,6 @@ def write(ser, cmd, moredata=None, delay=0, timeout=1.0, verbose=True):
     cmd = cmd + '\r\n'
     ser.write(cmd.encode())
     out = ''
-    # let's wait one second before reading output (let's give device time to answer)
-    # Let's wait up to one second for data to come back
-    #time.sleep(1)
     if delay > 0:
         time.sleep(delay)
     start_time = time.time()
@@ -186,14 +183,14 @@ def network_info(verbose):
         wait_urc(ser, 15)
 
 
-def network_set(operator_name, format, verbose=True):
+def network_set(operator_name, format, act=8, verbose=True):
     ser = myserial
     write(ser, 'AT+COPS=2')
     wait_urc(ser, 10)
     if operator_name == 'auto':
         mycmd = 'AT+COPS=0'
     else:
-        mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",8'
+        mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(act)
     write(ser, mycmd)
     wait_urc(ser, 10)
 
