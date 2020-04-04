@@ -1,14 +1,24 @@
-from aerismodsdk.telitmodule import TelitModule
+from enum import Enum
 
-modules = {
-        'telit': TelitModule()
-    }
+from aerismodsdk.manufacturer import Manufacturer
+from aerismodsdk.modules.quectel import QuectelModule
+from aerismodsdk.modules.telit import TelitModule
+from aerismodsdk.modules.ublox import UbloxModule
+from aerismodsdk.utils.loggerutils import logger
+
 
 class ModuleFactory:
     def get(self, modem_mfg, com_port, apn, verbose=True):
-        module = modules[modem_mfg]
-        module.init(com_port, apn, verbose=verbose)
+        if modem_mfg == Manufacturer.telit:
+            module = TelitModule(com_port, apn, verbose=verbose)
+        elif modem_mfg == Manufacturer.quectel:
+            module = QuectelModule(com_port, apn, verbose=verbose)
+        elif modem_mfg == Manufacturer.ublox:
+            module = UbloxModule(com_port, apn, verbose=verbose)
+        else:
+            logger.info('No valid Module Found')        
         return module
+
 
 def module_factory():
     return ModuleFactory()
