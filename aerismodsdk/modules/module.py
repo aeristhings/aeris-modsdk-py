@@ -7,10 +7,11 @@ Host: <hostname>
 
 
 class Module:
-    def __init__(self, com_port, apn, verbose=True):
+    def __init__(self, modem_mfg, com_port, apn, verbose=True):
         self.com_port = '/dev/tty' + com_port
         self.apn = apn
         self.verbose = verbose
+        self.modem_mfg = modem_mfg
         aerisutils.vprint(verbose, 'Using modem port: ' + com_port)
         self.myserial = rmutils.open_serial(self.com_port)
         logger.info('Established Serial Connection')
@@ -25,7 +26,7 @@ class Module:
         rmutils.write(ser, 'AT#CCID')  # Prints ICCID
         response = rmutils.write(ser, 'AT+GMI', delay=1)  # Module Manufacturer
         modem_type = response.split('\r\n')[1]
-        if modem_type.strip().upper() == 'TELIT':
+        if modem_type.strip().upper() == self.modem_mfg.upper():
             rmutils.write(ser, 'AT+GMM')  # Module Model
             rmutils.write(ser, 'AT+GSN')  # Module Serial Number
             rmutils.write(ser, 'AT+GMR')  # Software Revision

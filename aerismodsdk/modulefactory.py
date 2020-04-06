@@ -10,11 +10,11 @@ from aerismodsdk.utils.loggerutils import logger
 class ModuleFactory:
     def get(self, modem_mfg, com_port, apn, verbose=True):
         if modem_mfg == Manufacturer.telit:
-            module = TelitModule(com_port, apn, verbose=verbose)
+            module = TelitModule(modem_mfg.name, com_port, apn, verbose=verbose)
         elif modem_mfg == Manufacturer.quectel:
-            module = QuectelModule(com_port, apn, verbose=verbose)
+            module = QuectelModule(modem_mfg.name, com_port, apn, verbose=verbose)
         elif modem_mfg == Manufacturer.ublox:
-            module = UbloxModule(com_port, apn, verbose=verbose)
+            module = UbloxModule(modem_mfg.name, com_port, apn, verbose=verbose)
         else:
             logger.info('No valid Module Found')        
         return module
