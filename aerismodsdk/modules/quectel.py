@@ -5,9 +5,6 @@ from aerismodsdk.modules.module import Module
 
 class QuectelModule(Module):
 
-    def wait_urc(self, timeout, returnonreset=False, returnonvalue=False, verbose=True):
-        rmutils.wait_urc(self.myserial, timeout, self.com_port, returnonreset, returnonvalue, verbose=verbose)  # Wait up to X seconds for URC
-
     # ========================================================================
     #
     # The packet stuff
@@ -49,7 +46,7 @@ class QuectelModule(Module):
         ser = self.myserial
         rmutils.write(ser, 'AT+QIDEACT=1')  # Deactivate context
 
-    def http_get(self, host):
+    def http_get(self, host, verbose):
         ser = self.myserial
         self.create_packet_session()
         # Open TCP socket to the host
@@ -117,13 +114,13 @@ class QuectelModule(Module):
             rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
                              returnonvalue='APP RDY')  # Wait up to X seconds for UDP data to come in
 
-    def ping(self,host):
+    def ping(self,host,verbose):
         ser = self.myserial
         self.create_packet_session()
         mycmd = 'AT+QPING=1,\"' + host + '\",4,4'  # Context, host, timeout, pingnum
         rmutils.write(ser, mycmd, delay=6)  # Write a ping command; Wait timeout plus 2 seconds
 
-    def lookup(self, host):
+    def lookup(self, host, verbose):
         ser = self.myserial
         self.create_packet_session()
         rmutils.write(ser, 'AT+QIDNSCFG=1')  # Check DNS server
@@ -131,7 +128,7 @@ class QuectelModule(Module):
         rmutils.write(ser, mycmd, timeout=0)  # Write a dns lookup command
         rmutils.wait_urc(ser, 4,self.com_port)  # Wait up to 4 seconds for results to come back via urc
 
-    def parse_response(response, prefix):
+    def parse_response(self,response, prefix):
         response = response.rstrip('OK\r\n')
         findex = response.rfind(prefix) + len(prefix)
         value = response[findex: len(response)]
@@ -144,7 +141,7 @@ class QuectelModule(Module):
     # The PSM stuff
     #
 
-    def psm_mode(i):  # PSM mode
+    def psm_mode(self, i):  # PSM mode
         switcher = {
             0b0001: 'PSM without network coordination',
             0b0010: 'Rel 12 PSM without context retention',
@@ -152,11 +149,11 @@ class QuectelModule(Module):
             0b1000: 'PSM in between eDRX cycles'}
         return switcher.get(i, "Invalid value")
 
-    def timer_units(value):
+    def timer_units(self, value):
         units = value & 0b11100000
         return units
 
-    def tau_units(i):  # Tracking Area Update
+    def tau_units(self, i):  # Tracking Area Update
         switcher = {
             0b00000000: '10 min',
             0b00100000: '1 hr',
@@ -167,7 +164,7 @@ class QuectelModule(Module):
             0b11100000: 'invalid'}
         return switcher.get(i, "Invalid value")
 
-    def at_units(i):  # Active Time
+    def at_units(self, i):  # Active Time
         switcher = {
             0b00000000: '2 sec',
             0b00100000: '1 min',
@@ -206,7 +203,7 @@ class QuectelModule(Module):
             vals = self.parse_response(psmsettings, '+QCFG: ')
             print('PSM unsolicited response codes (urc): ' + vals[1])
 
-    def get_tau_config(tau_time):
+    def get_tau_config(self, tau_time):
         if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
             tau_config = 0b01100000 + int(tau_time / 2)
         elif tau_time > 30 and tau_time < (31 * 30):  # Use 30 seconds times up to 31
@@ -222,7 +219,7 @@ class QuectelModule(Module):
         print('TAU config: ' + "{0:08b}".format(tau_config))
         return tau_config
 
-    def get_active_config(atime):
+    def get_active_config(self, atime):
         if atime > 1 and atime < (31 * 2):  # Use 2s * up to 31
             atime_config = 0b00000000 + int(atime / 2)
         elif atime > 60 and atime < (31 * 60):  # Use 60s * up to 31
@@ -261,7 +258,7 @@ class QuectelModule(Module):
     # The eDRX stuff
     #
 
-    def act_type(i):  # Access technology type
+    def act_type(self, i):  # Access technology type
         switcher = {
             0: None,
             2: 'GSM',
@@ -270,7 +267,7 @@ class QuectelModule(Module):
             5: 'LTE CAT NB1'}
         return switcher.get(i, "Invalid value")
 
-    def edrx_time(i):  # eDRX cycle time duration
+    def edrx_time(self, i):  # eDRX cycle time duration
         switcher = {
             0b0000: '5.12 sec',
             0b0001: '10.24 sec',
@@ -290,7 +287,7 @@ class QuectelModule(Module):
             0b1111: '10485.88 sec (174 min)'}
         return switcher.get(i, "Invalid value")
 
-    def paging_time(i):  # eDRX paging time duration
+    def paging_time(self, i):  # eDRX paging time duration
         switcher = {
             0b0000: '1.28 sec',
             0b0001: '2.56 sec',

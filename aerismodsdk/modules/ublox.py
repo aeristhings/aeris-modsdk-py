@@ -9,12 +9,12 @@ from aerismodsdk.modules.module import Module
 
 class UbloxModule(Module):
 
-    def __init__(self, com_port, apn, verbose=True):
-        super().__init__(com_port, apn, verbose)
+    def __init__(self, modem_mfg, com_port, apn, verbose):
+        super(UbloxModule,self).__init__(modem_mfg, com_port, apn, verbose)
         rmutils.write(self.myserial, 'AT+CGEREP=1,1', verbose=verbose)  # Enable URCs
 
     def network_set(self, operator_name, format):
-        rmutils.network_set(operator_name, format, act=7)
+        super(UbloxModule, self).network_set(operator_name, format, act=7)
 
     # ========================================================================
     #
@@ -143,7 +143,7 @@ class UbloxModule(Module):
         # print('ipvals: ' + str(ipvals))
         return ipvals
 
-    def parse_response(response, prefix):
+    def parse_response(self,response, prefix):
         response = response.rstrip('OK\r\n')
         findex = response.rfind(prefix) + len(prefix)
         value = response[findex: len(response)]
@@ -156,7 +156,7 @@ class UbloxModule(Module):
     # The PSM stuff
     #
 
-    def psm_mode(i):  # PSM mode
+    def psm_mode(self,i):  # PSM mode
         switcher = {
             0b0001: 'PSM without network coordination',
             0b0010: 'Rel 12 PSM without context retention',
@@ -164,11 +164,11 @@ class UbloxModule(Module):
             0b1000: 'PSM in between eDRX cycles'}
         return switcher.get(i, "Invalid value")
 
-    def timer_units(value):
+    def timer_units(self,value):
         units = value & 0b11100000
         return units
 
-    def tau_units(i):  # Tracking Area Update
+    def tau_units(self,i):  # Tracking Area Update
         switcher = {
             0b00000000: '10 min',
             0b00100000: '1 hr',
@@ -179,7 +179,7 @@ class UbloxModule(Module):
             0b11100000: 'invalid'}
         return switcher.get(i, "Invalid value")
 
-    def at_units(i):  # Active Time
+    def at_units(self,i):  # Active Time
         switcher = {
             0b00000000: '2 sec',
             0b00100000: '1 min',
@@ -219,7 +219,7 @@ class UbloxModule(Module):
             # Check general Power Savings setting
             rmutils.write(ser, 'AT+UPSV=0', verbose=verbose)  # Disable power savings generally
 
-    def get_tau_config(tau_time):
+    def get_tau_config(self,tau_time):
         if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
             tau_config = 0b01100000 + int(tau_time / 2)
         elif tau_time > 30 and tau_time < (31 * 30):  # Use 30 seconds times up to 31
@@ -235,7 +235,7 @@ class UbloxModule(Module):
         print('TAU config: ' + "{0:08b}".format(tau_config))
         return tau_config
 
-    def get_active_config(atime):
+    def get_active_config(self,atime):
         if atime > 1 and atime < (31 * 2):  # Use 2s * up to 31
             atime_config = 0b00000000 + int(atime / 2)
         elif atime > 60 and atime < (31 * 60):  # Use 60s * up to 31
@@ -284,7 +284,7 @@ class UbloxModule(Module):
     # The eDRX stuff
     #
 
-    def act_type(i):  # Access technology type
+    def act_type(self,i):  # Access technology type
         switcher = {
             0: None,
             2: 'GSM',
@@ -293,7 +293,7 @@ class UbloxModule(Module):
             5: 'LTE CAT NB1'}
         return switcher.get(i, "Invalid value")
 
-    def edrx_time(i):  # eDRX cycle time duration
+    def edrx_time(self,i):  # eDRX cycle time duration
         switcher = {
             0b0000: '5.12 sec',
             0b0001: '10.24 sec',
@@ -313,7 +313,7 @@ class UbloxModule(Module):
             0b1111: '10485.88 sec (174 min)'}
         return switcher.get(i, "Invalid value")
 
-    def paging_time(i):  # eDRX paging time duration
+    def paging_time(self,i):  # eDRX paging time duration
         switcher = {
             0b0000: '1.28 sec',
             0b0001: '2.56 sec',

@@ -18,7 +18,7 @@ class Module:
         rmutils.write(self.myserial, 'ATE0', verbose=verbose)  # Turn off echo
 
     def init_serial(self, com_port, apn, verbose=True):
-        self.myserial = rmutils.init_modem('/dev/tty' + com_port, apn, verbose=verbose)
+        self.myserial = rmutils.open_serial('/dev/tty'+com_port)
 
     def check_modem(self):
         ser = self.myserial
@@ -72,5 +72,5 @@ class Module:
             else:
                 out = rmutils.write(self.myserial, myinput)
 
-    def get_http_packet(hostname):
+    def get_http_packet(self, hostname):
         return getpacket.replace('<hostname>', hostname)
