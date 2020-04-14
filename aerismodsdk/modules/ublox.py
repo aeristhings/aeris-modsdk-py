@@ -217,7 +217,7 @@ class UbloxModule(Module):
             # vals = parse_response(psmsettings, '+QCFG: ')
             # print('PSM unsolicited response codes (urc): ' + vals[1])
             # Check general Power Savings setting
-            rmutils.write(ser, 'AT+UPSV=0', verbose=verbose)  # Disable power savings generally
+            rmutils.write(ser, 'AT+UPSV?', verbose=verbose)  # Get general power savings config
 
     def get_tau_config(self,tau_time):
         if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
