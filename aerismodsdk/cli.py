@@ -84,7 +84,7 @@ def mycli(ctx, verbose, config_file):
 @mycli.command()
 @click.option('--modemmfg', prompt='Modem mfg', type=click.Choice(['ublox', 'quectel', 'telit']),
               cls=default_from_context('modemMfg', 'ublox'), help="Modem manufacturer.")
-@click.option('--comport', prompt='COM port', type=click.Choice(['S0', 'S1', 'USB0', 'USB1', 'USB2', 'USB3', 'USB4']),
+@click.option('--comport', prompt='COM port', type=click.Choice(['ACM0','S0', 'S1', 'USB0', 'USB1', 'USB2', 'USB3', 'USB4']),
               cls=default_from_context('comPort', 'USB0'), help="Modem COM port.")
 @click.option('--apn', prompt='APN', cls=default_from_context('apn', 'lpiot.aer.net'), help="APN to use")
 @click.pass_context

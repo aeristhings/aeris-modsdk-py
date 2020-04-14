@@ -12,7 +12,7 @@ def find_serial(com_port, verbose=False, timeout=1):
     start_time = time.time()
     elapsed_time = 0
     while elapsed_time < timeout:
-        ports = glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*')
+        ports = glob.glob('/dev/ttyA*') + glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*')
         # print(ports)
         if check_port in ports:
             aerisutils.vprint(verbose, aerisutils.get_date_time_str() + ' COM port found: ' + check_port)
