@@ -23,14 +23,15 @@ class Module:
     def check_modem(self):
         ser = self.myserial
         rmutils.write(ser, 'ATI')
-        rmutils.write(ser, 'AT#CCID')  # Prints ICCID
+        rmutils.write(ser, 'AT+CIMI')  # IMSI
+        # rmutils.write(ser, 'AT#CCID')  # Prints ICCID -- Telit-specific
         response = rmutils.write(ser, 'AT+GMI', delay=1)  # Module Manufacturer
         modem_type = (response.split('\r\n')[1]).replace('-', '')
         if modem_type.strip().upper() == self.modem_mfg.upper():
             rmutils.write(ser, 'AT+GMM')  # Module Model
-            rmutils.write(ser, 'AT+GSN')  # Module Serial Number
+            rmutils.write(ser, 'AT+GSN')  # IMEI of ME
             rmutils.write(ser, 'AT+GMR')  # Software Revision
-            rmutils.write(ser, 'AT#SWPKGV')  # Software Package Version
+            # rmutils.write(ser, 'AT#SWPKGV')  # Software Package Version -- Telit-specific
             rmutils.write(ser, 'AT+CREG?')
             rmutils.write(ser, 'AT+COPS?')
             rmutils.write(ser, 'AT+CSQ')
