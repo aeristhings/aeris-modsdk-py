@@ -188,21 +188,21 @@ def stop(ctx):
 
 
 @packet.command()
-@click.argument('host')  # Use httpbin.org to test
+@click.argument('host', default='httpbin.org')  # Use httpbin.org to test
 @click.pass_context
 def get(ctx, host):
     my_modem.http_get(host, verbose=ctx.obj['verbose'])
 
 
 @packet.command()
-@click.argument('host')
+@click.argument('host', default='httpbin.org')
 @click.pass_context
 def ping(ctx, host):
     my_modem.ping(host, verbose=ctx.obj['verbose'])
 
 
 @packet.command()
-@click.argument('host')
+@click.argument('host', default='httpbin.org')
 @click.pass_context
 def lookup(ctx, host):
     my_modem.lookup(host, verbose=ctx.obj['verbose'])
