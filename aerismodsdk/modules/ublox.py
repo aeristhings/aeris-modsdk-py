@@ -139,17 +139,9 @@ class UbloxModule(Module):
         self.create_packet_session()
         mycmd = 'AT+UDNSRN=0,"' + host + '"'  # Perform lookup
         ipvals = rmutils.write(ser, mycmd, delay=6)  # Write a ping command; Wait timeout plus 2 seconds
-        ipvals = self.parse_response(ipvals.replace('\"', '').replace(' ', ''), '+UDNSRN:')
+        ipvals = super().parse_response(ipvals.replace('\"', '').replace(' ', ''), '+UDNSRN:')
         # print('ipvals: ' + str(ipvals))
         return ipvals
-
-    def parse_response(self,response, prefix):
-        response = response.rstrip('OK\r\n')
-        findex = response.rfind(prefix) + len(prefix)
-        value = response[findex: len(response)]
-        vals = value.split(',')
-        # print('Values: ' + str(vals))
-        return vals
 
 
     # ========================================================================
@@ -162,7 +154,7 @@ class UbloxModule(Module):
         ser = self.myserial
         # Query settings provided by network
         psmsettings = rmutils.write(ser, 'AT+UCPSMS?', verbose=verbose)  # Check PSM settings
-        vals = self.parse_response(psmsettings, '+UCPSMS:')
+        vals = super().parse_response(psmsettings, '+UCPSMS:')
         if int(vals[0]) == 0:
             print('PSM is disabled')
         else:
@@ -175,7 +167,7 @@ class UbloxModule(Module):
             print('Active time network-specified value: ' + str(super().timer_value(active_time)))
             # Query settings we requested
             psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)  # Check PSM settings
-            vals = self.parse_response(psmsettings, '+CPSMS:')
+            vals = super().parse_response(psmsettings, '+CPSMS:')
             tau_value = int(vals[3].strip('\"'), 2)
             print('PSM enabled: ' + vals[0])
             print('TAU requested units: ' + str(super().tau_units(super().timer_units(tau_value))))
@@ -231,7 +223,7 @@ class UbloxModule(Module):
         edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose)  # Check eDRX settings
         edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP',
                                      verbose=verbose)  # Read eDRX settings requested and network-provided
-        vals = self.parse_response(edrxsettings, '+CEDRXRDP: ')
+        vals = super().parse_response(edrxsettings, '+CEDRXRDP: ')
         a_type = super().act_type(int(vals[0].strip('\"')))
         if a_type is None:
             print('eDRX is disabled')

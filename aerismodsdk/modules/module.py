@@ -78,6 +78,20 @@ class Module:
         
     # ========================================================================
     #
+    # Common stuff
+    #
+
+
+    def parse_response(self,response, prefix):
+        response = response.rstrip('OK\r\n')
+        findex = response.rfind(prefix) + len(prefix)
+        value = response[findex: len(response)]
+        vals = value.split(',')
+        return vals
+
+
+    # ========================================================================
+    #
     # Common PSM stuff
     #
 
