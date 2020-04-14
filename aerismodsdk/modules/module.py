@@ -25,7 +25,7 @@ class Module:
         rmutils.write(ser, 'ATI')
         rmutils.write(ser, 'AT#CCID')  # Prints ICCID
         response = rmutils.write(ser, 'AT+GMI', delay=1)  # Module Manufacturer
-        modem_type = response.split('\r\n')[1]
+        modem_type = (response.split('\r\n')[1]).replace('-', '')
         if modem_type.strip().upper() == self.modem_mfg.upper():
             rmutils.write(ser, 'AT+GMM')  # Module Model
             rmutils.write(ser, 'AT+GSN')  # Module Serial Number
@@ -37,7 +37,7 @@ class Module:
             rmutils.write(ser, 'AT+CGDCONT=1,\"IP\","' + self.apn + '"')  # Setting  PDP Context Configuration
             logger.info('Modem successfully verified')
         else:
-            logger.warn('WARNING : Modem you connected is ' + modem_type + ',Please correct configuration')
+            logger.warn('WARNING : The modem type connected is ' + modem_type + '. Please review configuration to ensure it is correct')
 
     def get_network_info(self, verbose):
         rmutils.write(self.myserial, 'AT+CREG?')
