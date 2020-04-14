@@ -133,3 +133,58 @@ class Module:
         print('Active time config: ' + "{0:08b}".format(atime_config))
         return atime_config
 
+
+    # ========================================================================
+    #
+    # Common eDRX stuff
+    #
+
+    def act_type(self,i):  # Access technology type
+        switcher = {
+            0: None,
+            2: 'GSM',
+            3: 'UTRAN',
+            4: 'LTE CAT M1',
+            5: 'LTE CAT NB1'}
+        return switcher.get(i, "Invalid value")
+
+    def edrx_time(self, i):  # eDRX cycle time duration
+        switcher = {
+            0b0000: '5.12 sec',
+            0b0001: '10.24 sec',
+            0b0010: '20.48 sec',
+            0b0011: '40.96 sec',
+            0b0100: '61.44 sec',
+            0b0101: '81.92 sec',
+            0b0110: '102.4 sec',
+            0b0111: '122.88 sec',
+            0b1000: '143.36 sec',
+            0b1001: '163.84 sec',
+            0b1010: '327.68 sec (5.5 min)',
+            0b1011: '655.36 sec (10.9 min)',
+            0b1100: '1310.72 sec (21 min)',
+            0b1101: '2621.44 sec (43 min)',
+            0b1110: '5242.88 sec (87 min)',
+            0b1111: '10485.88 sec (174 min)'}
+        return switcher.get(i, "Invalid value")
+
+    def paging_time(self, i):  # eDRX paging time duration
+        switcher = {
+            0b0000: '1.28 sec',
+            0b0001: '2.56 sec',
+            0b0010: '3.84 sec',
+            0b0011: '5.12 sec',
+            0b0100: '6.4 sec',
+            0b0101: '7.68 sec',
+            0b0110: '8.96 sec',
+            0b0111: '10.24 sec',
+            0b1000: '11.52 sec',
+            0b1001: '12.8 sec',
+            0b1010: '14.08 sec',
+            0b1011: '15.36 sec',
+            0b1100: '16.64 sec',
+            0b1101: '17.92 sec',
+            0b1110: '19.20 sec',
+            0b1111: '20.48 sec'}
+        return switcher.get(i, "Invalid value")
+
