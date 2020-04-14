@@ -75,3 +75,61 @@ class Module:
 
     def get_http_packet(self, hostname):
         return getpacket.replace('<hostname>', hostname)
+        
+    # ========================================================================
+    #
+    # Common PSM stuff
+    #
+
+    def timer_units(self,bits_in):  # PSM timer units mask
+        units = bits_in & 0b11100000
+        return units
+
+    def timer_value(self,bits_in):  # PSM timer value mask
+        value = bits_in & 0b00011111
+        return value
+
+    def tau_units(self,i):  # PSM Tracking Area Update
+        switcher = {
+            0b00000000: '10 min',
+            0b00100000: '1 hr',
+            0b01000000: '10 hrs',
+            0b01100000: '2 sec',
+            0b10000000: '30 secs',
+            0b10100000: '1 min',
+            0b11100000: 'invalid'}
+        return switcher.get(i, "Invalid value")
+
+    def at_units(self,i):  # PSM Active Time
+        switcher = {
+            0b00000000: '2 sec',
+            0b00100000: '1 min',
+            0b01000000: 'decihour (6 min)',
+            0b11100000: 'deactivated'}
+        return switcher.get(i, "Invalid value")
+
+
+    def get_tau_config(self,tau_time):
+        if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
+            tau_config = 0b01100000 + int(tau_time / 2)
+        elif tau_time > 30 and tau_time < (31 * 30):  # Use 30 seconds times up to 31
+            tau_config = 0b10000000 + int(tau_time / 30)
+        elif tau_time > 60 and tau_time < (31 * 60):  # Use 1 min times up to 31
+            tau_config = 0b10100000 + int(tau_time / 60)
+        elif tau_time > 600 and tau_time < (31 * 600):  # Use 10 min times up to 31
+            tau_config = 0b00000000 + int(tau_time / 600)
+        elif tau_time > 3600 and tau_time < (31 * 3600):  # Use 1 hour times up to 31
+            tau_config = 0b00100000 + int(tau_time / 3600)
+        elif tau_time > 36000 and tau_time < (31 * 36000):  # Use 10 hour times up to 31
+            tau_config = 0b01000000 + int(tau_time / 36000)
+        print('TAU config: ' + "{0:08b}".format(tau_config))
+        return tau_config
+
+    def get_active_config(self,atime):
+        if atime > 1 and atime < (31 * 2):  # Use 2s * up to 31
+            atime_config = 0b00000000 + int(atime / 2)
+        elif atime > 60 and atime < (31 * 60):  # Use 60s * up to 31
+            atime_config = 0b00100000 + int(atime / 60)
+        print('Active time config: ' + "{0:08b}".format(atime_config))
+        return atime_config
+

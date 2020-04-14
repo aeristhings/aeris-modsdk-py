@@ -151,41 +151,12 @@ class UbloxModule(Module):
         # print('Values: ' + str(vals))
         return vals
 
+
     # ========================================================================
     #
     # The PSM stuff
     #
 
-    def psm_mode(self,i):  # PSM mode
-        switcher = {
-            0b0001: 'PSM without network coordination',
-            0b0010: 'Rel 12 PSM without context retention',
-            0b0100: 'Rel 12 PSM with context retention',
-            0b1000: 'PSM in between eDRX cycles'}
-        return switcher.get(i, "Invalid value")
-
-    def timer_units(self,value):
-        units = value & 0b11100000
-        return units
-
-    def tau_units(self,i):  # Tracking Area Update
-        switcher = {
-            0b00000000: '10 min',
-            0b00100000: '1 hr',
-            0b01000000: '10 hrs',
-            0b01100000: '2 sec',
-            0b10000000: '30 secs',
-            0b10100000: '1 min',
-            0b11100000: 'invalid'}
-        return switcher.get(i, "Invalid value")
-
-    def at_units(self,i):  # Active Time
-        switcher = {
-            0b00000000: '2 sec',
-            0b00100000: '1 min',
-            0b01000000: 'decihour (6 min)',
-            0b11100000: 'deactivated'}
-        return switcher.get(i, "Invalid value")
 
     def get_psm_info(self, verbose):
         ser = self.myserial
@@ -197,87 +168,55 @@ class UbloxModule(Module):
         else:
             print('PSM enabled: ' + vals[0])
             tau_value = int(vals[3].strip('\"'), 2)
-            print('TAU network-specified units: ' + str(self.tau_units(self.timer_units(tau_value))))
-            print('TAU network-specified value: ' + str(tau_value & 0b00011111))
+            print('TAU network-specified units: ' + str(super().tau_units(super().timer_units(tau_value))))
+            print('TAU network-specified value: ' + str(super().timer_value(tau_value)))
             active_time = int(vals[4].strip('\"'), 2)
-            print('Active time network-specified units: ' + str(self.at_units(self.timer_units(active_time))))
-            print('Active time network-specified value: ' + str(active_time & 0b00011111))
+            print('Active time network-specified units: ' + str(super().at_units(super().timer_units(active_time))))
+            print('Active time network-specified value: ' + str(super().timer_value(active_time)))
             # Query settings we requested
             psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)  # Check PSM settings
             vals = self.parse_response(psmsettings, '+CPSMS:')
             tau_value = int(vals[3].strip('\"'), 2)
             print('PSM enabled: ' + vals[0])
-            print('TAU requested units: ' + str(self.tau_units(self.timer_units(tau_value))))
-            print('TAU requested value: ' + str(tau_value & 0b00011111))
+            print('TAU requested units: ' + str(super().tau_units(super().timer_units(tau_value))))
+            print('TAU requested value: ' + str(super().timer_value(tau_value)))
             active_time = int(vals[4].strip('\"'), 2)
-            print('Active time requested units: ' + str(self.at_units(self.timer_units(active_time))))
-            print('Active time requested value: ' + str(active_time & 0b00011111))
+            print('Active time requested units: ' + str(super().at_units(super().timer_units(active_time))))
+            print('Active time requested value: ' + str(super().timer_value(active_time)))
             # Check on urc setting
             psmsettings = rmutils.write(ser, 'AT+CGEREP?', verbose=verbose)  # Check if urc enabled
-            # vals = parse_response(psmsettings, '+QCFG: ')
-            # print('PSM unsolicited response codes (urc): ' + vals[1])
             # Check general Power Savings setting
             rmutils.write(ser, 'AT+UPSV?', verbose=verbose)  # Get general power savings config
-
-    def get_tau_config(self,tau_time):
-        if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
-            tau_config = 0b01100000 + int(tau_time / 2)
-        elif tau_time > 30 and tau_time < (31 * 30):  # Use 30 seconds times up to 31
-            tau_config = 0b10000000 + int(tau_time / 30)
-        elif tau_time > 60 and tau_time < (31 * 60):  # Use 1 min times up to 31
-            tau_config = 0b10100000 + int(tau_time / 60)
-        elif tau_time > 600 and tau_time < (31 * 600):  # Use 10 min times up to 31
-            tau_config = 0b00000000 + int(tau_time / 600)
-        elif tau_time > 3600 and tau_time < (31 * 3600):  # Use 1 hour times up to 31
-            tau_config = 0b00100000 + int(tau_time / 3600)
-        elif tau_time > 36000 and tau_time < (31 * 36000):  # Use 10 hour times up to 31
-            tau_config = 0b01000000 + int(tau_time / 36000)
-        print('TAU config: ' + "{0:08b}".format(tau_config))
-        return tau_config
-
-    def get_active_config(self,atime):
-        if atime > 1 and atime < (31 * 2):  # Use 2s * up to 31
-            atime_config = 0b00000000 + int(atime / 2)
-        elif atime > 60 and atime < (31 * 60):  # Use 60s * up to 31
-            atime_config = 0b00100000 + int(atime / 60)
-        print('Active time config: ' + "{0:08b}".format(atime_config))
-        return atime_config
 
     def enable_psm(self, tau_time, atime, verbose=True):
         ser = self.myserial
         rmutils.write(ser, 'AT+CMEE=2', verbose=verbose)  # Enable verbose errors
         # rmutils.write(ser, 'AT+CPIN=""', verbose=verbose) # Enable SIM (see app note; but does not seem to be needed)
         rmutils.write(ser, 'AT+CFUN=0', verbose=verbose)  # De-Register from network
-        tau_config = self.get_tau_config(tau_time)
-        atime_config = self.get_active_config(atime)
+        tau_config = super().get_tau_config(tau_time)
+        atime_config = super().get_active_config(atime)
         mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
         rmutils.write(ser, mycmd, verbose=verbose)  # Enable PSM and set the timers
         rmutils.write(ser, 'AT+CGEREP=1,1', verbose=verbose)  # Enable URCs
         rmutils.write(ser, 'AT+UPSV=4', verbose=verbose)  # Enable power savings generally
         rmutils.write(ser, 'AT+CFUN=15', verbose=verbose)  # Reboot module to fully enable
-        ser.close()
-        time.sleep(20)
-        self.myserial = rmutils.open_serial(self.com_port)
+        ser.close()  # Close serial port before reboot
+        time.sleep(20)  # Wait for reboot to complete
+        self.myserial = rmutils.open_serial(self.com_port)  # Need to open serial port again
         rmutils.write(self.myserial, 'AT+COPS?', verbose=verbose)  # Check mno connection
-        aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
+        aerisutils.print_log('PSM is enabled with TAU: {0}s and AT: {1}s'.format(str(tau_time), str(atime)))
 
     def disable_psm(self, verbose):
-        mycmd = 'AT+CPSMS=0'  # Disable PSM
         ser = self.myserial
+        mycmd = 'AT+CPSMS=0'  # Disable PSM
         rmutils.write(ser, mycmd, verbose=verbose)
         rmutils.write(ser, 'AT+UPSV=0', verbose=verbose)  # Disable power savings generally
-        # Disable urc setting
-        # rmutils.write(ser, 'AT+QCFG="psm/urc",0', verbose=verbose)
-        # aerisutils.print_log('PSM and PSM/URC disabled')
+
 
     def psm_now(self):
-        mycmd = 'AT+QCFG="psm/enter",1'  # Enter PSM right after RRC
-        ser = self.myserial
-        rmutils.write(ser, mycmd)
-        # Enable urc setting
-        rmutils.write(ser, 'AT+QCFG="psm/urc",1')  # Enable urc for PSM
-        # Let's try to wait for such a urc
-        # rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+        print('psm now is not supported by this module')
+        return None
+
 
     # ========================================================================
     #
