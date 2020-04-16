@@ -240,8 +240,43 @@ class Module:
             0b1100: '1310.72 sec (21 min)',
             0b1101: '2621.44 sec (43 min)',
             0b1110: '5242.88 sec (87 min)',
-            0b1111: '10485.88 sec (174 min)'}
+            0b1111: '10485.76 sec (174 min)'}
         return switcher.get(i, "Invalid value")
+
+    def get_edrx_config(self, cycle_time):
+        if cycle_time < 10:
+            edrx_config = 0b0000  # 5.12 sec
+        elif cycle_time >= 10 and cycle_time < 20:
+            edrx_config = 0b0001  # 10.24 sec
+        elif cycle_time >= 20 and cycle_time < 40:
+            edrx_config = 0b0010  # 20.48 sec
+        elif cycle_time >= 40 and cycle_time < 60:
+            edrx_config = 0b0011  # 40.96 sec
+        elif cycle_time >= 60 and cycle_time < 80:
+            edrx_config = 0b0100  # 61.44 sec
+        elif cycle_time >= 80 and cycle_time < 100:
+            edrx_config = 0b0101  # 81.92 sec
+        elif cycle_time >= 100 and cycle_time < 120:
+            edrx_config = 0b0110  # 102.4 sec
+        elif cycle_time >= 120 and cycle_time < 140:
+            edrx_config = 0b0111  # 122.88 sec
+        elif cycle_time >= 140 and cycle_time < 160:
+            edrx_config = 0b1000  # 143.36 sec
+        elif cycle_time >= 160 and cycle_time < 320:
+            edrx_config = 0b1001  # 163.84 sec
+        elif cycle_time >= 320 and cycle_time < 640:
+            edrx_config = 0b1010  # 327.68 sec (5.5 min)
+        elif cycle_time >= 640 and cycle_time < 1280:
+            edrx_config = 0b1011  # 655.36 sec (10.9 min)
+        elif cycle_time >= 1280 and cycle_time < 2560:
+            edrx_config = 0b1100  # 1310.72 sec (21 min)
+        elif cycle_time >= 2560 and cycle_time < 5120:
+            edrx_config = 0b1101  # 2621.44 sec (43 min)
+        elif cycle_time >= 5120 and cycle_time < 10240:
+            edrx_config = 0b1110  # 5242.88 sec (87 min)
+        elif cycle_time >= 10240:
+            edrx_config = 0b1111  # 10485.76 sec (174 min)
+        return edrx_config
 
     def paging_time(self, i):  # eDRX paging time duration
         switcher = {
@@ -283,7 +318,9 @@ class Module:
 
 
     def edrx_enable(self,verbose, edrx_time):
-        mycmd = 'AT+CEDRXS=2,4,"' + edrx_time + '"'
+        cycle_time = self.get_edrx_config(edrx_time)
+        print('Cycle time config: ' + str(cycle_time))
+        mycmd = 'AT+CEDRXS=2,4,"{0:04b}"'.format(cycle_time)
         ser = self.myserial
         rmutils.write(ser, mycmd, verbose=verbose)
         print('edrx is now enabled for LTE-M')

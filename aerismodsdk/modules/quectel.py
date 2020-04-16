@@ -247,92 +247,92 @@ class QuectelModule(Module):
 
     # ========================================================================
     #
-    # The eDRX stuff
+    # The eDRX stuff - see base class
     #
 
-    def act_type(self, i):  # Access technology type
-        switcher = {
-            0: None,
-            2: 'GSM',
-            3: 'UTRAN',
-            4: 'LTE CAT M1',
-            5: 'LTE CAT NB1'}
-        return switcher.get(i, "Invalid value")
+    # def act_type(self, i):  # Access technology type
+        # switcher = {
+            # 0: None,
+            # 2: 'GSM',
+            # 3: 'UTRAN',
+            # 4: 'LTE CAT M1',
+            # 5: 'LTE CAT NB1'}
+        # return switcher.get(i, "Invalid value")
 
-    def edrx_time(self, i):  # eDRX cycle time duration
-        switcher = {
-            0b0000: '5.12 sec',
-            0b0001: '10.24 sec',
-            0b0010: '20.48 sec',
-            0b0011: '40.96 sec',
-            0b0100: '61.44 sec',
-            0b0101: '81.92 sec',
-            0b0110: '102.4 sec',
-            0b0111: '122.88 sec',
-            0b1000: '143.36 sec',
-            0b1001: '163.84 sec',
-            0b1010: '327.68 sec (5.5 min)',
-            0b1011: '655.36 sec (10.9 min)',
-            0b1100: '1310.72 sec (21 min)',
-            0b1101: '2621.44 sec (43 min)',
-            0b1110: '5242.88 sec (87 min)',
-            0b1111: '10485.88 sec (174 min)'}
-        return switcher.get(i, "Invalid value")
+    # def edrx_time(self, i):  # eDRX cycle time duration
+        # switcher = {
+            # 0b0000: '5.12 sec',
+            # 0b0001: '10.24 sec',
+            # 0b0010: '20.48 sec',
+            # 0b0011: '40.96 sec',
+            # 0b0100: '61.44 sec',
+            # 0b0101: '81.92 sec',
+            # 0b0110: '102.4 sec',
+            # 0b0111: '122.88 sec',
+            # 0b1000: '143.36 sec',
+            # 0b1001: '163.84 sec',
+            # 0b1010: '327.68 sec (5.5 min)',
+            # 0b1011: '655.36 sec (10.9 min)',
+            # 0b1100: '1310.72 sec (21 min)',
+            # 0b1101: '2621.44 sec (43 min)',
+            # 0b1110: '5242.88 sec (87 min)',
+            # 0b1111: '10485.88 sec (174 min)'}
+        # return switcher.get(i, "Invalid value")
 
-    def paging_time(self, i):  # eDRX paging time duration
-        switcher = {
-            0b0000: '1.28 sec',
-            0b0001: '2.56 sec',
-            0b0010: '3.84 sec',
-            0b0011: '5.12 sec',
-            0b0100: '6.4 sec',
-            0b0101: '7.68 sec',
-            0b0110: '8.96 sec',
-            0b0111: '10.24 sec',
-            0b1000: '11.52 sec',
-            0b1001: '12.8 sec',
-            0b1010: '14.08 sec',
-            0b1011: '15.36 sec',
-            0b1100: '16.64 sec',
-            0b1101: '17.92 sec',
-            0b1110: '19.20 sec',
-            0b1111: '20.48 sec'}
-        return switcher.get(i, "Invalid value")
+    # def paging_time(self, i):  # eDRX paging time duration
+        # switcher = {
+            # 0b0000: '1.28 sec',
+            # 0b0001: '2.56 sec',
+            # 0b0010: '3.84 sec',
+            # 0b0011: '5.12 sec',
+            # 0b0100: '6.4 sec',
+            # 0b0101: '7.68 sec',
+            # 0b0110: '8.96 sec',
+            # 0b0111: '10.24 sec',
+            # 0b1000: '11.52 sec',
+            # 0b1001: '12.8 sec',
+            # 0b1010: '14.08 sec',
+            # 0b1011: '15.36 sec',
+            # 0b1100: '16.64 sec',
+            # 0b1101: '17.92 sec',
+            # 0b1110: '19.20 sec',
+            # 0b1111: '20.48 sec'}
+        # return switcher.get(i, "Invalid value")
 
-    def edrx_info(self,verbose):
-        ser = self.myserial
-        if ser is None:
-            return None
-        edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose)  # Check eDRX settings
-        edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP',
-                                     verbose=verbose)  # Read eDRX settings requested and network-provided
-        vals = super().parse_response(edrxsettings, '+CEDRXRDP: ')
-        a_type = self.act_type(int(vals[0].strip('\"')))
-        if a_type is None:
-            print('eDRX is disabled')
-        else:
-            r_edrx = self.edrx_time(int(vals[1].strip('\"'), 2))
-            n_edrx = self.edrx_time(int(vals[2].strip('\"'), 2))
-            p_time = self.paging_time(int(vals[3].strip('\"'), 2))
-            print('Access technology: ' + str(a_type))
-            print('Requested edrx cycle time: ' + str(r_edrx))
-            print('Network edrx cycle time: ' + str(n_edrx))
-            print('Paging time: ' + str(p_time))
+    # def edrx_info(self,verbose):
+        # ser = self.myserial
+        # if ser is None:
+            # return None
+        # edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose)  # Check eDRX settings
+        # edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP',
+                                     # verbose=verbose)  # Read eDRX settings requested and network-provided
+        # vals = super().parse_response(edrxsettings, '+CEDRXRDP: ')
+        # a_type = self.act_type(int(vals[0].strip('\"')))
+        # if a_type is None:
+            # print('eDRX is disabled')
+        # else:
+            # r_edrx = self.edrx_time(int(vals[1].strip('\"'), 2))
+            # n_edrx = self.edrx_time(int(vals[2].strip('\"'), 2))
+            # p_time = self.paging_time(int(vals[3].strip('\"'), 2))
+            # print('Access technology: ' + str(a_type))
+            # print('Requested edrx cycle time: ' + str(r_edrx))
+            # print('Network edrx cycle time: ' + str(n_edrx))
+            # print('Paging time: ' + str(p_time))
 
-    def edrx_enable(self,verbose, edrx_time):
-        # mycmd = 'AT+CEDRXS=1,4,“1001”' # Does not work with 1 on LTE-M
-        # mycmd = 'AT+CEDRXS=2,4,"1001"'
-        mycmd = 'AT+CEDRXS=2,4,"' + edrx_time + '"'
+    # def edrx_enable(self,verbose, edrx_time):
+        # # mycmd = 'AT+CEDRXS=1,4,“1001”' # Does not work with 1 on LTE-M
+        # # mycmd = 'AT+CEDRXS=2,4,"1001"'
+        # mycmd = 'AT+CEDRXS=2,4,"' + edrx_time + '"'
+        # # mycmd = 'AT+CEDRXS=0'
+        # # mycmd = 'AT+CEDRXS=0,5'
+        # # mycmd = 'AT+CEDRXS=1,5,"0000"'  # This works for CAT-NB with 1
+        # ser = self.myserial
+        # rmutils.write(ser, mycmd, verbose=verbose)  # Enable eDRX and set the timers
+        # print('edrx is now enabled for LTE-M')
+
+    # def edrx_disable(self,verbose):
         # mycmd = 'AT+CEDRXS=0'
-        # mycmd = 'AT+CEDRXS=0,5'
-        # mycmd = 'AT+CEDRXS=1,5,"0000"'  # This works for CAT-NB with 1
-        ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)  # Enable eDRX and set the timers
-        print('edrx is now enabled for LTE-M')
-
-    def edrx_disable(self,verbose):
-        mycmd = 'AT+CEDRXS=0'
-        # mycmd = 'AT+CEDRXS=0,5'
-        ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)
-        print('edrx is now disabled')
+        # # mycmd = 'AT+CEDRXS=0,5'
+        # ser = self.myserial
+        # rmutils.write(ser, mycmd, verbose=verbose)
+        # print('edrx is now disabled')

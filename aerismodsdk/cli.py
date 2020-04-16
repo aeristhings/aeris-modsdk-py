@@ -340,8 +340,8 @@ def info(ctx):
 
 
 @edrx.command()
-@click.option("--time", "-t", default='0000',
-              help="Time setting for eDRX.")
+@click.option("--time", "-t", default=5,
+              help="Requested eDRX cycle time in seconds.")
 @click.pass_context
 def enable(ctx, time):
     """Enable eDRX

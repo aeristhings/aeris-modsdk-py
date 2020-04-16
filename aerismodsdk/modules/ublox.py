@@ -217,41 +217,41 @@ class UbloxModule(Module):
 
     # ========================================================================
     #
-    # The eDRX stuff
+    # The eDRX stuff -- see the base class
     #
 
 
-    def edrx_info(self,verbose):
-        ser = self.myserial
-        if ser is None:
-            return None
-        edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose)  # Check eDRX settings
-        edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP',
-                                     verbose=verbose)  # Read eDRX settings requested and network-provided
-        vals = super().parse_response(edrxsettings, '+CEDRXRDP: ')
-        a_type = super().act_type(int(vals[0].strip('\"')))
-        if a_type is None:
-            print('eDRX is disabled')
-        else:
-            r_edrx = super().edrx_time(int(vals[1].strip('\"'), 2))
-            n_edrx = super().edrx_time(int(vals[2].strip('\"'), 2))
-            p_time = super().paging_time(int(vals[3].strip('\"'), 2))
-            print('Access technology: ' + str(a_type))
-            print('Requested edrx cycle time: ' + str(r_edrx))
-            print('Network edrx cycle time: ' + str(n_edrx))
-            print('Paging time: ' + str(p_time))
+    # def edrx_info(self,verbose):
+        # ser = self.myserial
+        # if ser is None:
+            # return None
+        # edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose)  # Check eDRX settings
+        # edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP',
+                                     # verbose=verbose)  # Read eDRX settings requested and network-provided
+        # vals = super().parse_response(edrxsettings, '+CEDRXRDP: ')
+        # a_type = super().act_type(int(vals[0].strip('\"')))
+        # if a_type is None:
+            # print('eDRX is disabled')
+        # else:
+            # r_edrx = super().edrx_time(int(vals[1].strip('\"'), 2))
+            # n_edrx = super().edrx_time(int(vals[2].strip('\"'), 2))
+            # p_time = super().paging_time(int(vals[3].strip('\"'), 2))
+            # print('Access technology: ' + str(a_type))
+            # print('Requested edrx cycle time: ' + str(r_edrx))
+            # print('Network edrx cycle time: ' + str(n_edrx))
+            # print('Paging time: ' + str(p_time))
 
-    def edrx_enable(self,verbose, edrx_time):
-        mycmd = 'AT+CEDRXS=2,4,"' + edrx_time + '"'
-        ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)  # Enable eDRX and set the timers
-        print('edrx is now enabled for LTE-M')
+    # def edrx_enable(self,verbose, edrx_time):
+        # mycmd = 'AT+CEDRXS=2,4,"' + edrx_time + '"'
+        # ser = self.myserial
+        # rmutils.write(ser, mycmd, verbose=verbose)  # Enable eDRX and set the timers
+        # print('edrx is now enabled for LTE-M')
 
-    def edrx_disable(self,verbose):
-        mycmd = 'AT+CEDRXS=0'
-        ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)
-        print('edrx is now disabled')
+    # def edrx_disable(self,verbose):
+        # mycmd = 'AT+CEDRXS=0'
+        # ser = self.myserial
+        # rmutils.write(ser, mycmd, verbose=verbose)
+        # print('edrx is now disabled')
 
     # ========================================================================
     #
