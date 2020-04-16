@@ -128,14 +128,6 @@ class QuectelModule(Module):
         rmutils.write(ser, mycmd, timeout=0)  # Write a dns lookup command
         rmutils.wait_urc(ser, 4,self.com_port)  # Wait up to 4 seconds for results to come back via urc
 
-    def parse_response(self,response, prefix):
-        response = response.rstrip('OK\r\n')
-        findex = response.rfind(prefix) + len(prefix)
-        value = response[findex: len(response)]
-        vals = value.split(',')
-        # print('Values: ' + str(vals))
-        return vals
-
     # ========================================================================
     #
     # The PSM stuff
@@ -176,12 +168,12 @@ class QuectelModule(Module):
         ser = self.myserial
         psmsettings = rmutils.write(ser, 'AT+QPSMCFG?',
                                     verbose=verbose)  # Check PSM feature mode and min time threshold
-        vals = self.parse_response(psmsettings, '+QPSMCFG:')
+        vals = super().parse_response(psmsettings, '+QPSMCFG:')
         print('Minimum seconds to enter PSM: ' + vals[0])
         print('PSM mode: ' + self.psm_mode(int(vals[1])))
         # Query settings
         psmsettings = rmutils.write(ser, 'AT+QPSMS?', verbose=verbose)  # Check PSM settings
-        vals = self.parse_response(psmsettings, '+QPSMS:')
+        vals = super().parse_response(psmsettings, '+QPSMS:')
         if int(vals[0]) == 0:
             print('PSM is disabled')
         else:
@@ -190,7 +182,7 @@ class QuectelModule(Module):
             print('Network-specified Active Time: ' + vals[4])
             # Different way to query
             psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)  # Check PSM settings
-            vals = self.parse_response(psmsettings, '+CPSMS:')
+            vals = super().parse_response(psmsettings, '+CPSMS:')
             tau_value = int(vals[3].strip('\"'), 2)
             print('PSM enabled: ' + vals[0])
             print('TAU requested units: ' + str(self.tau_units(self.timer_units(tau_value))))
@@ -200,7 +192,7 @@ class QuectelModule(Module):
             print('Active time requested value: ' + str(active_time & 0b00011111))
             # Check on urc setting
             psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose)  # Check if urc enabled
-            vals = self.parse_response(psmsettings, '+QCFG: ')
+            vals = super().parse_response(psmsettings, '+QCFG: ')
             print('PSM unsolicited response codes (urc): ' + vals[1])
 
     def get_tau_config(self, tau_time):
@@ -314,7 +306,7 @@ class QuectelModule(Module):
         edrxsettings = rmutils.write(ser, 'AT+CEDRXS?', verbose=verbose)  # Check eDRX settings
         edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP',
                                      verbose=verbose)  # Read eDRX settings requested and network-provided
-        vals = self.parse_response(edrxsettings, '+CEDRXRDP: ')
+        vals = super().parse_response(edrxsettings, '+CEDRXRDP: ')
         a_type = self.act_type(int(vals[0].strip('\"')))
         if a_type is None:
             print('eDRX is disabled')

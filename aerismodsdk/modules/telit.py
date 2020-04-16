@@ -4,23 +4,28 @@ from aerismodsdk.modules.module import Module
 from urllib.parse import urlsplit
 
 class TelitModule(Module):
+
+    # ========================================================================
+    #
+    # The packet stuff
+    #
+
+
     """Function to check if module is already established a PDP context
             Parameters : None
             Returns :  Boolean
             True indicates Connected
             False indicates Not Connected
         """
-
-    def get_packet_info(self):
+    def get_packet_info(self, verbose=True):
         ser = self.myserial
         constate = rmutils.write(ser, 'AT#SGACT?', verbose=self.verbose)  # Check if we are already connected
         return self.parse_connection_state(constate)
 
-    """Function to initiate a new Package Session
+    """Function to initiate a new Packet Session
             Parameters : None
             Returns :  None            
         """
-
     def start_packet_session(self):
         self.create_packet_session()
 
@@ -135,18 +140,16 @@ class TelitModule(Module):
             echo_wait = round(echo_wait + echo_delay)
         self.udp_listen(echo_wait)
 
-    def parse_response(self, response, prefix):
-        response = response.rstrip('OK\r\n')
-        findex = response.rfind(prefix) + len(prefix)
-        value = response[findex: len(response)]
-        value = value.replace('"', '')
-        vals = value.split(',')
-        return vals
+    # ========================================================================
+    #
+    # The PSM stuff
+    #
+
 
     def get_psm_info(self, verbose):
         ser = self.myserial
         psmsettings = rmutils.write(ser, 'AT+CPSMS?', delay=2)  # Check PSM feature mode and min time threshold
-        vals = self.parse_response(psmsettings, '+CPSMS: ')
+        vals = super().parse_response(psmsettings, '+CPSMS: ')
         if int(vals[0]) == 0:
             aerisutils.print_log('PSM is disabled')
         else:
@@ -170,4 +173,10 @@ class TelitModule(Module):
         ser = self.myserial
         mycmd = 'AT+CPSMS=1,,,"10000100","00001111"'  # 30/120
         rmutils.write(ser, mycmd, delay=2)  # Enable PSM and set the timers
+
+
+    # ========================================================================
+    #
+    # The eDRX stuff
+    #
 
