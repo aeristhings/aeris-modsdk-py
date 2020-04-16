@@ -189,6 +189,15 @@ class Module:
                 print('Active time requested value: ' + str(self.timer_value(active_time)))
 
 
+    def enable_psm(self,tau_time, atime, verbose=True):
+        ser = self.myserial
+        tau_config = self.get_tau_config(tau_time)
+        atime_config = self.get_active_config(atime)
+        mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
+        rmutils.write(ser, mycmd, verbose=verbose)  # Enable PSM and set the timers
+        aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
+
+
     # ========================================================================
     #
     # Common eDRX stuff

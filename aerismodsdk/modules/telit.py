@@ -151,10 +151,8 @@ class TelitModule(Module):
 
 
     def enable_psm(self, tau_time, atime, verbose):
-        ser = self.myserial
-        mycmd = 'AT+CPSMS=1,,,"10000100","00001111"'  # 30/120
-        rmutils.write(ser, mycmd, delay=2)  # Enable PSM and set the timers
-        aerisutils.print_log('Enabled PSM')
+        super().enable_psm(tau_time, atime, verbose)
+
 
     def disable_psm(self, verbose):
         ser = self.myserial
