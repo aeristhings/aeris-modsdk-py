@@ -198,6 +198,13 @@ class Module:
         aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
 
 
+    def disable_psm(self, verbose):
+        ser = self.myserial
+        mycmd = 'AT+CPSMS=0'  # Disable PSM
+        rmutils.write(ser, mycmd, delay=2)
+        aerisutils.print_log('PSM is disabled')
+
+
     # ========================================================================
     #
     # Common eDRX stuff

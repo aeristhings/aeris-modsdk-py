@@ -155,10 +155,11 @@ class TelitModule(Module):
 
 
     def disable_psm(self, verbose):
-        ser = self.myserial
-        mycmd = 'AT+CPSMS=0'  # Disable PSM
-        rmutils.write(ser, mycmd, delay=2)
-        aerisutils.print_log('Disabled PSM')
+        super().disable_psm(verbose)
+        # ser = self.myserial
+        # mycmd = 'AT+CPSMS=0'  # Disable PSM
+        # rmutils.write(ser, mycmd, delay=2)
+        # aerisutils.print_log('Disabled PSM')
 
     def psm_now(self):
         ser = self.myserial
