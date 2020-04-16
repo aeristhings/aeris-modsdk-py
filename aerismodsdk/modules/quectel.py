@@ -334,5 +334,5 @@ class QuectelModule(Module):
         mycmd = 'AT+CEDRXS=0'
         # mycmd = 'AT+CEDRXS=0,5'
         ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)  # Enable eDRX and set the timers
+        rmutils.write(ser, mycmd, verbose=verbose)
         print('edrx is now disabled')

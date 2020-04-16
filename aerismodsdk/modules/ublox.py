@@ -250,7 +250,7 @@ class UbloxModule(Module):
     def edrx_disable(self,verbose):
         mycmd = 'AT+CEDRXS=0'
         ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)  # Enable eDRX and set the timers
+        rmutils.write(ser, mycmd, verbose=verbose)
         print('edrx is now disabled')
 
     # ========================================================================

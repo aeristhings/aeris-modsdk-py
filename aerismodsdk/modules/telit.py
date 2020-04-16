@@ -156,15 +156,11 @@ class TelitModule(Module):
 
     def disable_psm(self, verbose):
         super().disable_psm(verbose)
-        # ser = self.myserial
-        # mycmd = 'AT+CPSMS=0'  # Disable PSM
-        # rmutils.write(ser, mycmd, delay=2)
-        # aerisutils.print_log('Disabled PSM')
+
 
     def psm_now(self):
-        ser = self.myserial
-        mycmd = 'AT+CPSMS=1,,,"10000100","00001111"'  # 30/120
-        rmutils.write(ser, mycmd, delay=2)  # Enable PSM and set the timers
+        print('psm now is not supported by this module')
+        return None
 
 
     # ========================================================================

@@ -84,10 +84,14 @@ class Module:
     #
 
 
-    def parse_response(self,response, prefix):
-        response = response.rstrip('OK\r\n')
+    def parse_response(self, response, prefix):
+        # Strip the 'OK' ending and spaces at start
+        response = response.rstrip('OK\r\n').lstrip()
+        # Find the prefix we want to take out
         findex = response.rfind(prefix) + len(prefix)
+        # Get the substring after the prefix
         value = response[findex: len(response)]
+        # Split the remaining values with comma seperation
         vals = value.split(',')
         return vals
 
@@ -258,4 +262,36 @@ class Module:
             0b1110: '19.20 sec',
             0b1111: '20.48 sec'}
         return switcher.get(i, "Invalid value")
+
+
+    def edrx_info(self,verbose):
+        ser = self.myserial
+        # Read eDRX settings requested and network-provided
+        edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP', verbose=verbose)  
+        vals = self.parse_response(edrxsettings, '+CEDRXRDP: ')
+        a_type = self.act_type(int(vals[0].strip('\"')))
+        if a_type is None:
+            print('eDRX is disabled')
+        else:
+            r_edrx = self.edrx_time(int(vals[1].strip('\"'), 2))
+            n_edrx = self.edrx_time(int(vals[2].strip('\"'), 2))
+            p_time = self.paging_time(int(vals[3].strip('\"'), 2))
+            print('Access technology: ' + str(a_type))
+            print('Requested edrx cycle time: ' + str(r_edrx))
+            print('Network edrx cycle time: ' + str(n_edrx))
+            print('Paging time: ' + str(p_time))
+
+
+    def edrx_enable(self,verbose, edrx_time):
+        mycmd = 'AT+CEDRXS=2,4,"' + edrx_time + '"'
+        ser = self.myserial
+        rmutils.write(ser, mycmd, verbose=verbose)
+        print('edrx is now enabled for LTE-M')
+
+
+    def edrx_disable(self,verbose):
+        mycmd = 'AT+CEDRXS=0'
+        ser = self.myserial
+        rmutils.write(ser, mycmd, verbose=verbose)
+        print('edrx is now disabled')
 
