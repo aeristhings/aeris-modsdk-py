@@ -1,3 +1,4 @@
+from aerismodsdk.utils import loggerutils
 from aerismodsdk.utils.loggerutils import logger
 from aerismodsdk.utils import rmutils, aerisutils
 
@@ -50,20 +51,21 @@ class Module:
             rmutils.wait_urc(self.myserial, 15, self.com_port)
 
     def set_network(self, operator_name, format, act=8):
-        rmutils.write(self.myserial, 'AT+COPS=2')
-        rmutils.wait_urc(self.myserial, 10,self.com_port)
+        #rmutils.write(self.myserial, 'AT+COPS=2')
+        #rmutils.wait_urc(self.myserial, 10, self.com_port)
         if operator_name == 'auto':
             mycmd = 'AT+COPS=0'
         else:
             mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(act)
         rmutils.write(self.myserial, mycmd)
-        rmutils.wait_urc(self.myserial, 10,self.com_port)
+        rmutils.wait_urc(self.myserial, 10, self.com_port)
 
     def turn_off_network(self, verbose):
         rmutils.write(self.myserial, 'AT+COPS=2')
         rmutils.wait_urc(self.myserial, 10,self.com_port)
 
     def interactive(self):
+        loggerutils.set_level(True)
         logger.info('Enter AT command or type exit')
         while 1:
             myinput = input(">> ")
