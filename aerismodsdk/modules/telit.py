@@ -147,15 +147,8 @@ class TelitModule(Module):
 
 
     def get_psm_info(self, verbose):
-        ser = self.myserial
-        psmsettings = rmutils.write(ser, 'AT+CPSMS?', delay=2)  # Check PSM feature mode and min time threshold
-        vals = super().parse_response(psmsettings, '+CPSMS: ')
-        if int(vals[0]) == 0:
-            aerisutils.print_log('PSM is disabled')
-        else:
-            aerisutils.print_log('PSM enabled: ' + vals[0])
-            aerisutils.print_log('Network-specified TAU: ' + vals[3])
-            aerisutils.print_log('Network-specified Active Time: ' + vals[4])
+        super().get_psm_info('#CPSMS', 0, 10, verbose)
+
 
     def enable_psm(self, tau_time, atime, verbose):
         ser = self.myserial

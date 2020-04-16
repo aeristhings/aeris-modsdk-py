@@ -150,6 +150,45 @@ class Module:
         return atime_config
 
 
+    def get_psm_info(self, custom_psm_cmd, value_offset, value_base, verbose):
+        ser = self.myserial
+        # Query settings provided by network
+        psmsettings = rmutils.write(ser, 'AT' + custom_psm_cmd + '?', delay=1.0, verbose=verbose)
+        #print('psmsettings: ' + psmsettings)
+        vals = self.parse_response(psmsettings, custom_psm_cmd + ':')
+        if int(vals[0]) == 0:
+            print('PSM is disabled')
+        else:
+            # Parse the settings provided by the network
+            # The value_offset and value_base settings help handle module differences
+            print('PSM enabled: ' + vals[0])
+            #tau_value = int(vals[3].strip('\"'), 2)
+            #active_time = int(vals[4].strip('\"'), 2)
+            tau_value = int(vals[1 + value_offset].strip('\"'), value_base)
+            active_time = int(vals[2 + value_offset].strip('\"'), value_base)
+            if value_base == 10:
+                print('TAU network-specified value: ' + str(tau_value))
+                print('Active time network-specified value: ' + str(active_time))
+            else:
+                print('TAU network-specified units: ' + str(self.tau_units(self.timer_units(tau_value))))
+                print('TAU network-specified value: ' + str(self.timer_value(tau_value)))
+                print('Active time network-specified units: ' + str(self.at_units(self.timer_units(active_time))))
+                print('Active time network-specified value: ' + str(self.timer_value(active_time)))
+            # Query settings we requested
+            psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)  # Check PSM settings
+            vals = self.parse_response(psmsettings, '+CPSMS:')
+            if int(vals[0]) == 0:
+                print('PSM is disabled')
+            else:
+                tau_value = int(vals[3].strip('\"'), 2)
+                print('PSM enabled: ' + vals[0])
+                print('TAU requested units: ' + str(self.tau_units(self.timer_units(tau_value))))
+                print('TAU requested value: ' + str(self.timer_value(tau_value)))
+                active_time = int(vals[4].strip('\"'), 2)
+                print('Active time requested units: ' + str(self.at_units(self.timer_units(active_time))))
+                print('Active time requested value: ' + str(self.timer_value(active_time)))
+
+
     # ========================================================================
     #
     # Common eDRX stuff
