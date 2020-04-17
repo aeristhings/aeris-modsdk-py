@@ -56,7 +56,7 @@ class TelitModule(Module):
 
     def create_packet_session(self):
         ser = self.myserial
-        rmutils.write(ser, 'AT#SCFG?')  # Prints Socket Configuration
+        #rmutils.write(ser, 'AT#SCFG?')  # Prints Socket Configuration
         constate = rmutils.write(ser, 'AT#SGACT?', verbose=self.verbose)  # Check if we are already connected
         if not self.parse_connection_state(constate):  # Returns packet session info if in session
             rmutils.write(ser, 'AT#SGACT=1,1', verbose=self.verbose)  # Activate context / create packet session
@@ -123,22 +123,39 @@ class TelitModule(Module):
         return True
 
     def udp_echo(self, echo_delay, echo_wait, verbose):
+        echo_host = '35.212.147.4'
+        echo_port = '3030'
+        listen_port = '3032'
         ser = self.myserial
+        # Create a packet session in case there is not one
         self.create_packet_session()
-        rmutils.write(ser, 'AT#SH=1', delay=1)  # Make sure to close existing sockets
-        rmutils.write(ser, 'AT#SD=1,1,3030,"35.212.147.4",0,3030,1',
-                      delay=1)  # Opening Socket Connection on UDP Remote host/port
-        command = 'AT#SSEND=1'
-        port = 3030
+        # Create a UDP socket for sending and receiving
+        mycmd = 'AT#SL=1,0,3032,0'
+        rmutils.write(ser, mycmd, delay=1)
+        rmutils.write(ser, 'AT#SH=1', delay=1)  # Make sure to close existing socket
+        mycmd = 'AT#SD=1,1,' + echo_port + ',"' + echo_host + '",0,' + listen_port + ',1,0,1'
+        rmutils.write(ser, mycmd, delay=1)
+        # rmutils.write(ser, 'AT#SD=1,1,3030,"35.212.147.4",0,3030,1',
+                      # delay=1)  # Opening Socket Connection on UDP Remote host/port
+        mycmd = 'AT#SSEND=1'
         udppacket = str(
-            '{"delay":' + str(echo_delay * 1000) + ', "ip":' + self.my_ip + ',"port":' + str(port) + '}' + chr(26))
-        rmutils.write(ser, command, udppacket, delay=1)  # Sending packets to socket
-        rmutils.write(ser, 'AT#SI', delay=1)  # Printing summary of sockets
-        rmutils.write(ser, 'AT#SH=1', delay=1)  # shutdown socket
+            '{"delay":' + str(echo_delay * 1000) + ', "ip":' + self.my_ip 
+            + ',"port":' + listen_port + '}' + chr(26))
+        rmutils.write(ser, mycmd, udppacket, delay=1)  # Sending packets to socket
+        #rmutils.write(ser, 'AT#SI', delay=1)  # Printing summary of sockets
+        #rmutils.write(ser, 'AT#SH=1', delay=1)  # shutdown socket
         aerisutils.print_log('Sent Echo command to remote UDP server')
+        # if echo_wait > 0:
+            # echo_wait = round(echo_wait + echo_delay)
+        # self.udp_listen(echo_wait, verbose)
+        # Wait for data
         if echo_wait > 0:
             echo_wait = round(echo_wait + echo_delay)
-        self.udp_listen(echo_wait)
+            # Wait for data to come in; handle case where we go to sleep
+            rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
+                             returnonvalue='APP RDY')
+            # Try to read data
+            rmutils.write(ser, 'AT#SRECV=1,1500,1', delay=1)
 
     # ========================================================================
     #
@@ -165,6 +182,6 @@ class TelitModule(Module):
 
     # ========================================================================
     #
-    # The eDRX stuff
+    # The eDRX stuff -- see base class
     #
 
