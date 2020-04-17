@@ -100,9 +100,10 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
             aerisutils.print_log('Exception while waiting for URC.')
             ser.close()
             find_serial(com_port, verbose=True, timeout=(timeout - elapsed_time))
-            ser.open()
             if returnonreset:
                 return myfinalout
+            else:
+                ser.open()
         time.sleep(0.5)
         elapsed_time = time.time() - start_time
     aerisutils.print_log('Finished waiting for URC.')

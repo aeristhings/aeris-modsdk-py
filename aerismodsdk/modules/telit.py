@@ -20,7 +20,9 @@ class TelitModule(Module):
     def get_packet_info(self, verbose=True):
         ser = self.myserial
         constate = rmutils.write(ser, 'AT#SGACT?', verbose=self.verbose)  # Check if we are already connected
-        return self.parse_connection_state(constate)
+        constate = self.parse_connection_state(constate)
+        #print('Connection state: ' + str(constate))
+        return constate
 
     """Function to initiate a new Packet Session
             Parameters : None
@@ -57,12 +59,12 @@ class TelitModule(Module):
     def create_packet_session(self):
         ser = self.myserial
         #rmutils.write(ser, 'AT#SCFG?')  # Prints Socket Configuration
-        constate = rmutils.write(ser, 'AT#SGACT?', verbose=self.verbose)  # Check if we are already connected
-        if not self.parse_connection_state(constate):  # Returns packet session info if in session
-            rmutils.write(ser, 'AT#SGACT=1,1', verbose=self.verbose)  # Activate context / create packet session
-            constate = rmutils.write(ser, 'AT#SGACT?', verbose=self.verbose)  # Verify that we connected
-            self.parse_connection_state(constate)
-            if not self.parse_connection_state(constate):
+        #constate = rmutils.write(ser, 'AT#SGACT?', verbose=self.verbose)  # Check if we are already connected
+        if not self.get_packet_info():  # Check if already in a packet sessiion
+            rmutils.write(ser, 'AT#SGACT=1,1', delay=1, verbose=self.verbose)  # Activate context / create packet session
+            # constate = rmutils.write(ser, 'AT#SGACT?', verbose=self.verbose)  # Verify that we connected
+            # self.parse_connection_state(constate)
+            if not self.get_packet_info():
                 return False
         response = rmutils.write(ser, 'AT+CGPADDR=1', delay=1)
         self.get_module_ip(response)
@@ -129,25 +131,18 @@ class TelitModule(Module):
         ser = self.myserial
         # Create a packet session in case there is not one
         self.create_packet_session()
-        # Create a UDP socket for sending and receiving
-        mycmd = 'AT#SL=1,0,3032,0'
-        rmutils.write(ser, mycmd, delay=1)
-        rmutils.write(ser, 'AT#SH=1', delay=1)  # Make sure to close existing socket
+        # Close socket if open
+        rmutils.write(ser, 'AT#SL=1,0,' + listen_port + ',0', delay=1)
+        rmutils.write(ser, 'AT#SH=1', delay=1)
+        # Create UDP socket for sending and receiving
         mycmd = 'AT#SD=1,1,' + echo_port + ',"' + echo_host + '",0,' + listen_port + ',1,0,1'
         rmutils.write(ser, mycmd, delay=1)
-        # rmutils.write(ser, 'AT#SD=1,1,3030,"35.212.147.4",0,3030,1',
-                      # delay=1)  # Opening Socket Connection on UDP Remote host/port
-        mycmd = 'AT#SSEND=1'
+        # Send our UDP packet
         udppacket = str(
             '{"delay":' + str(echo_delay * 1000) + ', "ip":' + self.my_ip 
             + ',"port":' + listen_port + '}' + chr(26))
-        rmutils.write(ser, mycmd, udppacket, delay=1)  # Sending packets to socket
-        #rmutils.write(ser, 'AT#SI', delay=1)  # Printing summary of sockets
-        #rmutils.write(ser, 'AT#SH=1', delay=1)  # shutdown socket
+        rmutils.write(ser, 'AT#SSEND=1', udppacket, delay=1)  # Sending packets to socket
         aerisutils.print_log('Sent Echo command to remote UDP server')
-        # if echo_wait > 0:
-            # echo_wait = round(echo_wait + echo_delay)
-        # self.udp_listen(echo_wait, verbose)
         # Wait for data
         if echo_wait > 0:
             echo_wait = round(echo_wait + echo_delay)
