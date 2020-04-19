@@ -70,11 +70,10 @@ def mycli(ctx, verbose, config_file):
     # print('context:\n' + str(ctx.invoked_subcommand))
     if load_config(ctx, config_file):
         global my_modem
-        my_modem = module_factory().get(Manufacturer[ctx.obj['modemMfg']], ctx.obj['comPort'], ctx.obj['apn'],
-                                        verbose=ctx.obj['verbose'])
+        my_modem = module_factory().get(Manufacturer[ctx.obj['modemMfg']], ctx.obj['comPort'], 
+                                        ctx.obj['apn'], verbose=ctx.obj['verbose'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
-    elif ctx.invoked_subcommand not in ['config',
-                                        'ping']:  # This is not ok unless we are doing a config or ping command
+    elif ctx.invoked_subcommand not in ['config']:  # Not ok unless we are doing a config command
         print('Valid configuration not found')
         print('Try running config command')
         exit()
@@ -107,7 +106,17 @@ def modem(ctx):
     \f
 
     """
-    # find_modem()
+    if rmutils.find_serial('/dev/tty'+ctx.obj['comPort'], verbose=True, timeout=5):
+        my_modem.check_modem()
+
+
+@mycli.command()
+@click.pass_context
+def info(ctx):
+    """Module information
+    \f
+
+    """
     if rmutils.find_serial('/dev/tty'+ctx.obj['comPort'], verbose=True, timeout=5):
         my_modem.check_modem()
 
