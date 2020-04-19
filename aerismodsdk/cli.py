@@ -305,13 +305,13 @@ def test(ctx, timeout, psmtau, psmat, delay):
     elapsed_time = 0
     aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
     while elapsed_time < timeout:
-        my_modem.udp_echo(delay, 0, verbose=ctx.obj['verbose'])
+        my_modem.udp_echo(delay, 4, verbose=ctx.obj['verbose'])
         rmutils.wait_urc(my_modem.myserial, timeout, my_modem.com_port, returnonreset=True, returnonvalue='APP RDY',
                          verbose=ctx.obj['verbose'])  # Wait up to X seconds for app rdy
         time.sleep(5.0) # Sleep in case it helps telit be able to connect
         my_modem.init_serial(ctx.obj['comPort'], ctx.obj['apn'], verbose=ctx.obj['verbose'])
         rmutils.write(my_modem.myserial, 'ATE0', verbose=ctx.obj['verbose'])  # Turn off echo
-        print('Connection state: ' + str(my_modem.get_packet_info(verbose=ctx.obj['verbose'])))
+        aerisutils.print_log('Connection state: ' + str(my_modem.get_packet_info(verbose=ctx.obj['verbose'])))
         elapsed_time = time.time() - start_time
     # Do some cleanup tasks
     my_modem.disable_psm(verbose=ctx.obj['verbose'])
