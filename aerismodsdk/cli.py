@@ -68,16 +68,16 @@ def mycli(ctx, verbose, config_file):
     ctx.obj['verbose'] = verbose
     loggerutils.set_level(verbose)
     # print('context:\n' + str(ctx.invoked_subcommand))
-    if load_config(ctx, config_file):
+    doing_config = ctx.invoked_subcommand in ['config']
+    if load_config(ctx, config_file) and not doing_config:
         global my_modem
         my_modem = module_factory().get(Manufacturer[ctx.obj['modemMfg']], ctx.obj['comPort'], 
                                         ctx.obj['apn'], verbose=ctx.obj['verbose'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
-    elif ctx.invoked_subcommand not in ['config']:  # Not ok unless we are doing a config command
+    elif not doing_config:  # Not ok unless we are doing a config command
         print('Valid configuration not found')
         print('Try running config command')
         exit()
-    # else: We are doing a config command
 
 
 @mycli.command()
