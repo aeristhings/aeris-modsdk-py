@@ -54,6 +54,10 @@ def get_disable():
 def get_pwrkey():
     return GPIO.input(BG96_POWERKEY)
 
+# Set state of BG96 pwrkey
+def set_pwrkey(pwrkey_val):
+    GPIO.output(BG96_POWERKEY, pwrkey_val)
+
 # Function for getting power on status of BG96 module
 # Returns 1 when powered down; Returns 0 when powered on
 def get_status():

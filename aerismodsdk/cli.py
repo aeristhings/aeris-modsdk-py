@@ -435,6 +435,18 @@ def poweroff(ctx):
     gpioutils.disable()
 
 
+@pi.command()
+@click.argument('pwrval', default=1)  # Default to high
+@click.pass_context
+def pwrkey(ctx, pwrval):
+    """Power off pi / sixfab
+    \f
+
+    """
+    gpioutils.setupGPIO()
+    gpioutils.set_pwrkey(pwrval)
+
+
 # ========================================================================
 #
 # Define the firmware group of commands
