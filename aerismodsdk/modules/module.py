@@ -57,6 +57,12 @@ class Module:
         else:
             logger.warn('WARNING : The modem type connected is ' + modem_type + '. Please review configuration to ensure it is correct')
 
+    # ========================================================================
+    #
+    # Network stuff
+    #
+
+
     def get_network_info(self, verbose):
         rmutils.write(self.myserial, 'AT+CREG?')
         rmutils.write(self.myserial, 'AT+COPS?')
@@ -65,6 +71,7 @@ class Module:
         if self.verbose:
             rmutils.write(self.myserial, 'AT+COPS=?')
             rmutils.wait_urc(self.myserial, 15, self.com_port)
+
 
     def set_network(self, operator_name, format, act=8):
         #rmutils.write(self.myserial, 'AT+COPS=2')
@@ -76,9 +83,11 @@ class Module:
         rmutils.write(self.myserial, mycmd)
         rmutils.wait_urc(self.myserial, 10, self.com_port)
 
+
     def turn_off_network(self, verbose):
         rmutils.write(self.myserial, 'AT+COPS=2')
         rmutils.wait_urc(self.myserial, 10,self.com_port)
+
 
     def interactive(self):
         loggerutils.set_level(True)
@@ -91,8 +100,10 @@ class Module:
             else:
                 out = rmutils.write(self.myserial, myinput)
 
+
     def get_http_packet(self, hostname):
         return getpacket.replace('<hostname>', hostname)
+
         
     # ========================================================================
     #
@@ -127,21 +138,21 @@ class Module:
 
     def tau_units(self,i):  # PSM Tracking Area Update
         switcher = {
-            0b00000000: '10 min',
-            0b00100000: '1 hr',
-            0b01000000: '10 hrs',
-            0b01100000: '2 sec',
-            0b10000000: '30 secs',
-            0b10100000: '1 min',
-            0b11100000: 'invalid'}
+            0b00000000: (60 * 10),          # 10 min
+            0b00100000: (60 * 60),          # 1 hr
+            0b01000000: (60 * 60 * 10),     # 10 hrs
+            0b01100000: 2,                  # 2 sec
+            0b10000000: 30,                 # 30 sec
+            0b10100000: 60,                 # 1 min
+            0b11100000: 0}                  # Invalid
         return switcher.get(i, "Invalid value")
 
     def at_units(self,i):  # PSM Active Time
         switcher = {
-            0b00000000: '2 sec',
-            0b00100000: '1 min',
-            0b01000000: 'decihour (6 min)',
-            0b11100000: 'deactivated'}
+            0b00000000: 2,          # 2 sec
+            0b00100000: 60,         # 1 min
+            0b01000000: 60 * 6,     # decihour (6 min)
+            0b11100000: 0}      # deactivated
         return switcher.get(i, "Invalid value")
 
 
@@ -172,41 +183,43 @@ class Module:
 
     def get_psm_info(self, custom_psm_cmd, value_offset, value_base, verbose):
         ser = self.myserial
+        psm_settings = {}  # Initialize an empty dictionary object
         # Query settings provided by network
         psmsettings = rmutils.write(ser, 'AT' + custom_psm_cmd + '?', delay=1.0, verbose=verbose)
         #print('psmsettings: ' + psmsettings)
         vals = self.parse_response(psmsettings, custom_psm_cmd + ':')
-        if int(vals[0]) == 0:
-            print('PSM is disabled')
-        else:
+        psm_settings.update( {'enabled_network':int(vals[0])} )
+        if int(vals[0]) > 0:
             # Parse the settings provided by the network
             # The value_offset and value_base settings help handle module differences
-            print('PSM enabled: ' + vals[0])
-            #tau_value = int(vals[3].strip('\"'), 2)
-            #active_time = int(vals[4].strip('\"'), 2)
             tau_value = int(vals[1 + value_offset].strip('\"'), value_base)
             active_time = int(vals[2 + value_offset].strip('\"'), value_base)
-            if value_base == 10:
-                print('TAU network-specified value: ' + str(tau_value))
-                print('Active time network-specified value: ' + str(active_time))
-            else:
-                print('TAU network-specified units: ' + str(self.tau_units(self.timer_units(tau_value))))
-                print('TAU network-specified value: ' + str(self.timer_value(tau_value)))
-                print('Active time network-specified units: ' + str(self.at_units(self.timer_units(active_time))))
-                print('Active time network-specified value: ' + str(self.timer_value(active_time)))
+            if value_base == 2:
+                tau_units = self.tau_units(self.timer_units(tau_value))
+                tau_value = self.timer_value(tau_value)
+                tau_value = tau_value * tau_units
+                active_time_units = self.at_units(self.timer_units(active_time))
+                active_time_value = self.timer_value(active_time)
+                active_time = active_time_value * active_time_units
+            psm_settings.update( {'tau_network':tau_value} )
+            psm_settings.update( {'active_time_network':active_time} )
             # Query settings we requested
-            psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)  # Check PSM settings
+            psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)
             vals = self.parse_response(psmsettings, '+CPSMS:')
-            if int(vals[0]) == 0:
-                print('PSM is disabled')
-            else:
+            psm_settings.update( {'enabled_request':int(vals[0])} )
+            if int(vals[0]) > 0:
                 tau_value = int(vals[3].strip('\"'), 2)
-                print('PSM enabled: ' + vals[0])
-                print('TAU requested units: ' + str(self.tau_units(self.timer_units(tau_value))))
-                print('TAU requested value: ' + str(self.timer_value(tau_value)))
+                tau_units = self.tau_units(self.timer_units(tau_value))
+                tau_value = self.timer_value(tau_value)
+                tau_value = tau_value * tau_units
                 active_time = int(vals[4].strip('\"'), 2)
-                print('Active time requested units: ' + str(self.at_units(self.timer_units(active_time))))
-                print('Active time requested value: ' + str(self.timer_value(active_time)))
+                active_time_units = self.at_units(self.timer_units(active_time))
+                active_time_value = self.timer_value(active_time)
+                active_time = active_time_value * active_time_units
+                psm_settings.update( {'tau_request':tau_value} )
+                psm_settings.update( {'active_time_request':active_time} )
+        #print('PSM: ' + str(psm_settings))
+        return psm_settings
 
 
     def enable_psm(self,tau_time, atime, verbose=True):

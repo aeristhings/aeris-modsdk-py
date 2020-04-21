@@ -271,7 +271,9 @@ def info(ctx):
     \f
 
     """
-    my_modem.get_psm_info(ctx.obj['verbose'])
+    psm_settings = my_modem.get_psm_info(ctx.obj['verbose'])
+    print('PSM Settings: ' + str(psm_settings))
+
 
 
 @psm.command()

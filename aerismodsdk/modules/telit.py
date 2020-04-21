@@ -175,7 +175,7 @@ class TelitModule(Module):
 
 
     def get_psm_info(self, verbose):
-        super().get_psm_info('#CPSMS', 0, 10, verbose)
+        return super().get_psm_info('#CPSMS', 0, 10, verbose)
 
 
     def enable_psm(self, tau_time, atime, verbose):
