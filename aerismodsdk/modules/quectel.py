@@ -157,28 +157,6 @@ class QuectelModule(Module):
             0b1000: 'PSM in between eDRX cycles'}
         return switcher.get(i, "Invalid value")
 
-    def timer_units(self, value):
-        units = value & 0b11100000
-        return units
-
-    def tau_units(self, i):  # Tracking Area Update
-        switcher = {
-            0b00000000: '10 min',
-            0b00100000: '1 hr',
-            0b01000000: '10 hrs',
-            0b01100000: '2 sec',
-            0b10000000: '30 secs',
-            0b10100000: '1 min',
-            0b11100000: 'invalid'}
-        return switcher.get(i, "Invalid value")
-
-    def at_units(self, i):  # Active Time
-        switcher = {
-            0b00000000: '2 sec',
-            0b00100000: '1 min',
-            0b01000000: 'decihour (6 min)',
-            0b11100000: 'deactivated'}
-        return switcher.get(i, "Invalid value")
 
     def get_psm_info(self, verbose):
         ser = self.myserial
@@ -187,29 +165,13 @@ class QuectelModule(Module):
         vals = super().parse_response(psmsettings, '+QPSMCFG:')
         print('Minimum seconds to enter PSM: ' + vals[0])
         print('PSM mode: ' + self.psm_mode(int(vals[1])))
+        # Check on urc setting
+        psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose)  # Check if urc enabled
+        vals = super().parse_response(psmsettings, '+QCFG: ')
+        print('PSM unsolicited response codes (urc): ' + vals[1])
         # Query settings
-        psmsettings = rmutils.write(ser, 'AT+QPSMS?', verbose=verbose)  # Check PSM settings
-        vals = super().parse_response(psmsettings, '+QPSMS:')
-        if int(vals[0]) == 0:
-            print('PSM is disabled')
-        else:
-            print('PSM enabled: ' + vals[0])
-            print('Network-specified TAU: ' + vals[3])
-            print('Network-specified Active Time: ' + vals[4])
-            # Different way to query
-            psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)  # Check PSM settings
-            vals = super().parse_response(psmsettings, '+CPSMS:')
-            tau_value = int(vals[3].strip('\"'), 2)
-            print('PSM enabled: ' + vals[0])
-            print('TAU requested units: ' + str(self.tau_units(self.timer_units(tau_value))))
-            print('TAU requested value: ' + str(tau_value & 0b00011111))
-            active_time = int(vals[4].strip('\"'), 2)
-            print('Active time requested units: ' + str(self.at_units(self.timer_units(active_time))))
-            print('Active time requested value: ' + str(active_time & 0b00011111))
-            # Check on urc setting
-            psmsettings = rmutils.write(ser, 'AT+QCFG="psm/urc"', verbose=verbose)  # Check if urc enabled
-            vals = super().parse_response(psmsettings, '+QCFG: ')
-            print('PSM unsolicited response codes (urc): ' + vals[1])
+        return super().get_psm_info('+QPSMS', 2, 10, verbose)
+
 
     def get_tau_config(self, tau_time):
         if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
