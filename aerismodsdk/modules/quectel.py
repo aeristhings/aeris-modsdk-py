@@ -149,6 +149,7 @@ class QuectelModule(Module):
     # The PSM stuff
     #
 
+
     def psm_mode(self, i):  # PSM mode
         switcher = {
             0b0001: 'PSM without network coordination',
@@ -173,46 +174,19 @@ class QuectelModule(Module):
         return super().get_psm_info('+QPSMS', 2, 10, verbose)
 
 
-    def get_tau_config(self, tau_time):
-        if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
-            tau_config = 0b01100000 + int(tau_time / 2)
-        elif tau_time > 30 and tau_time < (31 * 30):  # Use 30 seconds times up to 31
-            tau_config = 0b10000000 + int(tau_time / 30)
-        elif tau_time > 60 and tau_time < (31 * 60):  # Use 1 min times up to 31
-            tau_config = 0b10100000 + int(tau_time / 60)
-        elif tau_time > 600 and tau_time < (31 * 600):  # Use 10 min times up to 31
-            tau_config = 0b00000000 + int(tau_time / 600)
-        elif tau_time > 3600 and tau_time < (31 * 3600):  # Use 1 hour times up to 31
-            tau_config = 0b00100000 + int(tau_time / 3600)
-        elif tau_time > 36000 and tau_time < (31 * 36000):  # Use 10 hour times up to 31
-            tau_config = 0b01000000 + int(tau_time / 36000)
-        print('TAU config: ' + "{0:08b}".format(tau_config))
-        return tau_config
-
-    def get_active_config(self, atime):
-        if atime > 1 and atime < (31 * 2):  # Use 2s * up to 31
-            atime_config = 0b00000000 + int(atime / 2)
-        elif atime > 60 and atime < (31 * 60):  # Use 60s * up to 31
-            atime_config = 0b00100000 + int(atime / 60)
-        print('Active time config: ' + "{0:08b}".format(atime_config))
-        return atime_config
-
     def enable_psm(self,tau_time, atime, verbose=True):
-        tau_config = self.get_tau_config(tau_time)
-        atime_config = self.get_active_config(atime)
-        mycmd = 'AT+QPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
         ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)  # Enable PSM and set the timers
+        super().enable_psm(tau_time, atime, verbose)
         rmutils.write(ser, 'AT+QCFG="psm/urc",1', verbose=verbose)  # Enable urc for PSM
         aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
 
+
     def disable_psm(self,verbose):
-        mycmd = 'AT+CPSMS=0'  # Disable PSM
         ser = self.myserial
-        rmutils.write(ser, mycmd, verbose=verbose)
-        # Disable urc setting
-        rmutils.write(ser, 'AT+QCFG="psm/urc",0', verbose=verbose)
+        super().disable_psm(verbose)
+        rmutils.write(ser, 'AT+QCFG="psm/urc",0', verbose=verbose)  # Disable urc for PSM
         aerisutils.print_log('PSM and PSM/URC disabled')
+
 
     def psm_now(self):
         mycmd = 'AT+QCFG="psm/enter",1'  # Enter PSM right after RRC
@@ -222,6 +196,7 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QCFG="psm/urc",1')  # Enable urc for PSM
         # Let's try to wait for such a urc
         # rmutils.wait_urc(ser, 120) # Wait up to 120 seconds for urc
+
 
     # ========================================================================
     #
