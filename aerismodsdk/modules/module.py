@@ -39,7 +39,9 @@ class Module:
 
     def check_modem(self):
         ser = self.myserial
-        rmutils.write(ser, 'ATI')
+        if not self.parse_cmd_response(rmutils.write(ser, 'ATI')):
+            logger.warn('WARNING : The ATI command is not working. Please review configuration.')
+            return False
         rmutils.write(ser, 'AT+CIMI')  # IMSI
         # rmutils.write(ser, 'AT#CCID')  # Prints ICCID -- Telit-specific
         response = rmutils.write(ser, 'AT+GMI', delay=1)  # Module Manufacturer
@@ -55,7 +57,7 @@ class Module:
             rmutils.write(ser, 'AT+CGDCONT=1,\"IP\","' + self.apn + '"')  # Setting  PDP Context Configuration
             logger.info('Modem successfully verified')
         else:
-            logger.warn('WARNING : The modem type connected is ' + modem_type + '. Please review configuration to ensure it is correct')
+            logger.warn('WARNING : The modem type connected is ' + modem_type + '. Please review configuration')
 
     # ========================================================================
     #
@@ -109,6 +111,21 @@ class Module:
     #
     # Common stuff
     #
+
+
+    def parse_cmd_response(self, response):
+        # Make sure command ends with 'OK'
+        if 'OK\r\n' not in response:
+            return False
+        # Strip the 'OK' ending and spaces at start
+        response = response.rstrip('OK\r\n').lstrip()
+        # Find the prefix we want to take out
+        findex = response.rfind(prefix) + len(prefix)
+        # Get the substring after the prefix
+        value = response[findex: len(response)]
+        # Split the remaining values with comma seperation
+        vals = value.split(',')
+        return vals
 
 
     def parse_response(self, response, prefix):
@@ -331,7 +348,9 @@ class Module:
     def edrx_info(self,verbose):
         ser = self.myserial
         # Read eDRX settings requested and network-provided
-        edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP', verbose=verbose)  
+        edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP', verbose=verbose)
+        if edrxsettings.strip() == 'ERROR':
+            return False
         vals = self.parse_response(edrxsettings, '+CEDRXRDP: ')
         a_type = self.act_type(int(vals[0].strip('\"')))
         if a_type is None:
