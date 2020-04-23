@@ -34,7 +34,7 @@ home_directory = str(pathlib.Path.home())
 default_config_filename = home_directory + "/.aeris_config"
 
 # Establish the modem type; send commands to appropriate modem module
-my_modem = None
+my_module = None
 
 # Mapper between manufacturer to the corresponding logic, add new ones here
 modules = {
@@ -86,8 +86,8 @@ def mycli(ctx, verbose, config_file):
     # print('context:\n' + str(ctx.invoked_subcommand))
     doing_config = ctx.invoked_subcommand in ['config']
     if load_config(ctx, config_file) and not doing_config:
-        global my_modem
-        my_modem = module_factory().get(Manufacturer[ctx.obj['modemMfg']], ctx.obj['comPort'], 
+        global my_module
+        my_module = module_factory().get(Manufacturer[ctx.obj['modemMfg']], ctx.obj['comPort'], 
                                         ctx.obj['apn'], verbose=ctx.obj['verbose'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
     elif not doing_config:  # Not ok unless we are doing a config command
@@ -123,7 +123,7 @@ def modem(ctx):
 
     """
     if rmutils.find_serial('/dev/tty'+ctx.obj['comPort'], verbose=True, timeout=5):
-        my_modem.check_modem()
+        my_module.get_info()
 
 
 @mycli.command()
@@ -134,7 +134,8 @@ def info(ctx):
 
     """
     if rmutils.find_serial('/dev/tty'+ctx.obj['comPort'], verbose=True, timeout=5):
-        my_modem.check_modem()
+        mod_info = my_module.get_info()
+        print(str(mod_info))
 
 
 @mycli.command()
@@ -144,7 +145,7 @@ def interactive(ctx):
     \f
 
     """
-    my_modem.interactive()
+    my_module.interactive()
 
 
 # ========================================================================
@@ -163,7 +164,7 @@ def network(ctx):
 @network.command()
 @click.pass_context
 def info(ctx):
-    my_modem.get_network_info(ctx.obj['verbose'])
+    my_module.get_network_info(ctx.obj['verbose'])
 
 
 @network.command()
@@ -172,13 +173,13 @@ def info(ctx):
               help="Format: 0=Long, 1=Short, 2=Numeric")
 @click.pass_context
 def set(ctx, name, format):
-    my_modem.set_network(name, format)
+    my_module.set_network(name, format)
 
 
 @network.command()
 @click.pass_context
 def off(ctx):
-    my_modem.turn_off_network(ctx.obj['verbose'])
+    my_module.turn_off_network(ctx.obj['verbose'])
 
 
 # ========================================================================
@@ -197,40 +198,40 @@ def packet(ctx):
 @packet.command()
 @click.pass_context
 def info(ctx):
-    print('Connection state: ' + str(my_modem.get_packet_info(verbose=ctx.obj['verbose'])))
+    print('Connection state: ' + str(my_module.get_packet_info(verbose=ctx.obj['verbose'])))
 
 
 @packet.command()
 @click.pass_context
 def start(ctx):
-    my_modem.start_packet_session()
+    my_module.start_packet_session()
 
 
 @packet.command()
 @click.pass_context
 def stop(ctx):
-    my_modem.stop_packet_session()
+    my_module.stop_packet_session()
 
 
 @packet.command()
 @click.argument('host', default='httpbin.org')  # Use httpbin.org to test
 @click.pass_context
 def get(ctx, host):
-    my_modem.http_get(host, verbose=ctx.obj['verbose'])
+    my_module.http_get(host, verbose=ctx.obj['verbose'])
 
 
 @packet.command()
 @click.argument('host', default='httpbin.org')
 @click.pass_context
 def ping(ctx, host):
-    my_modem.ping(host, verbose=ctx.obj['verbose'])
+    my_module.ping(host, verbose=ctx.obj['verbose'])
 
 
 @packet.command()
 @click.argument('host', default='httpbin.org')
 @click.pass_context
 def lookup(ctx, host):
-    my_modem.lookup(host, verbose=ctx.obj['verbose'])
+    my_module.lookup(host, verbose=ctx.obj['verbose'])
 
 
 @packet.command()
@@ -240,7 +241,7 @@ def lookup(ctx, host):
               help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
 def udp(ctx, delay, wait):
-    my_modem.udp_echo(delay, wait, verbose=ctx.obj['verbose'])
+    my_module.udp_echo(delay, wait, verbose=ctx.obj['verbose'])
 
 
 @packet.command()
@@ -248,7 +249,7 @@ def udp(ctx, delay, wait):
               help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
 def listen(ctx, wait):
-    my_modem.udp_listen('3030', wait)
+    my_module.udp_listen('3030', wait)
 
 
 # ========================================================================
@@ -271,7 +272,7 @@ def info(ctx):
     \f
 
     """
-    psm_settings = my_modem.get_psm_info(ctx.obj['verbose'])
+    psm_settings = my_module.get_psm_info(ctx.obj['verbose'])
     print('PSM Settings: ' + str(psm_settings))
 
 
@@ -287,7 +288,7 @@ def enable(ctx, tau, atime):
     \f
 
     """
-    my_modem.enable_psm(tau, atime, verbose=ctx.obj['verbose'])
+    my_module.enable_psm(tau, atime, verbose=ctx.obj['verbose'])
 
 
 @psm.command()
@@ -297,7 +298,7 @@ def disable(ctx):
     \f
 
     """
-    my_modem.disable_psm(ctx.obj['verbose'])
+    my_module.disable_psm(ctx.obj['verbose'])
 
 
 @psm.command()
@@ -307,7 +308,7 @@ def now(ctx):
     \f
 
     """
-    my_modem.psm_now()
+    my_module.psm_now()
 
 
 @psm.command()
@@ -326,22 +327,22 @@ def test(ctx, timeout, psmtau, psmat, delay):
 
     """
     # Do some setup tasks
-    my_modem.enable_psm(psmtau, psmat, verbose=ctx.obj['verbose'])
+    my_module.enable_psm(psmtau, psmat, verbose=ctx.obj['verbose'])
     # Get ready to do some timing
     start_time = time.time()
     elapsed_time = 0
     aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
     while elapsed_time < timeout:
-        my_modem.udp_echo(delay, 4, verbose=ctx.obj['verbose'])
-        rmutils.wait_urc(my_modem.myserial, timeout, my_modem.com_port, returnonreset=True, returnonvalue='APP RDY',
+        my_module.udp_echo(delay, 4, verbose=ctx.obj['verbose'])
+        rmutils.wait_urc(my_module.myserial, timeout, my_module.com_port, returnonreset=True, returnonvalue='APP RDY',
                          verbose=ctx.obj['verbose'])  # Wait up to X seconds for app rdy
         time.sleep(5.0) # Sleep in case it helps telit be able to connect
-        my_modem.init_serial(ctx.obj['comPort'], ctx.obj['apn'], verbose=ctx.obj['verbose'])
-        rmutils.write(my_modem.myserial, 'ATE0', verbose=ctx.obj['verbose'])  # Turn off echo
-        aerisutils.print_log('Connection state: ' + str(my_modem.get_packet_info(verbose=ctx.obj['verbose'])))
+        my_module.init_serial(ctx.obj['comPort'], ctx.obj['apn'], verbose=ctx.obj['verbose'])
+        rmutils.write(my_module.myserial, 'ATE0', verbose=ctx.obj['verbose'])  # Turn off echo
+        aerisutils.print_log('Connection state: ' + str(my_module.get_packet_info(verbose=ctx.obj['verbose'])))
         elapsed_time = time.time() - start_time
     # Do some cleanup tasks
-    my_modem.disable_psm(verbose=ctx.obj['verbose'])
+    my_module.disable_psm(verbose=ctx.obj['verbose'])
     aerisutils.print_log('Finished test')
 
 
@@ -365,7 +366,7 @@ def info(ctx):
     \f
 
     """
-    my_modem.edrx_info(ctx.obj['verbose'])
+    my_module.edrx_info(ctx.obj['verbose'])
 
 
 @edrx.command()
@@ -377,7 +378,7 @@ def enable(ctx, time):
     \f
 
     """
-    my_modem.edrx_enable(ctx.obj['verbose'], time)
+    my_module.edrx_enable(ctx.obj['verbose'], time)
 
 
 @edrx.command()
@@ -387,7 +388,7 @@ def disable(ctx):
     \f
 
     """
-    my_modem.edrx_disable(ctx.obj['verbose'])
+    my_module.edrx_disable(ctx.obj['verbose'])
 
 
 # ========================================================================
@@ -469,7 +470,7 @@ def update(ctx):
     \f
 
     """
-    my_modem.fw_update()
+    my_module.fw_update()
 
 
 # ========================================================================

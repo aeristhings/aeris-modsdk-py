@@ -37,27 +37,34 @@ class Module:
     def init_serial(self, com_port, apn, verbose=True):
         self.myserial = rmutils.open_serial('/dev/tty'+com_port)
 
-    def check_modem(self):
+    def get_info_add(self, cmd, keyname, info_obj):
         ser = self.myserial
+        value = self.parse_cmd_single_response(rmutils.write(ser, cmd))
+        info_obj.update( {keyname:value} )
+
+            
+    def get_info(self):
+        ser = self.myserial
+        mod_info = {}  # Initialize an empty dictionary object
         if not self.parse_cmd_response(rmutils.write(ser, 'ATI')):
             logger.warn('WARNING : The ATI command is not working. Please review configuration.')
             return False
-        rmutils.write(ser, 'AT+CIMI')  # IMSI
-        # rmutils.write(ser, 'AT#CCID')  # Prints ICCID -- Telit-specific
+        self.get_info_add('AT+CIMI', 'imsi', mod_info)
         response = rmutils.write(ser, 'AT+GMI', delay=1)  # Module Manufacturer
-        modem_type = (response.split('\r\n')[1]).replace('-', '')
-        if modem_type.strip().upper() == self.modem_mfg.upper():
-            rmutils.write(ser, 'AT+GMM')  # Module Model
-            rmutils.write(ser, 'AT+GSN')  # IMEI of ME
-            rmutils.write(ser, 'AT+GMR')  # Software Revision
-            # rmutils.write(ser, 'AT#SWPKGV')  # Software Package Version -- Telit-specific
+        mod_type = (response.split('\r\n')[1]).replace('-', '').strip().upper()
+        mod_info.update( {'maker':mod_type} )
+        if mod_type == self.modem_mfg.upper():
+            self.get_info_add('AT+GMM', 'model', mod_info)
+            self.get_info_add('AT+GSN', 'imei', mod_info)
+            self.get_info_add('AT+GMR', 'rev', mod_info)
             rmutils.write(ser, 'AT+CREG?')
             rmutils.write(ser, 'AT+COPS?')
             rmutils.write(ser, 'AT+CSQ')
             rmutils.write(ser, 'AT+CGDCONT=1,\"IP\","' + self.apn + '"')  # Setting  PDP Context Configuration
-            logger.info('Modem successfully verified')
+            #logger.info('Modem successfully verified')
         else:
-            logger.warn('WARNING : The modem type connected is ' + modem_type + '. Please review configuration')
+            logger.warn('WARNING : The modem type connected is ' + mod_type + '. Please review configuration')
+        return mod_info
 
     # ========================================================================
     #
@@ -118,7 +125,25 @@ class Module:
         if 'OK\r\n' not in response:
             return False
         else:
-            return True
+            # Strip the 'OK' ending and spaces at start
+            response = response.rstrip('OK\r\n').lstrip()
+            # Split the remaining values with newline seperation
+            vals = response.split('\r\n')
+            #print(str(vals))
+            return vals
+
+
+    def parse_cmd_single_response(self, response):
+        # Make sure command ends with 'OK'
+        if 'OK\r\n' not in response:
+            return False
+        else:
+            # Strip the 'OK' ending and spaces at start
+            response = response.rstrip('OK\r\n').lstrip()
+            # Split the remaining values with newline seperation
+            vals = response.split('\r\n')
+            #print(str(vals))
+            return vals[0]
 
 
     def parse_response(self, response, prefix):
