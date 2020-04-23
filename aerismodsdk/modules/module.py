@@ -117,15 +117,8 @@ class Module:
         # Make sure command ends with 'OK'
         if 'OK\r\n' not in response:
             return False
-        # Strip the 'OK' ending and spaces at start
-        response = response.rstrip('OK\r\n').lstrip()
-        # Find the prefix we want to take out
-        findex = response.rfind(prefix) + len(prefix)
-        # Get the substring after the prefix
-        value = response[findex: len(response)]
-        # Split the remaining values with comma seperation
-        vals = value.split(',')
-        return vals
+        else:
+            return True
 
 
     def parse_response(self, response, prefix):
