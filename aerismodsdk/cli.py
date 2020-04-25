@@ -140,6 +140,17 @@ def info(ctx):
 
 @mycli.command()
 @click.pass_context
+def reset(ctx):
+    """Reset module
+    \f
+
+    """
+    reset_info = my_module.reset()
+    print(str(reset_info))
+
+
+@mycli.command()
+@click.pass_context
 def interactive(ctx):
     """Interactive mode
     \f
@@ -366,7 +377,7 @@ def info(ctx):
     \f
 
     """
-    my_module.edrx_info(ctx.obj['verbose'])
+    my_module.get_edrx_info(ctx.obj['verbose'])
 
 
 @edrx.command()
@@ -378,7 +389,7 @@ def enable(ctx, time):
     \f
 
     """
-    my_module.edrx_enable(ctx.obj['verbose'], time)
+    my_module.enable_edrx(ctx.obj['verbose'], time)
 
 
 @edrx.command()
@@ -388,7 +399,7 @@ def disable(ctx):
     \f
 
     """
-    my_module.edrx_disable(ctx.obj['verbose'])
+    my_module.disable_edrx(ctx.obj['verbose'])
 
 
 # ========================================================================

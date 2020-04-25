@@ -40,6 +40,15 @@ class Module:
         self.myserial = rmutils.open_serial('/dev/tty'+com_port)
 
 
+    def reset(self):
+        ser = self.myserial
+        self.disable_psm(verbose = True)
+        self.disable_edrx(verbose = True)
+        rmutils.write(ser, 'AT+CFUN=4', delay=3)
+        rmutils.write(ser, 'AT+CFUN=1,1')
+        return True
+
+
     def get_info(self):
         ser = self.myserial
         mod_info = {}  # Initialize an empty dictionary object
@@ -74,9 +83,9 @@ class Module:
         rmutils.write(self.myserial, 'AT+COPS?')
         rmutils.write(self.myserial, 'AT+CSQ')
         rmutils.write(self.myserial, 'AT+CIND?')
-        # if self.verbose:
-            # rmutils.write(self.myserial, 'AT+COPS=?')
-            # rmutils.wait_urc(self.myserial, 180, self.com_port)
+        if self.verbose:
+            rmutils.write(self.myserial, 'AT+COPS=?')
+            rmutils.wait_urc(self.myserial, 60, self.com_port)
 
 
     def set_network(self, operator_name, format, act=8):
@@ -366,7 +375,7 @@ class Module:
         return switcher.get(i, "Invalid value")
 
 
-    def edrx_info(self,verbose):
+    def get_edrx_info(self,verbose):
         ser = self.myserial
         # Read eDRX settings requested and network-provided
         edrxsettings = rmutils.write(ser, 'AT+CEDRXRDP', verbose=verbose)
@@ -386,7 +395,7 @@ class Module:
             print('Paging time: ' + str(p_time))
 
 
-    def edrx_enable(self,verbose, edrx_time):
+    def enable_edrx(self,verbose, edrx_time):
         cycle_time = self.get_edrx_config(edrx_time)
         print('Cycle time config: ' + str(cycle_time))
         mycmd = 'AT+CEDRXS=2,4,"{0:04b}"'.format(cycle_time)
@@ -395,7 +404,7 @@ class Module:
         print('edrx is now enabled for LTE-M')
 
 
-    def edrx_disable(self,verbose):
+    def disable_edrx(self,verbose):
         mycmd = 'AT+CEDRXS=0'
         ser = self.myserial
         rmutils.write(ser, mycmd, verbose=verbose)
