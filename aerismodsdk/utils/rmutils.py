@@ -55,6 +55,7 @@ def open_serial(modem_port):
         )
         myserial.isOpen()
     except serial.serialutil.SerialException:
+        myserial = None
         print("Could not open serial port")
     return myserial
 

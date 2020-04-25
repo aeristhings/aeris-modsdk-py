@@ -29,34 +29,31 @@ class Module:
         self.apn = apn
         self.verbose = verbose
         self.modem_mfg = modem_mfg
-        aerisutils.vprint(verbose, 'Using modem port: ' + com_port)
+        #aerisutils.vprint(verbose, 'Using modem port: ' + com_port)
         self.myserial = rmutils.open_serial(self.com_port)
-        logger.info('Established Serial Connection')
-        rmutils.write(self.myserial, 'ATE0', verbose=verbose)  # Turn off echo
+        if self.myserial is not None:
+            logger.info('Established Serial Connection')
+            rmutils.write(self.myserial, 'ATE0', verbose=verbose)  # Turn off echo
+
 
     def init_serial(self, com_port, apn, verbose=True):
         self.myserial = rmutils.open_serial('/dev/tty'+com_port)
 
-    def get_info_add(self, cmd, keyname, info_obj):
-        ser = self.myserial
-        value = self.parse_cmd_single_response(rmutils.write(ser, cmd))
-        info_obj.update( {keyname:value} )
 
-            
     def get_info(self):
         ser = self.myserial
         mod_info = {}  # Initialize an empty dictionary object
         if not self.parse_cmd_response(rmutils.write(ser, 'ATI')):
             logger.warn('WARNING : The ATI command is not working. Please review configuration.')
             return False
-        self.get_info_add('AT+CIMI', 'imsi', mod_info)
+        self.get_info_for_obj('AT+CIMI', 'imsi', mod_info)
         response = rmutils.write(ser, 'AT+GMI', delay=1)  # Module Manufacturer
         mod_type = (response.split('\r\n')[1]).replace('-', '').strip().upper()
         mod_info.update( {'maker':mod_type} )
         if mod_type == self.modem_mfg.upper():
-            self.get_info_add('AT+GMM', 'model', mod_info)
-            self.get_info_add('AT+GSN', 'imei', mod_info)
-            self.get_info_add('AT+GMR', 'rev', mod_info)
+            self.get_info_for_obj('AT+GMM', 'model', mod_info)
+            self.get_info_for_obj('AT+GSN', 'imei', mod_info)
+            self.get_info_for_obj('AT+GMR', 'rev', mod_info)
             rmutils.write(ser, 'AT+CREG?')
             rmutils.write(ser, 'AT+COPS?')
             rmutils.write(ser, 'AT+CSQ')
@@ -77,9 +74,9 @@ class Module:
         rmutils.write(self.myserial, 'AT+COPS?')
         rmutils.write(self.myserial, 'AT+CSQ')
         rmutils.write(self.myserial, 'AT+CIND?')
-        if self.verbose:
-            rmutils.write(self.myserial, 'AT+COPS=?')
-            rmutils.wait_urc(self.myserial, 15, self.com_port)
+        # if self.verbose:
+            # rmutils.write(self.myserial, 'AT+COPS=?')
+            # rmutils.wait_urc(self.myserial, 180, self.com_port)
 
 
     def set_network(self, operator_name, format, act=8):
@@ -120,6 +117,12 @@ class Module:
     #
 
 
+    def get_info_for_obj(self, cmd, keyname, info_obj):
+        ser = self.myserial
+        value = self.parse_cmd_single_response(rmutils.write(ser, cmd))
+        info_obj.update( {keyname:value} )
+
+            
     def parse_cmd_response(self, response):
         # Make sure command ends with 'OK'
         if 'OK\r\n' not in response:
