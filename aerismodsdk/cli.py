@@ -175,7 +175,8 @@ def network(ctx):
 @network.command()
 @click.pass_context
 def info(ctx):
-    my_module.get_network_info(ctx.obj['verbose'])
+    network_info = my_module.get_network_info(ctx.obj['verbose'])
+    print('Network info object: ' + str(network_info))
 
 
 @network.command()

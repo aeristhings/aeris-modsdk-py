@@ -78,14 +78,50 @@ class Module:
     #
 
 
+    def reg_status(self,i):  # Registration status
+        switcher = {
+            '0': '0: Not registered',
+            '1': '1: Registered; home network',
+            '2': '2: Not registered; scanning',
+            '3': '3: Registration denied',
+            '4': '4: Unknown',
+            '5': '5: Registered; roaming'}
+        return switcher.get(i, "Invalid value")
+
     def get_network_info(self, verbose):
-        rmutils.write(self.myserial, 'AT+CREG?')
-        rmutils.write(self.myserial, 'AT+COPS?')
-        rmutils.write(self.myserial, 'AT+CSQ')
-        rmutils.write(self.myserial, 'AT+CIND?')
+        net_info = {}  # Initialize an empty dictionary object
+        # Registration status
+        values = self.get_values_for_cmd('AT+CREG?', '+CREG:')
+        net_info.update( {'reg_status':self.reg_status(values[1])} )
+        # Operator selection
+        values = self.get_values_for_cmd('AT+COPS?', '+COPS:')
+        net_info.update( {'op_mode':values[0]} )        
+        net_info.update( {'op_format':values[1]} )        
+        net_info.update( {'op_id':values[2]} )        
+        net_info.update( {'op_act':values[3]} )
+        # Signal quality
+        values = self.get_values_for_cmd('AT+CSQ', '+CSQ:')
+        net_info.update( {'rssi':(-113 + (2*int(values[0])))} )        
+        net_info.update( {'ber':values[1]} )
+        # Indicator control
+        #rmutils.write(self.myserial, 'AT+CIND?')
+        values = self.get_values_for_cmd('AT+CIND?', '+CIND:')
+        net_info.update( {'battchg':values[0]} )
+        net_info.update( {'signal':values[1]} )
+        net_info.update( {'service':values[2]} )
+        net_info.update( {'call':values[3]} )
+        net_info.update( {'roam':values[4]} )
+        net_info.update( {'smsfull':values[5]} )
+        net_info.update( {'gprs_cov':values[6]} )
+        net_info.update( {'callsetup':values[7]} )
         if self.verbose:
-            rmutils.write(self.myserial, 'AT+COPS=?')
-            rmutils.wait_urc(self.myserial, 60, self.com_port)
+            ops = rmutils.write(self.myserial, 'AT+COPS=?')
+            #print('cops return: ' + ops)
+            if ops is None or ops == '':
+                print('No return from cops=?')
+                ops = rmutils.wait_urc(self.myserial, 60, self.com_port, returnonvalue='+COPS:')
+            #if ops is not None:
+        return net_info
 
 
     def set_network(self, operator_name, format, act=8):
@@ -126,12 +162,17 @@ class Module:
     #
 
 
+    def get_values_for_cmd(self, cmd, prefix):
+        ser = self.myserial
+        return self.parse_response(rmutils.write(ser, cmd), prefix)
+
+
     def get_info_for_obj(self, cmd, keyname, info_obj):
         ser = self.myserial
         value = self.parse_cmd_single_response(rmutils.write(ser, cmd))
         info_obj.update( {keyname:value} )
 
-            
+
     def parse_cmd_response(self, response):
         # Make sure command ends with 'OK'
         if 'OK\r\n' not in response:
@@ -164,7 +205,7 @@ class Module:
         # Find the prefix we want to take out
         findex = response.rfind(prefix) + len(prefix)
         # Get the substring after the prefix
-        value = response[findex: len(response)]
+        value = response[findex: len(response)].lstrip()
         # Split the remaining values with comma seperation
         vals = value.split(',')
         return vals

@@ -33,7 +33,7 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+CREG=2') 
         # Quectel-specific advanced configuration
         rmutils.write(ser, 'AT+QPSMEXTCFG?') 
-        super().get_network_info(verbose)
+        return super().get_network_info(verbose)
 
 
     # ========================================================================
