@@ -119,53 +119,6 @@ class UbloxModule(Module):
             rmutils.write(ser, mycmd, verbose=verbose)
 
 
-    def udp_listen(self, listen_port, listen_wait, verbose=True):
-        ser = self.myserial
-        read_socket = 0
-        if self.create_packet_session(verbose=verbose):
-            aerisutils.print_log('Packet session active: ' + self.my_ip)
-        else:
-            return False
-        # Close open sockets
-        self.close_socket(read_socket, verbose)
-        # Open UDP socket
-        mycmd = 'AT+USOCR=17'
-        val = rmutils.write(ser, mycmd, verbose=verbose)
-        socket_id = (super().parse_response(val, '+USOCR:'))[0]
-        print('Socket ID = ' + str(socket_id))
-        # Listen on udp socket port
-        mycmd = 'AT+USOLI=' + str(socket_id) + ',' + str(listen_port)
-        val = rmutils.write(ser, mycmd, verbose=verbose)      
-        # Wait for data up to X seconds
-        if listen_wait > 0:
-            rmutils.wait_urc(ser, listen_wait, self.com_port, returnonreset=True)
-        return True
-
-    def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):
-        ser = self.myserial
-        echo_host = host
-        #listen_port = '3032'
-        listen_port = port
-        # echo_host = '195.34.89.241' # ublox echo server
-        # port = '7' # ublox echo server port
-        self.create_packet_session(verbose=verbose)
-        rmutils.write(ser, 'AT+USOCL=0', verbose=verbose)  # Make sure our socket closed
-        mycmd = 'AT+USOCR=17,' + str(listen_port)
-        rmutils.write(ser, mycmd, verbose=verbose)  # Create UDP socket connection
-        # Send data
-        udppacket = str(
-            '{"delay":' + str(echo_delay * 1000) + ', "ip":"' + self.my_ip + '","port":' + str(listen_port) + '}')
-        mycmd = 'AT+USOST=0,"' + echo_host + '",' + str(port) + ',' + str(len(udppacket))
-        rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
-        aerisutils.print_log('Sent echo command: ' + udppacket)
-        # Wait for data
-        if echo_wait > 0:
-            echo_wait = round(echo_wait + echo_delay)
-            rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
-                             returnonvalue='APP RDY')  # Wait up to X seconds for UDP data to come in
-            mycmd = 'AT+USORF=0,' + str(len(udppacket))
-            # rmutils.write(ser, mycmd, verbose=verbose)  # Read from socket
-
     def ping(self,host, verbose=True):
         print('ICMP Ping not supported by this module')
         return None
@@ -178,6 +131,71 @@ class UbloxModule(Module):
         ipvals = super().parse_response(ipvals.replace('\"', '').replace(' ', ''), '+UDNSRN:')
         # print('ipvals: ' + str(ipvals))
         return ipvals
+
+
+    # ========================================================================
+    #
+    # The udp stuff
+    #
+
+
+    def udp_listen(self, listen_port, listen_wait, verbose=True):
+        ser = self.myserial
+        udp_socket = 0
+        if self.create_packet_session(verbose=verbose):
+            aerisutils.print_log('Packet session active: ' + self.my_ip)
+        else:
+            return False
+        # Close our read socket
+        self.close_socket(udp_socket, verbose)
+        # Open UDP socket
+        socket_id = (super().get_values_for_cmd('AT+USOCR=17','+USOCR:'))[0]
+        print('Socket ID = ' + str(socket_id))
+        # Listen on udp socket port
+        mycmd = 'AT+USOLI=' + str(socket_id) + ',' + str(listen_port)
+        val = rmutils.write(ser, mycmd, verbose=verbose)      
+        # Wait for data up to X seconds
+        if listen_wait > 0:
+            rmutils.wait_urc(ser, listen_wait, self.com_port, returnonreset=True)
+        return True
+
+    def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):
+        ser = self.myserial
+        echo_host = host
+        listen_port = port
+        udp_socket = 0
+        # echo_host = '195.34.89.241' # ublox echo server
+        # port = '7' # ublox echo server port
+        # Make sure we have a packet session
+        self.create_packet_session(verbose=verbose)
+        # Close our read socket
+        self.close_socket(udp_socket, verbose)
+        # Create a UDP socket
+        mycmd = 'AT+USOCR=17,' + str(listen_port)
+        rmutils.write(ser, mycmd, verbose=verbose)
+        # Send data
+        udppacket = str(
+            '{"delay":' + str(echo_delay * 1000) + ', "ip":"' 
+            + self.my_ip + '","port":' + str(listen_port) + '}')
+        mycmd = 'AT+USOST=0,"' + echo_host + '",' + str(port) + ',' + str(len(udppacket))
+        rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
+        aerisutils.print_log('Sent echo command: ' + udppacket)
+        # Always wait long enough to verify packet sent
+        vals = rmutils.wait_urc(ser, 5, self.com_port, returnonvalue='OK', verbose=verbose)
+        print('Return: ' + str(vals))
+        if echo_wait == 0:
+            # True indicates we sent the echo
+            return True
+        else:
+            # Wait for data
+            echo_wait = round(echo_wait + echo_delay)
+            # vals = rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
+                             # returnonvalue='APP RDY')  # Wait up to X seconds for UDP data to come in
+            vals = rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
+                             returnonvalue='+UUSORF:', verbose=verbose)
+            print('Return: ' + str(vals))
+            mycmd = 'AT+USORF=0,' + str(len(udppacket))
+            rmutils.write(ser, mycmd, verbose=verbose)  # Read from socket
 
 
     # ========================================================================
