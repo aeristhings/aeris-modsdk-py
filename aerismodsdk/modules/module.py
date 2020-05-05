@@ -95,10 +95,11 @@ class Module:
         net_info.update( {'reg_status':self.reg_status(values[1])} )
         # Operator selection
         values = self.get_values_for_cmd('AT+COPS?', '+COPS:')
-        net_info.update( {'op_mode':values[0]} )        
-        net_info.update( {'op_format':values[1]} )        
-        net_info.update( {'op_id':values[2]} )        
-        net_info.update( {'op_act':values[3]} )
+        net_info.update( {'op_mode':values[0]} )
+        if len(values) > 1:
+            net_info.update( {'op_format':values[1]} )        
+            net_info.update( {'op_id':values[2]} )        
+            net_info.update( {'op_act':values[3]} )
         # Signal quality
         values = self.get_values_for_cmd('AT+CSQ', '+CSQ:')
         net_info.update( {'rssi':(-113 + (2*int(values[0])))} )        

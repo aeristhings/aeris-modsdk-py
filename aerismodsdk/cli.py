@@ -246,22 +246,59 @@ def lookup(ctx, host):
     my_module.lookup(host, verbose=ctx.obj['verbose'])
 
 
-@packet.command()
+# ========================================================================
+#
+# Define the udp group of commands
+#
+@mycli.group()
+@click.pass_context
+def udp(ctx):
+    """UDP commands
+    \f
+
+    """
+
+
+@udp.command()
 @click.option("--delay", "-d", default=1,
               help="Delay request to send to udp echo server. Units = seconds")
 @click.option("--wait", "-w", default=4,
               help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
-def udp(ctx, delay, wait):
+def echo(ctx, delay, wait):
+    """Send UDP echo and wait for response
+    \f
+
+    """
     my_module.udp_echo(delay, wait, verbose=ctx.obj['verbose'])
 
 
-@packet.command()
+@udp.command()
+@click.option("--port", "-p", default=3030,
+              help="Port to listen on.")
 @click.option("--wait", "-w", default=200,
               help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
-def listen(ctx, wait):
-    my_module.udp_listen('3030', wait)
+def listen(ctx, port, wait):
+    """Listen for UDP messages on specified port
+    \f
+
+    """
+    my_module.udp_listen(port, wait)
+
+
+@udp.command()
+@click.option("--host", "-h", default='1.1.1.1',
+              help="Destination host name or IP address")
+@click.option("--port", "-p", default=3030,
+              help="Destination port.")
+@click.pass_context
+def send(ctx, host, port):
+    """Send UDP message to host:port
+    \f
+
+    """
+    #my_module.udp_listen(port, wait)
 
 
 # ========================================================================

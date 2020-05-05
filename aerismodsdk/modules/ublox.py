@@ -31,8 +31,8 @@ class UbloxModule(Module):
 
     def get_network_info(self, verbose):
         super().get_network_info(verbose)
-        if self.verbose:
-            rmutils.wait_urc(self.myserial, 30, self.com_port)
+        # if self.verbose:
+            # rmutils.wait_urc(self.myserial, 30, self.com_port)
 
     def set_network(self, operator_name, format, act=7):
         super(UbloxModule, self).set_network(operator_name, format, act=7)
@@ -106,24 +106,39 @@ class UbloxModule(Module):
         rmutils.write(ser, 'AT+URDFILE="get.ffs"', delay=1, verbose=verbose)  # Read the file
         rmutils.write(ser, 'AT+UDELFILE="get.ffs"', delay=1, verbose=verbose)  # Delete the file
 
+
+    def close_socket(self, socket_id = None, verbose=True):
+        ser = self.myserial
+        if socket_id is None:
+            for i in range(7):
+                # Close socket
+                mycmd = 'AT+USOCL=' + str(i)
+                rmutils.write(ser, mycmd, verbose=verbose)
+        else:
+            mycmd = 'AT+USOCL=' + str(socket_id)
+            rmutils.write(ser, mycmd, verbose=verbose)
+
+
     def udp_listen(self, listen_port, listen_wait, verbose=True):
         ser = self.myserial
-        read_sock = '1'  # Use socket 1 for listen
+        read_socket = 0
         if self.create_packet_session(verbose=verbose):
             aerisutils.print_log('Packet session active: ' + self.my_ip)
         else:
             return False
-        # Open UDP socket for listen
-        mycmd = 'AT+USOCR=17,' + read_sock
-        rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create UDP socket connection
-        sostate = rmutils.write(ser, 'AT+USOCR?', verbose=verbose)  # Check socket state
-        # if "UDP" not in sostate:  # Try one more time with a delay if not connected
-        #    sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock, delay=1, verbose=verbose)  # Check socket state
-        #    if "UDP" not in sostate:
-        #        return False
-        # Wait for data
+        # Close open sockets
+        self.close_socket(read_socket, verbose)
+        # Open UDP socket
+        mycmd = 'AT+USOCR=17'
+        val = rmutils.write(ser, mycmd, verbose=verbose)
+        socket_id = (super().parse_response(val, '+USOCR:'))[0]
+        print('Socket ID = ' + str(socket_id))
+        # Listen on udp socket port
+        mycmd = 'AT+USOLI=' + str(socket_id) + ',' + str(listen_port)
+        val = rmutils.write(ser, mycmd, verbose=verbose)      
+        # Wait for data up to X seconds
         if listen_wait > 0:
-            rmutils.wait_urc(ser, listen_wait, self.com_port, returnonreset=True)  # Wait up to X seconds for UDP data to come in
+            rmutils.wait_urc(ser, listen_wait, self.com_port, returnonreset=True)
         return True
 
     def udp_echo(self, echo_delay, echo_wait, verbose=True):
