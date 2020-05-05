@@ -260,17 +260,21 @@ def udp(ctx):
 
 
 @udp.command()
+@click.option("--host", "-h", default='35.212.147.4',
+              help="Echo server host name or IP address")
+@click.option("--port", "-p", default=3030,
+              help="Echo server port to send echo to.")
 @click.option("--delay", "-d", default=1,
               help="Delay request to send to udp echo server. Units = seconds")
 @click.option("--wait", "-w", default=4,
               help="Time to wait for udp echo to return. Units = seconds")
 @click.pass_context
-def echo(ctx, delay, wait):
+def echo(ctx, host, port, delay, wait):
     """Send UDP echo and wait for response
     \f
 
     """
-    my_module.udp_echo(delay, wait, verbose=ctx.obj['verbose'])
+    my_module.udp_echo(host, port, delay, wait, verbose=ctx.obj['verbose'])
 
 
 @udp.command()

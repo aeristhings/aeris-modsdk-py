@@ -115,7 +115,7 @@ class QuectelModule(Module):
             rmutils.wait_urc(ser, listen_wait, self.com_port,returnonreset=True)  # Wait up to X seconds for UDP data to come in
         return True
 
-    def udp_echo(self,echo_delay, echo_wait, verbose=True):
+    def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):
         ser = self.myserial
         echo_host = '35.212.147.4'
         port = '3030'

@@ -141,21 +141,21 @@ class UbloxModule(Module):
             rmutils.wait_urc(ser, listen_wait, self.com_port, returnonreset=True)
         return True
 
-    def udp_echo(self, echo_delay, echo_wait, verbose=True):
+    def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):
         ser = self.myserial
-        echo_host = '35.212.147.4'  # aeris echo server
-        port = '3030'  # aeris echo server port
-        listen_port = '3032'
+        echo_host = host
+        #listen_port = '3032'
+        listen_port = port
         # echo_host = '195.34.89.241' # ublox echo server
         # port = '7' # ublox echo server port
         self.create_packet_session(verbose=verbose)
         rmutils.write(ser, 'AT+USOCL=0', verbose=verbose)  # Make sure our socket closed
-        mycmd = 'AT+USOCR=17,' + listen_port
+        mycmd = 'AT+USOCR=17,' + str(listen_port)
         rmutils.write(ser, mycmd, verbose=verbose)  # Create UDP socket connection
         # Send data
         udppacket = str(
             '{"delay":' + str(echo_delay * 1000) + ', "ip":"' + self.my_ip + '","port":' + str(listen_port) + '}')
-        mycmd = 'AT+USOST=0,"' + echo_host + '",' + port + ',' + str(len(udppacket))
+        mycmd = 'AT+USOST=0,"' + echo_host + '",' + str(port) + ',' + str(len(udppacket))
         rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
         aerisutils.print_log('Sent echo command: ' + udppacket)
         # Wait for data

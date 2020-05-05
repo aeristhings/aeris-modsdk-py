@@ -140,7 +140,7 @@ class TelitModule(Module):
             rmutils.write(ser, 'AT#SS', delay=1)
         return True
 
-    def udp_echo(self, echo_delay, echo_wait, verbose):
+    def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):
         echo_host = '35.212.147.4'
         echo_port = '3030'
         listen_port = '3032'
