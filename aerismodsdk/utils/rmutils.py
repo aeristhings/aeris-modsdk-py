@@ -99,7 +99,7 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
     myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
-    aerisutils.print_log('Starting to wait {0}s for URC.'.format(timeout))
+    aerisutils.print_log('Starting to wait {0}s for URC.'.format(timeout), verbose)
     while elapsed_time < timeout:
         try:
             while ser.inWaiting() > 0:
@@ -107,14 +107,14 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
                 mybytes.append(mybyte)
                 if mybyte == 10:  # Newline
                     oneline = mybytes.decode("utf-8")  # Change to utf-8
-                    aerisutils.print_log("<< " + oneline.strip())
+                    aerisutils.print_log("<< " + oneline.strip(), verbose)
                     myfinalout = myfinalout + oneline
                     if returnonvalue:
                         if oneline.find(returnonvalue) > -1:
                             return myfinalout
                     mybytes = bytearray()
         except IOError:
-            aerisutils.print_log('Exception while waiting for URC.')
+            aerisutils.print_log('Exception while waiting for URC.', verbose)
             ser.close()
             find_serial(com_port, verbose=True, timeout=(timeout - elapsed_time))
             if returnonreset:
@@ -123,7 +123,7 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
                 ser.open()
         time.sleep(0.5)
         elapsed_time = time.time() - start_time
-    aerisutils.print_log('Finished waiting for URC.')
+    aerisutils.print_log('Finished waiting for URC.', verbose)
     return myfinalout
 
 

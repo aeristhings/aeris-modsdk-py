@@ -274,7 +274,8 @@ def echo(ctx, host, port, delay, wait):
     \f
 
     """
-    my_module.udp_echo(host, port, delay, wait, verbose=ctx.obj['verbose'])
+    success = my_module.udp_echo(host, port, delay, wait, verbose=ctx.obj['verbose'])
+    print('Success: ' + str(success))
 
 
 @udp.command()

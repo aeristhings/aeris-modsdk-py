@@ -18,5 +18,7 @@ def get_date_time_str():
     return now.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def print_log(logstr):
-    logger.info(get_date_time_str() + ' ' + logstr)
+def print_log(logstr, verbose = True):
+    if verbose:
+        logger.info(get_date_time_str() + ' ' + logstr)
+

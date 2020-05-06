@@ -172,17 +172,18 @@ class UbloxModule(Module):
         self.close_socket(udp_socket, verbose)
         # Create a UDP socket
         mycmd = 'AT+USOCR=17,' + str(listen_port)
-        rmutils.write(ser, mycmd, verbose=verbose)
+        socket_id = (super().get_values_for_cmd(mycmd,'+USOCR:'))[0]
+        #print('Socket ID = ' + str(socket_id))
         # Send data
         udppacket = str(
-            '{"delay":' + str(echo_delay * 1000) + ', "ip":"' 
-            + self.my_ip + '","port":' + str(listen_port) + '}')
-        mycmd = 'AT+USOST=0,"' + echo_host + '",' + str(port) + ',' + str(len(udppacket))
+                    '{"delay":' + str(echo_delay * 1000) + ', "ip":"' 
+                    + self.my_ip + '","port":' + str(listen_port) + '}')
+        mycmd = 'AT+USOST=' + str(socket_id) + ',"' + echo_host + '",' + str(port) + ',' + str(len(udppacket))
         rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
-        aerisutils.print_log('Sent echo command: ' + udppacket)
+        aerisutils.print_log('Sent echo command: ' + udppacket, verbose)
         # Always wait long enough to verify packet sent
         vals = rmutils.wait_urc(ser, 5, self.com_port, returnonvalue='OK', verbose=verbose)
-        print('Return: ' + str(vals))
+        #print('Return: ' + str(vals))
         if echo_wait == 0:
             # True indicates we sent the echo
             return True
@@ -193,9 +194,15 @@ class UbloxModule(Module):
                              # returnonvalue='APP RDY')  # Wait up to X seconds for UDP data to come in
             vals = rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
                              returnonvalue='+UUSORF:', verbose=verbose)
-            print('Return: ' + str(vals))
+            #print('Return: ' + str(vals))
             mycmd = 'AT+USORF=0,' + str(len(udppacket))
-            rmutils.write(ser, mycmd, verbose=verbose)  # Read from socket
+            #vals = rmutils.write(ser, mycmd, verbose=verbose)  # Read from socket
+            vals = (super().get_values_for_cmd(mycmd,'+USORF:'))
+            #print('Return: ' + str(vals))
+            if len(vals) > 0 and int(vals[3]) == len(udppacket):
+                return True
+            else:
+                return False
 
 
     # ========================================================================
