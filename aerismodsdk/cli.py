@@ -279,6 +279,34 @@ def echo(ctx, host, port, delay, wait):
 
 
 @udp.command()
+@click.option("--timeout", "-t", default=60*3,
+              help="Time to run the test. Units = seconds")
+@click.option("--delay", "-d", default=60,
+              help="Delay between echos. Units = seconds")
+@click.pass_context
+def test(ctx, timeout, delay):
+    """Send UDP echo and wait for response
+    \f
+
+    """
+    echo_host = '35.212.147.4'
+    echo_port = 3030
+    echo_delay = 1
+    echo_wait = 4
+    # Get ready to do some timing
+    start_time = time.time()
+    elapsed_time = 0
+    aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
+    while elapsed_time < timeout:
+        success = my_module.udp_echo(echo_host, echo_port, echo_delay, echo_wait, verbose=ctx.obj['verbose'])
+        aerisutils.print_log('Success: ' + str(success))
+        time.sleep(delay - echo_delay - echo_wait)
+        elapsed_time = time.time() - start_time
+    # Do some cleanup tasks
+    aerisutils.print_log('Finished test')
+
+
+@udp.command()
 @click.option("--port", "-p", default=3030,
               help="Port to listen on.")
 @click.option("--wait", "-w", default=200,
