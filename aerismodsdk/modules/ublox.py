@@ -83,30 +83,6 @@ class UbloxModule(Module):
         ser = self.myserial
         rmutils.write(ser, 'AT+CGACT=0')  # Deactivate context
 
-    def http_get(self, host, verbose=True):
-        ser = self.myserial
-        self.create_packet_session()
-        rmutils.write(ser, 'AT+CMEE=2', verbose=verbose)  # Enable verbose errors
-        rmutils.write(ser, 'AT+UHTTP=0', verbose=verbose)  # Reset http profile #0
-        try:
-            network = ipaddress.IPv4Network(host)
-            mycmd = 'AT+UHTTP=0,0,"' + host + '"'  # Set by IP address
-            mylookup = None
-        except ValueError:
-            mycmd = 'AT+UHTTP=0,1,"' + host + '"'  # Set by dns name
-            mylookup = 'AT+UDNSRN=0,"' + host + '"'  # Perform lookup
-        rmutils.write(ser, mycmd, verbose=verbose)  # Set server
-        if mylookup:
-            rmutils.write(ser, mylookup, delay=1, verbose=verbose)  # Do DNS lookup
-        rmutils.write(ser, 'AT+UHTTP=0,5,80', verbose=verbose)  # Set server IP address
-        rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)  # List files before the request
-        rmutils.write(ser, 'AT+UHTTPC=0,1,"/","get.ffs"', delay=1,
-                      verbose=verbose)  # Make get request; store in get.ffs file
-        rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)  # List files before the request
-        rmutils.write(ser, 'AT+URDFILE="get.ffs"', delay=1, verbose=verbose)  # Read the file
-        rmutils.write(ser, 'AT+UDELFILE="get.ffs"', delay=1, verbose=verbose)  # Delete the file
-
-
     def close_socket(self, socket_id = None, verbose=True):
         ser = self.myserial
         if socket_id is None:
@@ -131,6 +107,45 @@ class UbloxModule(Module):
         ipvals = super().parse_response(ipvals.replace('\"', '').replace(' ', ''), '+UDNSRN:')
         # print('ipvals: ' + str(ipvals))
         return ipvals
+
+
+    # ========================================================================
+    #
+    # The http stuff
+    #
+
+
+    def http_get(self, host, port=80, verbose=True):
+        ser = self.myserial
+        self.create_packet_session()
+        rmutils.write(ser, 'AT+CMEE=2', verbose=verbose)  # Enable verbose errors
+        # http profile commands works as <profile-id>, <opcode>
+        rmutils.write(ser, 'AT+UHTTP=0', verbose=verbose)  # Reset http profile #0
+        try:
+            # Try to treat the host as an IP address; we will get ValueError if not
+            network = ipaddress.IPv4Network(host)
+            mycmd = 'AT+UHTTP=0,0,"' + host + '"'  # Opcode = Set host by IP address
+            mylookup = None
+        except ValueError:
+            mycmd = 'AT+UHTTP=0,1,"' + host + '"'  # Opcode = Set host by dns name
+            mylookup = 'AT+UDNSRN=0,"' + host + '"'  # Perform lookup
+        # set the server (either ip address or host)
+        rmutils.write(ser, mycmd, verbose=verbose)
+        if mylookup:
+            # Do DNS lookup if we need one
+            rmutils.write(ser, mylookup, delay=1, verbose=verbose)
+        # Set http port
+        rmutils.write(ser, 'AT+UHTTP=0,5,' + str(port), verbose=verbose)
+        # List files before the request
+        rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)
+        # Make http get request; store in get.ffs file
+        rmutils.write(ser, 'AT+UHTTPC=0,1,"/","get.ffs"', delay=1, verbose=verbose)
+        # List files after the request
+        rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)
+        # Read the file 'get.ffs'
+        rmutils.write(ser, 'AT+URDFILE="get.ffs"', delay=1, verbose=verbose)
+        # Delete the file 'get.ffs'
+        rmutils.write(ser, 'AT+UDELFILE="get.ffs"', delay=1, verbose=verbose)
 
 
     # ========================================================================
@@ -199,7 +214,7 @@ class UbloxModule(Module):
             #vals = rmutils.write(ser, mycmd, verbose=verbose)  # Read from socket
             vals = (super().get_values_for_cmd(mycmd,'+USORF:'))
             #print('Return: ' + str(vals))
-            if len(vals) > 0 and int(vals[3]) == len(udppacket):
+            if len(vals) > 3 and int(vals[3]) == len(udppacket):
                 return True
             else:
                 return False

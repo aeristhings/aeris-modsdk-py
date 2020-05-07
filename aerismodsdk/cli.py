@@ -226,13 +226,6 @@ def stop(ctx):
 
 
 @packet.command()
-@click.argument('host', default='httpbin.org')  # Use httpbin.org to test
-@click.pass_context
-def get(ctx, host):
-    my_module.http_get(host, verbose=ctx.obj['verbose'])
-
-
-@packet.command()
 @click.argument('host', default='httpbin.org')
 @click.pass_context
 def ping(ctx, host):
@@ -244,6 +237,53 @@ def ping(ctx, host):
 @click.pass_context
 def lookup(ctx, host):
     my_module.lookup(host, verbose=ctx.obj['verbose'])
+
+
+# ========================================================================
+#
+# Define the http group of commands
+#
+@mycli.group()
+@click.pass_context
+def http(ctx):
+    """HTTP commands
+    \f
+
+    """
+
+
+@http.command()
+@click.argument('host', default='httpbin.org')  # Use httpbin.org to test
+@click.pass_context
+def get(ctx, host):
+    my_module.http_get(host, verbose=ctx.obj['verbose'])
+
+
+@http.command()
+@click.option("--timeout", "-t", default=3,
+              help="Time to run the test. Units = minutes")
+@click.option("--delay", "-d", default=60,
+              help="Delay between echos. Units = seconds")
+@click.pass_context
+def test(ctx, timeout, delay):
+    """Send http request and wait for response
+    \f
+
+    """
+    timeout = timeout * 60
+    http_host = 'httpbin.org'
+    http_port = 80
+    # Get ready to do some timing
+    start_time = time.time()
+    elapsed_time = 0
+    aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
+    while elapsed_time < timeout:
+        success = my_module.http_get(host, http_port, verbose=ctx.obj['verbose'])
+        aerisutils.print_log('Success: ' + str(success))
+        time.sleep(delay)
+        elapsed_time = time.time() - start_time
+    # Do some cleanup tasks
+    aerisutils.print_log('Finished test')
 
 
 # ========================================================================
@@ -279,8 +319,8 @@ def echo(ctx, host, port, delay, wait):
 
 
 @udp.command()
-@click.option("--timeout", "-t", default=60*3,
-              help="Time to run the test. Units = seconds")
+@click.option("--timeout", "-t", default=3,
+              help="Time to run the test. Units = minutes")
 @click.option("--delay", "-d", default=60,
               help="Delay between echos. Units = seconds")
 @click.pass_context
@@ -289,6 +329,7 @@ def test(ctx, timeout, delay):
     \f
 
     """
+    timeout = timeout * 60
     echo_host = '35.212.147.4'
     echo_port = 3030
     echo_delay = 1
@@ -300,6 +341,9 @@ def test(ctx, timeout, delay):
     while elapsed_time < timeout:
         success = my_module.udp_echo(echo_host, echo_port, echo_delay, echo_wait, verbose=ctx.obj['verbose'])
         aerisutils.print_log('Success: ' + str(success))
+        if not success:
+            success = my_module.udp_echo(echo_host, echo_port, echo_delay, echo_wait, verbose=ctx.obj['verbose'])
+            aerisutils.print_log('Retry success: ' + str(success))        
         time.sleep(delay - echo_delay - echo_wait)
         elapsed_time = time.time() - start_time
     # Do some cleanup tasks
