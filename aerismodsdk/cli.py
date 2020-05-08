@@ -258,10 +258,7 @@ def http(ctx):
 @click.pass_context
 def get(ctx, host):
     response = my_module.http_get(host, verbose=ctx.obj['verbose'])
-    if response == False:
-        print('Error in request')
-    else:
-        print('Success')
+    print('Response: ' + response)
 
 
 @http.command()

@@ -141,15 +141,19 @@ class UbloxModule(Module):
         # Set http port
         rmutils.write(ser, 'AT+UHTTP=0,5,' + str(port), verbose=verbose)
         # List files before the request
-        rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)
+        rmutils.write(ser, 'AT+ULSTFILE=', verbose=verbose)
         # Make http get request; store in get.ffs file
-        rmutils.write(ser, 'AT+UHTTPC=0,1,"/","get.ffs"', delay=1, verbose=verbose)
+        rmutils.write(ser, 'AT+UHTTPC=0,1,"/","get.ffs"', verbose=verbose)
+        # Wait for response
+        vals = rmutils.wait_urc(ser, 60, self.com_port, returnonreset=True,
+                         returnonvalue='+UUHTTPCR:', verbose=verbose)
         # List files after the request
-        rmutils.write(ser, 'AT+ULSTFILE=', delay=1, verbose=verbose)
+        rmutils.write(ser, 'AT+ULSTFILE=', verbose=verbose)
         # Read the file 'get.ffs'
-        rmutils.write(ser, 'AT+URDFILE="get.ffs"', delay=1, verbose=verbose)
+        response = rmutils.write(ser, 'AT+URDFILE="get.ffs"', verbose=verbose)
         # Delete the file 'get.ffs'
-        rmutils.write(ser, 'AT+UDELFILE="get.ffs"', delay=1, verbose=verbose)
+        rmutils.write(ser, 'AT+UDELFILE="get.ffs"', verbose=verbose)
+        return response
 
 
     # ========================================================================
