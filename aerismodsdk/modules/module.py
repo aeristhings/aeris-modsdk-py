@@ -104,7 +104,7 @@ class Module:
         values = self.get_values_for_cmd('AT+CSQ', '+CSQ:')
         net_info.update( {'rssi':(-113 + (2*int(values[0])))} )        
         net_info.update( {'ber':values[1]} )
-        # Indicator control (for quectel)
+        # Indicator control (for quectel) -- move to quectel
         # values = self.get_values_for_cmd('AT+CIND?', '+CIND:')
         # net_info.update( {'battchg':values[0]} )
         # net_info.update( {'signal':values[1]} )
@@ -116,11 +116,9 @@ class Module:
         # net_info.update( {'callsetup':values[7]} )
         if self.verbose:
             ops = rmutils.write(self.myserial, 'AT+COPS=?')
-            #print('cops return: ' + ops)
             if ops is None or ops == '':
                 print('No return from cops=?')
                 ops = rmutils.wait_urc(self.myserial, 60, self.com_port, returnonvalue='+COPS:')
-            #if ops is not None:
         return net_info
 
 
@@ -167,7 +165,9 @@ class Module:
         Writes the command to the module and returns the response values
         """
         ser = self.myserial
-        return self.parse_response(rmutils.write(ser, cmd), prefix)
+        response = rmutils.write(ser, cmd, waitoe = True)
+        vals = self.parse_response(response, prefix)
+        return vals
 
 
     def get_info_for_obj(self, cmd, keyname, info_obj):
@@ -203,6 +203,9 @@ class Module:
 
 
     def parse_response(self, response, prefix):
+        # Check for error
+        if 'ERROR' in response:
+            return []
         # Strip the 'OK' ending and spaces at start
         response = response.rstrip('OK\r\n').lstrip()
         # Find the prefix we want to take out

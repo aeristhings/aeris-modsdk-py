@@ -30,12 +30,12 @@ class UbloxModule(Module):
         rmutils.write(self.myserial, 'AT+CGEREP=1,1', verbose=verbose)  # Enable URCs
 
     def get_network_info(self, verbose):
-        super().get_network_info(verbose)
+        return super().get_network_info(verbose)
         # if self.verbose:
             # rmutils.wait_urc(self.myserial, 30, self.com_port)
 
     def set_network(self, operator_name, format, act=7):
-        super(UbloxModule, self).set_network(operator_name, format, act=7)
+        return super(UbloxModule, self).set_network(operator_name, format, act=7)
 
     # ========================================================================
     #
@@ -104,9 +104,9 @@ class UbloxModule(Module):
         self.create_packet_session()
         # Create a lookup async command
         mycmd = 'AT+UDNSRN=0,"' + host + '"'
-        ipvals = rmutils.write(ser, mycmd, waitoe = True)
-        ipvals = super().parse_response(ipvals.replace('\"', '').replace(' ', ''), '+UDNSRN:')
-        #ipvals = super().get_values_for_cmd(mycmd, '+UDNSRN:')
+        #ipvals = rmutils.write(ser, mycmd, waitoe = True)
+        #ipvals = super().parse_response(ipvals.replace('\"', '').replace(' ', ''), '+UDNSRN:')
+        ipvals = super().get_values_for_cmd(mycmd, '+UDNSRN:')
         # print('ipvals: ' + str(ipvals))
         return ipvals
 
@@ -135,7 +135,9 @@ class UbloxModule(Module):
         rmutils.write(ser, mycmd, verbose=verbose)
         if mylookup:
             # Do DNS lookup if we need one
-            rmutils.write(ser, mylookup, delay=1, verbose=verbose)
+            ipvals = super().get_values_for_cmd(mylookup, '+UDNSRN:')
+            if len(ipvals) < 1 or ipvals[0] == '':
+                return False
         # Set http port
         rmutils.write(ser, 'AT+UHTTP=0,5,' + str(port), verbose=verbose)
         # List files before the request

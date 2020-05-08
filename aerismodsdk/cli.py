@@ -257,7 +257,11 @@ def http(ctx):
 @click.argument('host', default='httpbin.org')  # Use httpbin.org to test
 @click.pass_context
 def get(ctx, host):
-    my_module.http_get(host, verbose=ctx.obj['verbose'])
+    response = my_module.http_get(host, verbose=ctx.obj['verbose'])
+    if response == False:
+        print('Error in request')
+    else:
+        print('Success')
 
 
 @http.command()
