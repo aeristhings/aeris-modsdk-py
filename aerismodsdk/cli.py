@@ -236,7 +236,8 @@ def ping(ctx, host):
 @click.argument('host', default='httpbin.org')
 @click.pass_context
 def lookup(ctx, host):
-    my_module.lookup(host, verbose=ctx.obj['verbose'])
+    ipvals = my_module.lookup(host, verbose=ctx.obj['verbose'])
+    print('ip: ' + str(ipvals))
 
 
 # ========================================================================

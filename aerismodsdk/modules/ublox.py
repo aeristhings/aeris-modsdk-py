@@ -102,9 +102,11 @@ class UbloxModule(Module):
     def lookup(self, host, verbose=True):
         ser = self.myserial
         self.create_packet_session()
-        mycmd = 'AT+UDNSRN=0,"' + host + '"'  # Perform lookup
-        ipvals = rmutils.write(ser, mycmd, delay=6)  # Write a ping command; Wait timeout plus 2 seconds
+        # Create a lookup async command
+        mycmd = 'AT+UDNSRN=0,"' + host + '"'
+        ipvals = rmutils.write(ser, mycmd, waitoe = True)
         ipvals = super().parse_response(ipvals.replace('\"', '').replace(' ', ''), '+UDNSRN:')
+        #ipvals = super().get_values_for_cmd(mycmd, '+UDNSRN:')
         # print('ipvals: ' + str(ipvals))
         return ipvals
 
