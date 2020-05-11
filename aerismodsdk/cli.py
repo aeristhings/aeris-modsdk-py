@@ -457,8 +457,9 @@ def test(ctx, timeout, psmtau, psmat, delay):
     \f
 
     """
-    # Do some setup tasks
+    # Enable PSM
     my_module.enable_psm(psmtau, psmat, verbose=ctx.obj['verbose'])
+    # Make sure network allowed the configuration we asked for
     # Get ready to do some timing
     start_time = time.time()
     elapsed_time = 0

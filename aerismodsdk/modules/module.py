@@ -323,6 +323,7 @@ class Module:
         mycmd = 'AT+CPSMS=1,,,"{0:08b}","{1:08b}"'.format(tau_config, atime_config)
         rmutils.write(ser, mycmd, verbose=verbose)  # Enable PSM and set the timers
         aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
+        return True
 
 
     def disable_psm(self, verbose):
@@ -330,6 +331,7 @@ class Module:
         mycmd = 'AT+CPSMS=0'  # Disable PSM
         rmutils.write(ser, mycmd, delay=2)
         aerisutils.print_log('PSM is disabled')
+        return True
 
 
     # ========================================================================
