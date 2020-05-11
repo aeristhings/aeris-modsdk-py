@@ -280,8 +280,10 @@ def test(ctx, timeout, delay):
     elapsed_time = 0
     aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
     while elapsed_time < timeout:
-        success = my_module.http_get(host, http_port, verbose=ctx.obj['verbose'])
-        aerisutils.print_log('Success: ' + str(success))
+        response = my_module.http_get(http_host, http_port, verbose=ctx.obj['verbose'])
+        if response:
+            response = True
+        aerisutils.print_log('Success: ' + str(response))
         time.sleep(delay)
         elapsed_time = time.time() - start_time
     # Do some cleanup tasks
