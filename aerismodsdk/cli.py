@@ -273,7 +273,8 @@ def test(ctx, timeout, delay):
 
     """
     timeout = timeout * 60
-    http_host = 'httpbin.org'
+    #http_host = 'httpbin.org'
+    http_host = '35.212.147.4'
     http_port = 80
     # Get ready to do some timing
     start_time = time.time()
