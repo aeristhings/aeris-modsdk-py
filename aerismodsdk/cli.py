@@ -258,7 +258,7 @@ def http(ctx):
 @click.pass_context
 def get(ctx, host):
     response = my_module.http_get(host, verbose=ctx.obj['verbose'])
-    print('Response: ' + response)
+    print('Response: ' + str(response))
 
 
 @http.command()

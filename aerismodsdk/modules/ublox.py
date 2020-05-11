@@ -150,10 +150,29 @@ class UbloxModule(Module):
         # List files after the request
         rmutils.write(ser, 'AT+ULSTFILE=', verbose=verbose)
         # Read the file 'get.ffs'
+        mycmd = 'AT+URDFILE="get.ffs"'
         response = rmutils.write(ser, 'AT+URDFILE="get.ffs"', verbose=verbose)
+        #vals = super().get_values_for_cmd(mycmd, '+URDFILE:')
+        vals = self.parse_http_response(response, '+URDFILE:')
+        if len(vals) < 3:
+            response = False
+        else:
+            response = vals[2]
+        if response == '""':
+            response = False
         # Delete the file 'get.ffs'
         rmutils.write(ser, 'AT+UDELFILE="get.ffs"', verbose=verbose)
         return response
+
+
+    def parse_http_response(self, response, prefix):
+        # Strip the 'OK' ending and spaces at start
+        response = response.rstrip('OK\r\n').lstrip()
+        # Find the prefix we want to take out
+        response = response.lstrip(prefix).lstrip()
+        # Split the remaining values with comma seperation
+        vals = response.split(',', 2)  # max split 2
+        return vals
 
 
     # ========================================================================
