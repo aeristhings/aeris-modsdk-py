@@ -444,7 +444,7 @@ class Module:
             print('Paging time: ' + str(p_time))
 
 
-    def enable_edrx(self,verbose, edrx_time):
+    def enable_edrx(self, edrx_time, verbose=True):
         cycle_time = self.get_edrx_config(edrx_time)
         print('Cycle time config: ' + str(cycle_time))
         mycmd = 'AT+CEDRXS=2,4,"{0:04b}"'.format(cycle_time)

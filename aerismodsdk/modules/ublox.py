@@ -254,35 +254,13 @@ class UbloxModule(Module):
 
 
     def get_psm_info(self, verbose):
+        ser = self.myserial
+        # Check on urc setting
+        psmsettings = rmutils.write(ser, 'AT+CGEREP?', verbose=verbose)  # Check if urc enabled
+        # Check general Power Savings setting
+        rmutils.write(ser, 'AT+UPSV?', verbose=verbose)  # Get general power savings config
         return super().get_psm_info('+UCPSMS', 2, 2, verbose)   
-        # ser = self.myserial
-        # # Query settings provided by network
-        # psmsettings = rmutils.write(ser, 'AT+UCPSMS?', verbose=verbose)  # Check PSM settings
-        # vals = super().parse_response(psmsettings, '+UCPSMS:')
-        # if int(vals[0]) == 0:
-            # print('PSM is disabled')
-        # else:
-            # print('PSM enabled: ' + vals[0])
-            # tau_value = int(vals[3].strip('\"'), 2)
-            # print('TAU network-specified units: ' + str(super().tau_units(super().timer_units(tau_value))))
-            # print('TAU network-specified value: ' + str(super().timer_value(tau_value)))
-            # active_time = int(vals[4].strip('\"'), 2)
-            # print('Active time network-specified units: ' + str(super().at_units(super().timer_units(active_time))))
-            # print('Active time network-specified value: ' + str(super().timer_value(active_time)))
-            # # Query settings we requested
-            # psmsettings = rmutils.write(ser, 'AT+CPSMS?', verbose=verbose)  # Check PSM settings
-            # vals = super().parse_response(psmsettings, '+CPSMS:')
-            # tau_value = int(vals[3].strip('\"'), 2)
-            # print('PSM enabled: ' + vals[0])
-            # print('TAU requested units: ' + str(super().tau_units(super().timer_units(tau_value))))
-            # print('TAU requested value: ' + str(super().timer_value(tau_value)))
-            # active_time = int(vals[4].strip('\"'), 2)
-            # print('Active time requested units: ' + str(super().at_units(super().timer_units(active_time))))
-            # print('Active time requested value: ' + str(super().timer_value(active_time)))
-            # # Check on urc setting
-            # psmsettings = rmutils.write(ser, 'AT+CGEREP?', verbose=verbose)  # Check if urc enabled
-            # # Check general Power Savings setting
-            # rmutils.write(ser, 'AT+UPSV?', verbose=verbose)  # Get general power savings config
+
 
     def enable_psm(self, tau_time, atime, verbose=True):
         ser = self.myserial

@@ -457,15 +457,28 @@ def test(ctx, timeout, psmtau, psmat, delay):
     \f
 
     """
+    echo_host = '35.212.147.4'
+    echo_port = 3030
+    echo_delay = delay
+    echo_wait = 4
     # Enable PSM
     my_module.enable_psm(psmtau, psmat, verbose=ctx.obj['verbose'])
     # Make sure network allowed the configuration we asked for
+    psm_settings = my_module.get_psm_info(ctx.obj['verbose'])
+    tau_network = int(psm_settings['tau_network'])
+    if (tau_network - psmtau > 120):
+        my_module.disable_psm(verbose=ctx.obj['verbose'])
+        aerisutils.print_log('Network settings not within tolerance.')
+        return False
+    aerisutils.print_log('Network tau: ' + str(tau_network))
     # Get ready to do some timing
     start_time = time.time()
     elapsed_time = 0
     aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
     while elapsed_time < timeout:
-        my_module.udp_echo(delay, 4, verbose=ctx.obj['verbose'])
+        #my_module.udp_echo(delay, 4, verbose=ctx.obj['verbose'])
+        success = my_module.udp_echo(echo_host, echo_port, echo_delay, echo_wait, verbose=ctx.obj['verbose'])        
+        aerisutils.print_log('Success: ' + str(success))
         rmutils.wait_urc(my_module.myserial, timeout, my_module.com_port, returnonreset=True, returnonvalue='APP RDY',
                          verbose=ctx.obj['verbose'])  # Wait up to X seconds for app rdy
         time.sleep(5.0) # Sleep in case it helps telit be able to connect
@@ -502,15 +515,15 @@ def info(ctx):
 
 
 @edrx.command()
-@click.option("--time", "-t", default=5,
+@click.option("--cycletime", "-c", default=5,
               help="Requested eDRX cycle time in seconds.")
 @click.pass_context
-def enable(ctx, time):
+def enable(ctx, cycletime):
     """Enable eDRX
     \f
 
     """
-    my_module.enable_edrx(ctx.obj['verbose'], time)
+    my_module.enable_edrx(cycletime, ctx.obj['verbose'])
 
 
 @edrx.command()
@@ -521,6 +534,40 @@ def disable(ctx):
 
     """
     my_module.disable_edrx(ctx.obj['verbose'])
+
+
+@edrx.command()
+@click.option("--timeout", "-t", default=3,
+              help="Time to run the test. Units = minutes")
+@click.option("--delay", "-d", default=60,
+              help="Delay between echos. Units = seconds")
+@click.option("--cycletime", "-c", default=5,
+              help="PSM TAU")
+@click.pass_context
+def test(ctx, timeout, cycletime, delay):
+    """Test eDRX mode 
+    \f
+
+    """
+    timeout = timeout * 60
+    echo_host = '35.212.147.4'
+    echo_port = 3030
+    echo_delay = int(cycletime / 2)
+    echo_wait = int(cycletime / 2) + 4
+    # Enable eDRX
+    my_module.enable_edrx(cycletime, verbose=ctx.obj['verbose'])
+    # Get ready to do some timing
+    start_time = time.time()
+    elapsed_time = 0
+    aerisutils.print_log('Starting test for {0} seconds'.format(timeout))
+    while elapsed_time < timeout:
+        success = my_module.udp_echo(echo_host, echo_port, echo_delay, echo_wait + cycletime, verbose=ctx.obj['verbose'])        
+        aerisutils.print_log('Success: ' + str(success))
+        time.sleep(delay - echo_delay - echo_wait)
+        elapsed_time = time.time() - start_time
+    # Do some cleanup tasks
+    my_module.disable_psm(verbose=ctx.obj['verbose'])
+    aerisutils.print_log('Finished test')
 
 
 # ========================================================================
