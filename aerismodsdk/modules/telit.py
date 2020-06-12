@@ -93,12 +93,12 @@ class TelitModule(Module):
         """
 
     def http_get(self, url, verbose):
-        urlValues = urlsplit(url)  # Parse URL to get Host & Path
-        if urlValues.netloc:
-            host = urlValues.netloc
-            path = urlValues.path
+        url_values = urlsplit(url)  # Parse URL to get Host & Path
+        if url_values.netloc:
+            host = url_values.netloc
+            path = url_values.path
         else:
-            host = urlValues.path
+            host = url_values.path
             path = '/'
         ser = self.myserial
         self.create_packet_session()

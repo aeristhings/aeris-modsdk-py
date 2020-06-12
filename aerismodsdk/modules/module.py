@@ -23,6 +23,17 @@ Host: <hostname>
 """
 
 
+def reg_status(i):  # Registration status
+    switcher = {
+        '0': '0: Not registered',
+        '1': '1: Registered; home network',
+        '2': '2: Not registered; scanning',
+        '3': '3: Registration denied',
+        '4': '4: Unknown',
+        '5': '5: Registered; roaming'}
+    return switcher.get(i, "Invalid value")
+
+
 class Module:
     def __init__(self, modem_mfg, com_port, apn, verbose=True):
         self.com_port = '/dev/tty' + com_port
@@ -77,22 +88,11 @@ class Module:
     # Network stuff
     #
 
-
-    def reg_status(self,i):  # Registration status
-        switcher = {
-            '0': '0: Not registered',
-            '1': '1: Registered; home network',
-            '2': '2: Not registered; scanning',
-            '3': '3: Registration denied',
-            '4': '4: Unknown',
-            '5': '5: Registered; roaming'}
-        return switcher.get(i, "Invalid value")
-
     def get_network_info(self, verbose):
         net_info = {}  # Initialize an empty dictionary object
         # Registration status
         values = self.get_values_for_cmd('AT+CREG?', '+CREG:')
-        net_info.update( {'reg_status':self.reg_status(values[1])} )
+        net_info.update({'reg_status': reg_status(values[1])})
         # Operator selection
         values = self.get_values_for_cmd('AT+COPS?', '+COPS:')
         net_info.update( {'op_mode':values[0]} )
@@ -251,25 +251,27 @@ class Module:
 
 
     def get_tau_config(self,tau_time):
-        if tau_time > 1 and tau_time < (31 * 2):  # Use 2 seconds times up to 31
+        tau_config = 0
+        if 1 < tau_time < (31 * 2):  # Use 2 seconds times up to 31
             tau_config = 0b01100000 + int(tau_time / 2)
-        elif tau_time > 30 and tau_time < (31 * 30):  # Use 30 seconds times up to 31
+        elif 30 < tau_time < (31 * 30):  # Use 30 seconds times up to 31
             tau_config = 0b10000000 + int(tau_time / 30)
-        elif tau_time > 60 and tau_time < (31 * 60):  # Use 1 min times up to 31
+        elif 60 < tau_time < (31 * 60):  # Use 1 min times up to 31
             tau_config = 0b10100000 + int(tau_time / 60)
-        elif tau_time > 600 and tau_time < (31 * 600):  # Use 10 min times up to 31
+        elif 600 < tau_time < (31 * 600):  # Use 10 min times up to 31
             tau_config = 0b00000000 + int(tau_time / 600)
-        elif tau_time > 3600 and tau_time < (31 * 3600):  # Use 1 hour times up to 31
+        elif 3600 < tau_time < (31 * 3600):  # Use 1 hour times up to 31
             tau_config = 0b00100000 + int(tau_time / 3600)
-        elif tau_time > 36000 and tau_time < (31 * 36000):  # Use 10 hour times up to 31
+        elif 36000 < tau_time < (31 * 36000):  # Use 10 hour times up to 31
             tau_config = 0b01000000 + int(tau_time / 36000)
         print('TAU config: ' + "{0:08b}".format(tau_config))
         return tau_config
 
     def get_active_config(self,atime):
-        if atime > 1 and atime < (31 * 2):  # Use 2s * up to 31
+        atime_config = 0
+        if 1 < atime < (31 * 2):  # Use 2s * up to 31
             atime_config = 0b00000000 + int(atime / 2)
-        elif atime > 60 and atime < (31 * 60):  # Use 60s * up to 31
+        elif 60 < atime < (31 * 60):  # Use 60s * up to 31
             atime_config = 0b00100000 + int(atime / 60)
         print('Active time config: ' + "{0:08b}".format(atime_config))
         return atime_config
@@ -369,35 +371,36 @@ class Module:
         return switcher.get(i, "Invalid value")
 
     def get_edrx_config(self, cycle_time):
+        edrx_config = 0
         if cycle_time < 10:
             edrx_config = 0b0000  # 5.12 sec
-        elif cycle_time >= 10 and cycle_time < 20:
+        elif 10 <= cycle_time < 20:
             edrx_config = 0b0001  # 10.24 sec
-        elif cycle_time >= 20 and cycle_time < 40:
+        elif 20 <= cycle_time < 40:
             edrx_config = 0b0010  # 20.48 sec
-        elif cycle_time >= 40 and cycle_time < 60:
+        elif 40 <= cycle_time < 60:
             edrx_config = 0b0011  # 40.96 sec
-        elif cycle_time >= 60 and cycle_time < 80:
+        elif 60 <= cycle_time < 80:
             edrx_config = 0b0100  # 61.44 sec
-        elif cycle_time >= 80 and cycle_time < 100:
+        elif 80 <= cycle_time < 100:
             edrx_config = 0b0101  # 81.92 sec
-        elif cycle_time >= 100 and cycle_time < 120:
+        elif 100 <= cycle_time < 120:
             edrx_config = 0b0110  # 102.4 sec
-        elif cycle_time >= 120 and cycle_time < 140:
+        elif 120 <= cycle_time < 140:
             edrx_config = 0b0111  # 122.88 sec
-        elif cycle_time >= 140 and cycle_time < 160:
+        elif 140 <= cycle_time < 160:
             edrx_config = 0b1000  # 143.36 sec
-        elif cycle_time >= 160 and cycle_time < 320:
+        elif 160 <= cycle_time < 320:
             edrx_config = 0b1001  # 163.84 sec
-        elif cycle_time >= 320 and cycle_time < 640:
+        elif 320 <= cycle_time < 640:
             edrx_config = 0b1010  # 327.68 sec (5.5 min)
-        elif cycle_time >= 640 and cycle_time < 1280:
+        elif 640 <= cycle_time < 1280:
             edrx_config = 0b1011  # 655.36 sec (10.9 min)
-        elif cycle_time >= 1280 and cycle_time < 2560:
+        elif 1280 <= cycle_time < 2560:
             edrx_config = 0b1100  # 1310.72 sec (21 min)
-        elif cycle_time >= 2560 and cycle_time < 5120:
+        elif 2560 <= cycle_time < 5120:
             edrx_config = 0b1101  # 2621.44 sec (43 min)
-        elif cycle_time >= 5120 and cycle_time < 10240:
+        elif 5120 <= cycle_time < 10240:
             edrx_config = 0b1110  # 5242.88 sec (87 min)
         elif cycle_time >= 10240:
             edrx_config = 0b1111  # 10485.76 sec (174 min)

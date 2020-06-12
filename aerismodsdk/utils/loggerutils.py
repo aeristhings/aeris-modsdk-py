@@ -7,7 +7,7 @@ logger.setLevel(logging.INFO)
 
 
 def set_level(verbose):
-    if (verbose):
+    if verbose:
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)

@@ -9,6 +9,7 @@ from aerismodsdk.utils.loggerutils import logger
 
 class ModuleFactory:
     def get(self, modem_mfg, com_port, apn, verbose=True):
+        module = None
         if modem_mfg == Manufacturer.telit:
             module = TelitModule(modem_mfg.name, com_port, apn, verbose=verbose)
         elif modem_mfg == Manufacturer.quectel:

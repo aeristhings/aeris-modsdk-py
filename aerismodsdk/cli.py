@@ -466,7 +466,7 @@ def test(ctx, timeout, psmtau, psmat, delay):
     # Make sure network allowed the configuration we asked for
     psm_settings = my_module.get_psm_info(ctx.obj['verbose'])
     tau_network = int(psm_settings['tau_network'])
-    if (tau_network - psmtau > 120):
+    if tau_network - psmtau > 120:
         my_module.disable_psm(verbose=ctx.obj['verbose'])
         aerisutils.print_log('Network settings not within tolerance.')
         return False
@@ -600,7 +600,7 @@ def poweron(ctx):
     \f
 
     """
-    gpioutils.setupGPIO()
+    gpioutils.setup_gpio()
     gpioutils.disable()
     gpioutils.enable()
     gpioutils.poweron()
@@ -613,7 +613,7 @@ def poweroff(ctx):
     \f
 
     """
-    gpioutils.setupGPIO()
+    gpioutils.setup_gpio()
     gpioutils.disable()
 
 
@@ -625,7 +625,7 @@ def pwrkey(ctx, pwrval):
     \f
 
     """
-    gpioutils.setupGPIO()
+    gpioutils.setup_gpio()
     gpioutils.set_pwrkey(pwrval)
 
 

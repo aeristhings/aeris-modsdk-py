@@ -9,7 +9,7 @@ BG96_DISABLE = 17
 BG96_POWERKEY = 24
 BG96_STATUS = 23
 
-def setupGPIO():
+def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     GPIO.setup(BG96_DISABLE, GPIO.OUT) # Note that 1 value is disable
@@ -64,7 +64,7 @@ def get_status():
     return GPIO.input(BG96_STATUS)
 
 def print_status():
-    setupGPIO()
+    setup_gpio()
     print('BG96_DISABLE: ' + str(get_disable()))
     print('BG96_POWERKEY: ' + str(get_pwrkey()))
     print('BG96_STATUS: ' + str(get_status()))

@@ -90,7 +90,7 @@ def write(ser, cmd, moredata=None, waitoe=False, delay=0, timeout=1.0, verbose=T
             if 'OK' in myoututf8 or 'ERROR' in myoututf8:
                 #print('Found OK')
                 waitoe = False
-    if (moredata != None):
+    if moredata is not None:
         # print('More data length: ' + str(len(moredata)))
         aerisutils.vprint(verbose, 'More data: ' + moredata)
         time.sleep(1)
