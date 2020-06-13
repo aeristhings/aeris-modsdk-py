@@ -61,6 +61,7 @@ def open_serial(modem_port):
 
 
 def write(ser, cmd, moredata=None, waitoe=False, delay=0, timeout=1.0, verbose=True):
+# waitoe means 'wait for ok or error'
     if ser is None:
         print('Serial port is not open')
         return None

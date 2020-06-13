@@ -41,6 +41,7 @@ class QuectelModule(Module):
     # The packet stuff
     #
 
+
     def parse_constate(self, constate):
         if len(constate) < len('+QIACT: '):
             return False
@@ -52,6 +53,7 @@ class QuectelModule(Module):
             self.my_ip = vals2[1]
             # print('My IP: ' + self.my_ip)
             return self.my_ip
+
 
     def create_packet_session(self, verbose=True):
         ser = self.myserial
@@ -65,17 +67,43 @@ class QuectelModule(Module):
                 return False
         return True
 
+
     def get_packet_info(self, verbose=True):
         ser = self.myserial
         constate = rmutils.write(ser, 'AT+QIACT?', verbose=verbose)  # Check if we are already connected
         return self.parse_constate(constate)
 
+
     def start_packet_session(self,verbose=True):
         self.create_packet_session()
+
 
     def stop_packet_session(self, verbose=True):
         ser = self.myserial
         rmutils.write(ser, 'AT+QIDEACT=1')  # Deactivate context
+
+
+    def ping(self,host,verbose):
+        ser = self.myserial
+        self.create_packet_session()
+        mycmd = 'AT+QPING=1,\"' + host + '\",4,4'  # Context, host, timeout, pingnum
+        rmutils.write(ser, mycmd, delay=6)  # Write a ping command; Wait timeout plus 2 seconds
+
+
+    def lookup(self, host, verbose):
+        ser = self.myserial
+        self.create_packet_session()
+        rmutils.write(ser, 'AT+QIDNSCFG=1')  # Check DNS server
+        mycmd = 'AT+QIDNSGIP=1,\"' + host + '\"'
+        rmutils.write(ser, mycmd, timeout=0)  # Write a dns lookup command
+        rmutils.wait_urc(ser, 4,self.com_port)  # Wait up to 4 seconds for results to come back via urc
+
+
+    # ========================================================================
+    #
+    # The http stuff
+    #
+
 
     def http_get(self, host, verbose):
         ser = self.myserial
@@ -94,6 +122,12 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
         # Read the response
         rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
+
+    # ========================================================================
+    #
+    # The udp stuff
+    #
+
 
     def udp_listen(self,listen_port, listen_wait, verbose=True):
         ser = self.myserial
@@ -138,26 +172,23 @@ class QuectelModule(Module):
         rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
         rmutils.write(ser, 'AT+QISEND=0,0', verbose=verbose)  # Check how much data sent
         aerisutils.print_log('Sent echo command: ' + udppacket)
-        # Wait for data
-        if echo_wait > 0:
+        if echo_wait == 0:
+            # True indicates we sent the echo
+            return True
+        else:
             echo_wait = round(echo_wait + echo_delay)
-            # rmutils.wait_urc(ser, echo_wait, returnonreset=True) # Wait up to X seconds for UDP data to come in
-            rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
-                             returnonvalue='APP RDY')  # Wait up to X seconds for UDP data to come in
+            vals = rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
+                             returnonvalue='OK')  # Wait up to X seconds to confirm data sent
+            #print('Return: ' + str(vals))
+            vals = rmutils.wait_urc(ser, echo_wait, self.com_port, returnonreset=True,
+                             returnonvalue='+QIURC:')  # Wait up to X seconds for UDP data to come in
+            vals = super().parse_response(vals, '+QIURC:')
+            print('Return: ' + str(vals))
+            if len(vals) > 3 and int(vals[2]) == len(udppacket):
+                return True
+            else:
+                return False
 
-    def ping(self,host,verbose):
-        ser = self.myserial
-        self.create_packet_session()
-        mycmd = 'AT+QPING=1,\"' + host + '\",4,4'  # Context, host, timeout, pingnum
-        rmutils.write(ser, mycmd, delay=6)  # Write a ping command; Wait timeout plus 2 seconds
-
-    def lookup(self, host, verbose):
-        ser = self.myserial
-        self.create_packet_session()
-        rmutils.write(ser, 'AT+QIDNSCFG=1')  # Check DNS server
-        mycmd = 'AT+QIDNSGIP=1,\"' + host + '\"'
-        rmutils.write(ser, mycmd, timeout=0)  # Write a dns lookup command
-        rmutils.wait_urc(ser, 4,self.com_port)  # Wait up to 4 seconds for results to come back via urc
 
     # ========================================================================
     #
