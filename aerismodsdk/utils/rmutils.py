@@ -92,6 +92,8 @@ def write(ser, cmd, moredata=None, waitoe=False, delay=0, timeout=1.0, verbose=T
             if 'OK' in myoututf8 or 'ERROR' in myoututf8:
                 #print('Found OK')
                 waitoe = False
+            elif (time.time() - start_time) > (timeout * 2):
+                waitoe = False
     if moredata is not None:
         # print('More data length: ' + str(len(moredata)))
         aerisutils.vprint(verbose, 'More data: ' + moredata)
@@ -107,7 +109,7 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
     myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
-    aerisutils.print_log('Starting to wait {0}s for URC.'.format(timeout), verbose)
+    aerisutils.print_log('Starting to wait up to {0}s for URC.'.format(timeout), verbose)
     while elapsed_time < timeout:
         try:
             while ser.inWaiting() > 0:

@@ -27,13 +27,13 @@ class QuectelModule(Module):
     #
 
 
-    def get_network_info(self, verbose):
+    def get_network_info(self, scan, verbose):
         ser = self.myserial
         # Enable unsolicited reg results
         rmutils.write(ser, 'AT+CREG=2') 
         # Quectel-specific advanced configuration
         rmutils.write(ser, 'AT+QPSMEXTCFG?') 
-        return super().get_network_info(verbose)
+        return super().get_network_info(scan, verbose)
 
 
     # ========================================================================

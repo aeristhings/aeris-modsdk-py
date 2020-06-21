@@ -182,9 +182,10 @@ def network(ctx):
 
 
 @network.command()
+@click.option('--scan/--no-scan', default=False)
 @click.pass_context
-def info(ctx):
-    network_info = my_module.get_network_info(ctx.obj['verbose'])
+def info(ctx, scan):
+    network_info = my_module.get_network_info(scan, ctx.obj['verbose'])
     print('Network info object: ' + str(network_info))
 
 

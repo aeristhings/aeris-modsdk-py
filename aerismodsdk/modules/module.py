@@ -92,10 +92,12 @@ class Module:
     # Network stuff
     #
 
-    def get_network_info(self, verbose):
+    def get_network_info(self, scan, verbose):
         net_info = {}  # Initialize an empty dictionary object
         # Registration status
         values = self.get_values_for_cmd('AT+CREG?', '+CREG:')
+        if len(values) < 2:
+            return net_info
         net_info.update({'reg_status': reg_status(values[1])})
         # Operator selection
         values = self.get_values_for_cmd('AT+COPS?', '+COPS:')
@@ -118,11 +120,11 @@ class Module:
         # net_info.update( {'smsfull':values[5]} )
         # net_info.update( {'gprs_cov':values[6]} )
         # net_info.update( {'callsetup':values[7]} )
-        if self.verbose:
+        if scan:
             ops = rmutils.write(self.myserial, 'AT+COPS=?')
             if ops is None or ops == '':
-                print('No return from cops=?')
-                ops = rmutils.wait_urc(self.myserial, 60, self.com_port, returnonvalue='+COPS:')
+                #print('No return from cops=?')
+                ops = rmutils.wait_urc(self.myserial, 180, self.com_port, returnonvalue='+COPS:')
         return net_info
 
 
