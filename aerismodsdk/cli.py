@@ -639,7 +639,7 @@ def pwrkey(ctx, pwrval):
 
 
 @pi.command()
-@click.argument('gpio_id', default=37)
+@click.argument('gpio_id', default=26)
 @click.pass_context
 def readgpio(ctx, gpio_id):
     """Read a gpio pin
@@ -652,7 +652,7 @@ def readgpio(ctx, gpio_id):
 
 
 @pi.command()
-@click.argument('gpio_id', default=37)
+@click.argument('gpio_id', default=26)
 @click.argument('gpio_val', default=0)
 @click.pass_context
 def writegpio(ctx, gpio_id, gpio_val):
