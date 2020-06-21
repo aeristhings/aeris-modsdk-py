@@ -223,7 +223,7 @@ class QuectelModule(Module):
     def enable_psm(self,tau_time, atime, verbose=True):
         ser = self.myserial
         super().enable_psm(tau_time, atime, verbose)
-        rmutils.write(ser, 'AT+QCFG="psm/urc",1', delay=1, verbose=verbose)  # Enable urc for PSM
+        rmutils.write(ser, 'AT+QCFG="psm/urc",1', verbose=verbose)  # Enable urc for PSM
         aerisutils.print_log('PSM is enabled with TAU: {0} s and AT: {1} s'.format(str(tau_time), str(atime)))
 
 

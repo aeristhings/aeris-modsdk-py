@@ -473,8 +473,11 @@ def test(ctx, timeout, psmtau, psmat, delay):
     echo_wait = 4
     # Enable PSM
     my_module.enable_psm(psmtau, psmat, verbose=ctx.obj['verbose'])
+    time.sleep(1.0) # Sleep to allow enable to complete
     # Make sure network allowed the configuration we asked for
     psm_settings = my_module.get_psm_info(ctx.obj['verbose'])
+    if 'tau_network' not in psm_settings:
+        exit()
     tau_network = int(psm_settings['tau_network'])
     if tau_network - psmtau > 120:
         my_module.disable_psm(verbose=ctx.obj['verbose'])

@@ -96,7 +96,7 @@ class Module:
         net_info = {}  # Initialize an empty dictionary object
         # Registration status
         values = self.get_values_for_cmd('AT+CREG?', '+CREG:')
-        if len(values) < 2:
+        if len(values) < 2:  # Check for problem condition
             return net_info
         net_info.update({'reg_status': reg_status(values[1])})
         # Operator selection
