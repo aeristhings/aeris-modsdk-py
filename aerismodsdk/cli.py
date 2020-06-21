@@ -85,12 +85,21 @@ def mycli(ctx, verbose, config_file):
     loggerutils.set_level(verbose)
     # print('context:\n' + str(ctx.invoked_subcommand))
     doing_config = ctx.invoked_subcommand in ['config']
-    if load_config(ctx, config_file) and not doing_config:
+    doing_pi = ctx.invoked_subcommand in ['pi']
+    if doing_pi:  # Get out of here if doing a pi gpio command
+        return
+    config_loaded = load_config(ctx, config_file)  # Load config if there is one
+    if doing_config:  # Get out of ere if doing a config command
+        return
+    if config_loaded:  # In all other cases, we need a valid config
         global my_module
         my_module = module_factory().get(Manufacturer[ctx.obj['modemMfg']], ctx.obj['comPort'], 
                                         ctx.obj['apn'], verbose=ctx.obj['verbose'])
         aerisutils.vprint(verbose, 'Valid configuration loaded.')
-    elif not doing_config:  # Not ok unless we are doing a config command
+        if my_module.get_serial() is None:
+            print('Could not open serial port')
+            exit()
+    else:  # Not ok
         print('Valid configuration not found')
         print('Try running config command')
         exit()

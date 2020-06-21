@@ -51,6 +51,10 @@ class Module:
         self.myserial = rmutils.open_serial('/dev/tty'+com_port)
 
 
+    def get_serial(self):
+        return self.myserial
+
+
     def reset(self):
         ser = self.myserial
         self.disable_psm(verbose = True)
