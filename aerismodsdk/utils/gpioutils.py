@@ -9,6 +9,25 @@ BG96_DISABLE = 17
 BG96_POWERKEY = 24
 BG96_STATUS = 23
 
+def setup(pin_id, asinput = True):
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(False)
+    if asinput:
+        GPIO.setup(pin_id, GPIO.IN)
+    else:
+        GPIO.setup(pin_id, GPIO.OUT)    
+
+
+# Get state of pin
+def read(pin_id):
+    return GPIO.input(pin_id)
+
+
+# Set state of pin
+def set(pin_id, pin_val):
+    return GPIO.output(pin_id, pin_val)
+
+
 def setup_gpio():
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)

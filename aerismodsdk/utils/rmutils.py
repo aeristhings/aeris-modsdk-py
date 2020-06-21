@@ -27,6 +27,7 @@ def find_serial(com_port, verbose=False, timeout=1):
     check_port = com_port
     start_time = time.time()
     elapsed_time = 0
+    aerisutils.vprint(verbose, aerisutils.get_date_time_str() + ' Searching for port: ' + check_port)
     while elapsed_time < timeout:
         ports = glob.glob('/dev/ttyA*') + glob.glob('/dev/ttyS*') + glob.glob('/dev/ttyUSB*')
         # print(ports)

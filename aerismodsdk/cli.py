@@ -629,6 +629,33 @@ def pwrkey(ctx, pwrval):
     gpioutils.set_pwrkey(pwrval)
 
 
+@pi.command()
+@click.argument('gpio_id', default=37)
+@click.pass_context
+def readgpio(ctx, gpio_id):
+    """Read a gpio pin
+    \f
+
+    """
+    gpioutils.setup(gpio_id)
+    pinstatus = gpioutils.read(gpio_id)
+    print('Pin {0} is {1}'.format(gpio_id, pinstatus))
+
+
+@pi.command()
+@click.argument('gpio_id', default=37)
+@click.argument('gpio_val', default=0)
+@click.pass_context
+def writegpio(ctx, gpio_id, gpio_val):
+    """Write a gpio pin
+    \f
+
+    """
+    gpioutils.setup(gpio_id, asinput=False)
+    print('Setting pin {0} to {1}'.format(gpio_id, gpio_val))
+    gpioutils.set(gpio_id, gpio_val)
+
+
 # ========================================================================
 #
 # Define the firmware group of commands
