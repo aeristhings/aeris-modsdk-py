@@ -5,12 +5,16 @@ from aerismodsdk.modulefactory import module_factory
 
 
 class QuectelTests(unittest.TestCase):
+    def create_urc(self, payload, ip='1.1.1.1', port=65534):
+        return f'+QIURC: "recv",1,{len(payload)},"{ip}",{port}\u000D\u000A{payload}\u000D\u000A'
+
     def test_parse_single_urc(self):
         print('starting test_parse_single_urc ...')
         expected_payloads = ['Hello, world!']
         urcs = ''
         for p in expected_payloads:
-            urcs += '+QIURC:"recv",1,' + str(len(p)) + '\u000D\u000A' + p + '\u000D\u000A'
+            urcs += self.create_urc(p)
+
         my_module = module_factory().get(Manufacturer.quectel, '1',
                                          'anyapn', verbose=True)
         payloads = my_module.udp_urcs_to_payloads(urcs, verbose=True)
@@ -21,7 +25,7 @@ class QuectelTests(unittest.TestCase):
         expected_payloads = ['payload 1', 'second payload', 'this is the third payload']
         urcs = ''
         for p in expected_payloads:
-            urcs += '+QIURC:"recv",1,' + str(len(p)) + '\u000D\u000A' + p + '\u000D\u000A'
+            urcs += self.create_urc(p)
 
         my_module = module_factory().get(Manufacturer.quectel, '1',
                                          'anyapn', verbose=True)
@@ -33,7 +37,7 @@ class QuectelTests(unittest.TestCase):
         expected_payloads = ['payload\u000A1', 'second pay\u000Aload', 'this is the third payload']
         urcs = ''
         for p in expected_payloads:
-            urcs += '+QIURC:"recv",1,' + str(len(p)) + '\u000D\u000A' + p + '\u000D\u000A'
+            urcs += self.create_urc(p)
 
         my_module = module_factory().get(Manufacturer.quectel, '1',
                                          'anyapn', verbose=True)
@@ -47,7 +51,7 @@ class QuectelTests(unittest.TestCase):
         expected_payloads = ['payload\u000A1', 'second pay\u000Aload', 'this is the third payload']
         urcs = ''
         for p in expected_payloads:
-            urcs += '+QIURC:"recv",1,' + str(len(p)) + '\u000D\u000A' + p + '\u000D\u000A'
+            urcs += self.create_urc(p)
             # pretend that the modem got an unsolicited result code for a time zone report
             urcs += '+CTZV: 1' + '\u000D\u000A'
 

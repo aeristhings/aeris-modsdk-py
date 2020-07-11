@@ -18,6 +18,7 @@ import aerismodsdk.utils.rmutils as rmutils
 import aerismodsdk.utils.aerisutils as aerisutils
 from aerismodsdk.modules.module import Module
 
+import re
 
 class QuectelModule(Module):
 
@@ -173,7 +174,7 @@ class QuectelModule(Module):
         ----------
         urcs : str
             The unsolicited result codes as output from e.g. udp_listen
-            The Quectel BG96 outputs these URCs as "+QIURC:"recv",<connectID>,<currentrecvlength><CR><LF><data>
+            When delivered to a connectID that is serving a service of "UDP SERVICE," the Quectel BG96 outputs these URCs as "+QIURC: "recv",<connectID>,<currentrecvlength>,"<remote IP address>",<remoteport><CR><LF><data>
         verbose : bool, optional
             True to enable debug logging??? Unrecognized URCs will be logged regarldess of this value.
         Returns
@@ -182,30 +183,37 @@ class QuectelModule(Module):
             An iterable of payloads.
         '''
         # state machine:
-        # (initial) -> (receive: +QIURC:"recv") -> (parse <connectID>,<currentrecvlength><CR><LF>) -> read <currentrecvlength> bytes -> (initial)
+        # (initial) -> (receive: +QIURC: "recv") -> (parse <connectID>,<currentrecvlength>,"remote ip",<remoteport><CR><LF>) -> read <currentrecvlength> bytes -> (initial)
         # (initial) -> (receive: +) -> (read rest of line, output as "unexpected URC") -> (initial)
-        URC_HEAD = '+QIURC:"recv",'
+        URC_HEAD = '+QIURC: "recv",'
+        urc_regex = re.compile(r'\+QIURC: "recv",(?P<connectID>\d+),(?P<currentrecvlength>\d+),"(?P<remoteIP>[^"]+)",(?P<remotePort>\d+)')
         payloads = []
         current_input = urcs
         while len(current_input) > 0:
-            print('hi')
             aerisutils.print_log('Remaining input: ' + current_input, verbose)
             head = current_input[:len(URC_HEAD)]
             if head == URC_HEAD:
-                # advance to beyond the preamble thing
-                current_input = current_input[len(URC_HEAD):]
-                # parse out connection ID
-                connection_id_end_index = current_input.find(',')
-                connection_id = current_input[:connection_id_end_index]
+                # find the next carriage return
+                next_carriage_return_index = current_input.find('\u000D')
+                if next_carriage_return_index == -1:
+                    aerisutils.print_log('Error: no carriage returns after an URC')
+                parse_result = urc_regex.search(current_input[:next_carriage_return_index])
+                aerisutils.print_log('QIURC parse result: ' + str(parse_result), verbose)
+                if not parse_result:
+                    aerisutils.print_log('Error: failed to parse QIURC', verbose=True)
+                connection_id = parse_result.group('connectID')
+                
                 aerisutils.print_log('Found connection ID: ' + connection_id, verbose)
-                # advance to beyond the connection id
-                current_input = current_input[connection_id_end_index+1:]
-                # parse out the length of received data
-                length_end_index = current_input.find('\u000D')
-                length = current_input[:length_end_index]
+                length = parse_result.group('currentrecvlength')
+                 
                 aerisutils.print_log('Found length of received data: ' + length, verbose)
-                # advance to beyond the length of received data
-                current_input = current_input[length_end_index:]
+                remote_ip = parse_result.group('remoteIP')
+                aerisutils.print_log('Found remote IP: ' + remote_ip, verbose)
+                remote_port = parse_result.group('remotePort')
+                aerisutils.print_log('Found remote port: ' + remote_port, verbose)
+                # advance to the carriage return
+                current_input = current_input[next_carriage_return_index:]
+                
                 # consume the CRLF
                 if not (current_input[0] == '\u000D' and current_input[1] == '\u000A'):
                     aerisutils.print_log('Error: the two characters after the length were not a CRLF')
@@ -213,7 +221,7 @@ class QuectelModule(Module):
                 # consume the next length bytes, and advance that many
                 payload = current_input[:int(length)]
                 payloads.append(payload)
-                aerisutils.print_log('Found payload: ' + payload, verbose)
+                aerisutils.print_log('Found packet: ' + payload, verbose)
                 current_input = current_input[int(length):]
                 # consume the trailing CRLF
                 if not (current_input[0] == '\u000D' and current_input[1] == '\u000A'):
@@ -226,7 +234,6 @@ class QuectelModule(Module):
                 unexpected_urc = current_input[:newline_index]
                 aerisutils.print_log('Warning: found unexpected URC: ' + unexpected_urc, verbose=True)
                 current_input = current_input[newline_index+1:]
-            #return payloads
         return payloads
 
     def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):

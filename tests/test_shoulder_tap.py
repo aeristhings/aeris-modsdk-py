@@ -27,6 +27,47 @@ class ShoulderTapTest(unittest.TestCase):
         result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
         self.assertEqual(payload, result.payload)
 
+    def test_parse_13_byte_payload(self):
+        payload = 'Hello, world!'
+        packet_string = '\u00020100010d'+payload+'\u0003'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertEqual(payload, result.payload)
+
+    def test_parse_14_byte_payload(self):
+        payload = 'Hello, world!?'
+        packet_string = '\u00020100010e'+payload+'\u0003'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertEqual(payload, result.payload)
+
+    def test_not_enough_sequence_number_bytes(self):
+        packet_string = '\u000201000'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertIsNone(result)
+
+    def test_invalid_sequence_hex(self):
+        packet_string = '\u000201cats'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertIsNone(result)
+
+    def test_not_enough_payload_length_bytes(self):
+        packet_string = '\u00020100011'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertIsNone(result)
+  
+    def test_invalid_payload_length_hex(self):
+        packet_string = '\u0002010001zz'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertIsNone(result)
+
+    def test_not_enough_payload_bytes(self):
+        packet_string = '\u00020100012anotevenfortytwocharacters'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertIsNone(result)
+
+    def test_final_character_not_etx(self):
+        packet_string = '\u00020100010a1234567890Q'
+        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        self.assertIsNone(result)
 
 if __name__ == '__main__':
     unittest.main()
