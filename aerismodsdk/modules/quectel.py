@@ -130,6 +130,23 @@ class QuectelModule(Module):
 
 
     def udp_listen(self,listen_port, listen_wait, verbose=True):
+        '''Starts listening for UDP packets.
+        Parameters
+        ----------
+        listen_port : int
+            The port on which to listen.
+        listen_wait : int
+            Greater than zero if this method should wait for that many seconds for received packets.
+            If less than or equal to zero, this method will return a boolean type.
+        verbose : bool, optional
+        Returns
+        -------
+        s : bool
+            False if a packet data session was not active, or if setting up the UDP socket failed.
+            True if the modem successfully started listening for packets.
+        m : str
+            Any URCs that arrived while listening for packets.
+        '''
         ser = self.myserial
         read_sock = '1'  # Use socket 1 for listen
         if self.create_packet_session(verbose=verbose):
@@ -137,7 +154,7 @@ class QuectelModule(Module):
         else:
             return False
         # Open UDP socket for listen
-        mycmd = 'AT+QIOPEN=1,' + read_sock + ',"UDP SERVICE","127.0.0.1",0,3030,1'
+        mycmd = 'AT+QIOPEN=1,' + read_sock + ',"UDP SERVICE","127.0.0.1",0,'+str(listen_port)+',1'
         rmutils.write(ser, mycmd, delay=1, verbose=verbose)  # Create UDP socket connection
         sostate = rmutils.write(ser, 'AT+QISTATE=1,' + read_sock, verbose=verbose)  # Check socket state
         if "UDP" not in sostate:  # Try one more time with a delay if not connected
@@ -146,8 +163,71 @@ class QuectelModule(Module):
                 return False
         # Wait for data
         if listen_wait > 0:
-            rmutils.wait_urc(ser, listen_wait, self.com_port,returnonreset=True)  # Wait up to X seconds for UDP data to come in
+            return rmutils.wait_urc(ser, listen_wait, self.com_port,returnonreset=True)  # Wait up to X seconds for UDP data to come in
         return True
+
+    def udp_urcs_to_payloads(self, urcs, verbose=False):
+        '''Parses a string of URCs representing UDP packet deliveries into a list of payloads, one per packet.
+
+        Parameters
+        ----------
+        urcs : str
+            The unsolicited result codes as output from e.g. udp_listen
+            The Quectel BG96 outputs these URCs as "+QIURC:"recv",<connectID>,<currentrecvlength><CR><LF><data>
+        verbose : bool, optional
+            True to enable debug logging??? Unrecognized URCs will be logged regarldess of this value.
+        Returns
+        -------
+        list
+            An iterable of payloads.
+        '''
+        # state machine:
+        # (initial) -> (receive: +QIURC:"recv") -> (parse <connectID>,<currentrecvlength><CR><LF>) -> read <currentrecvlength> bytes -> (initial)
+        # (initial) -> (receive: +) -> (read rest of line, output as "unexpected URC") -> (initial)
+        URC_HEAD = '+QIURC:"recv",'
+        payloads = []
+        current_input = urcs
+        while len(current_input) > 0:
+            print('hi')
+            aerisutils.print_log('Remaining input: ' + current_input, verbose)
+            head = current_input[:len(URC_HEAD)]
+            if head == URC_HEAD:
+                # advance to beyond the preamble thing
+                current_input = current_input[len(URC_HEAD):]
+                # parse out connection ID
+                connection_id_end_index = current_input.find(',')
+                connection_id = current_input[:connection_id_end_index]
+                aerisutils.print_log('Found connection ID: ' + connection_id, verbose)
+                # advance to beyond the connection id
+                current_input = current_input[connection_id_end_index+1:]
+                # parse out the length of received data
+                length_end_index = current_input.find('\u000D')
+                length = current_input[:length_end_index]
+                aerisutils.print_log('Found length of received data: ' + length, verbose)
+                # advance to beyond the length of received data
+                current_input = current_input[length_end_index:]
+                # consume the CRLF
+                if not (current_input[0] == '\u000D' and current_input[1] == '\u000A'):
+                    aerisutils.print_log('Error: the two characters after the length were not a CRLF')
+                current_input = current_input[2:]
+                # consume the next length bytes, and advance that many
+                payload = current_input[:int(length)]
+                payloads.append(payload)
+                aerisutils.print_log('Found payload: ' + payload, verbose)
+                current_input = current_input[int(length):]
+                # consume the trailing CRLF
+                if not (current_input[0] == '\u000D' and current_input[1] == '\u000A'):
+                    aerisutils.print_log('Error: the two characters after the payload were not a CRLF')
+                current_input = current_input[2:]
+            else:
+                # this is not the URC we expected
+                # consume to the next newline, output as a warning or whatever, and try again
+                newline_index = current_input.find('\n')
+                unexpected_urc = current_input[:newline_index]
+                aerisutils.print_log('Warning: found unexpected URC: ' + unexpected_urc, verbose=True)
+                current_input = current_input[newline_index+1:]
+            #return payloads
+        return payloads
 
     def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):
         ser = self.myserial
