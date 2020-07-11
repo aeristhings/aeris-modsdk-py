@@ -399,7 +399,10 @@ def send(ctx, host, port):
 @click.option("--port", "-p", default=23747, help="Shoulder-Tap listen port")
 @click.pass_context
 def shoulder_tap(ctx, port):
-    shoulder_taps = get_shoulder_taps(port, ctx.obj["verbose"])
+    """Listen for Shoulder-Tap packets and print their details.
+    \f
+    """
+    shoulder_taps = get_shoulder_taps(my_module, port, ctx.obj["verbose"])
     for st in shoulder_taps:
         print(f'Shoulder tap request ID: <<{st.getRequestId()}>> and payload: <<{st.payload}>>')
 
