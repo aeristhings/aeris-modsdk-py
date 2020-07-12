@@ -6,12 +6,18 @@ from aerismodsdk.modulefactory import module_factory
 
 class QuectelTests(unittest.TestCase):
     def create_urc(self, payload, ip='1.1.1.1', port=65534):
-        return f'+QIURC: "recv",1,{len(payload)},"{ip}",{port}\u000D\u000A{payload}\u000D\u000A'
+        urc = b'+QIURC: "recv",1,' + bytes(str(len(payload)), 'utf-8') + b',"' + ip.encode('utf-8') + b'",' + bytes(str(port), 'utf-8') + b'\x0D\x0A'
+        if isinstance(payload, bytes):
+            urc += payload
+        else:
+            urc += payload.encode('utf-8')
+        urc += b'\x0D\x0A'
+        return urc
 
     def test_parse_single_urc(self):
         print('starting test_parse_single_urc ...')
-        expected_payloads = ['Hello, world!']
-        urcs = ''
+        expected_payloads = [b'Hello, world!']
+        urcs = b''
         for p in expected_payloads:
             urcs += self.create_urc(p)
 
@@ -22,8 +28,8 @@ class QuectelTests(unittest.TestCase):
         self.assertEqual(expected_payloads, payloads)
 
     def test_parse_multiple_urcs(self):
-        expected_payloads = ['payload 1', 'second payload', 'this is the third payload']
-        urcs = ''
+        expected_payloads = [b'payload 1', b'second payload', b'this is the third payload']
+        urcs = b''
         for p in expected_payloads:
             urcs += self.create_urc(p)
 
@@ -34,8 +40,8 @@ class QuectelTests(unittest.TestCase):
         self.assertEqual(expected_payloads, payloads)
 
     def test_parse_urcs_with_newlines(self):
-        expected_payloads = ['payload\u000A1', 'second pay\u000Aload', 'this is the third payload']
-        urcs = ''
+        expected_payloads = [b'payload\x0A1', b'second pay\x0Aload', b'this is the third payload']
+        urcs = b''
         for p in expected_payloads:
             urcs += self.create_urc(p)
 
@@ -48,12 +54,12 @@ class QuectelTests(unittest.TestCase):
     def test_parse_urcs_with_unexpected_urcs(self):
         '''Run this with pytest's '-s' flag to observe the printed unexpected URCs:
         poetry run pytest -s'''
-        expected_payloads = ['payload\u000A1', 'second pay\u000Aload', 'this is the third payload']
-        urcs = ''
+        expected_payloads = [b'payload\x0A1', b'second pay\x0Aload', b'this is the third payload']
+        urcs = b''
         for p in expected_payloads:
             urcs += self.create_urc(p)
             # pretend that the modem got an unsolicited result code for a time zone report
-            urcs += '+CTZV: 1' + '\u000D\u000A'
+            urcs += b'+CTZV: 1' + b'\x0D\x0A'
 
         my_module = module_factory().get(Manufacturer.quectel, '1',
                                          'anyapn', verbose=True)

@@ -400,7 +400,7 @@ def send(ctx, host, port):
 @click.pass_context
 def shoulder_tap(ctx, port):
     """Listen for Shoulder-Tap packets and print their details.
-    \f
+    Requires that the module is in a packet data session; see the 'packet start' command.
     """
     shoulder_taps = get_shoulder_taps(my_module, port, ctx.obj["verbose"])
     for st in shoulder_taps:

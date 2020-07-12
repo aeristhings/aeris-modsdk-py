@@ -8,65 +8,65 @@ class ShoulderTapTest(unittest.TestCase):
     imsi = '123456789012345'
 
     def test_parse_no_payload(self):
-        packet_string = '\u000201000100\u0003'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x0201000100\x03'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsInstance(result, Udp0ShoulderTap)
         self.assertIsNone(result.payload)
         self.assertEqual(self.imsi+'-'+'00001', result.getRequestId())
 
     def test_parse_no_payload_maxsequencenumber(self):
-        packet_string = '\u000201ffff00\u0003'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x0201ffff00\x03'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsInstance(result, Udp0ShoulderTap)
         self.assertIsNone(result.payload)
         self.assertEqual(self.imsi+'-'+'65535', result.getRequestId())
 
     def test_parse_140_byte_payload(self):
-        payload = 'a'*140
-        packet_string = '\u00020100018C'+payload+'\u0003'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        payload = b'a'*140
+        packet = b'\x020100018C'+payload+b'\x03'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertEqual(payload, result.payload)
 
     def test_parse_13_byte_payload(self):
-        payload = 'Hello, world!'
-        packet_string = '\u00020100010d'+payload+'\u0003'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        payload = b'Hello, world!'
+        packet = b'\x020100010d'+payload+b'\x03'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertEqual(payload, result.payload)
 
     def test_parse_14_byte_payload(self):
-        payload = 'Hello, world!?'
-        packet_string = '\u00020100010e'+payload+'\u0003'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        payload = b'Hello, world!?'
+        packet = b'\x020100010e'+payload+b'\x03'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertEqual(payload, result.payload)
 
     def test_not_enough_sequence_number_bytes(self):
-        packet_string = '\u000201000'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x0201000'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsNone(result)
 
     def test_invalid_sequence_hex(self):
-        packet_string = '\u000201cats'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x0201cats'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsNone(result)
 
     def test_not_enough_payload_length_bytes(self):
-        packet_string = '\u00020100011'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x020100011'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsNone(result)
   
     def test_invalid_payload_length_hex(self):
-        packet_string = '\u0002010001zz'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x02010001zz'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsNone(result)
 
     def test_not_enough_payload_bytes(self):
-        packet_string = '\u00020100012anotevenfortytwocharacters'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x020100012anotevenfortytwocharacters'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsNone(result)
 
     def test_final_character_not_etx(self):
-        packet_string = '\u00020100010a1234567890Q'
-        result = shoulder_tap.parse_shoulder_tap(packet_string, self.imsi, True)
+        packet = b'\x020100010a1234567890Q'
+        result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsNone(result)
 
 if __name__ == '__main__':
