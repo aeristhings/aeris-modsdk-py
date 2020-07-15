@@ -31,7 +31,7 @@ def get_shoulder_taps(module, port=23747, verbose=False):
     verbose : bool, optional
         True to enable verbose output.
     '''
-    DEFAULT_WAIT_DURATION = 5
+    DEFAULT_WAIT_DURATION = 30
     mod_info = {}
     module.get_info_for_obj('AT+CIMI', 'imsi', mod_info)
     imsi = mod_info['imsi']
