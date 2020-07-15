@@ -149,23 +149,23 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
                     myfinalout = myfinalout + mybytes
                     if returnonvalue:
                         if oneline.find(returnonvalue) > -1:
-                            return bytes_or_utf(myfinalout, returnbytes)
+                            return bytes_or_utf(myfinalout, returnbytes, verbose)
                     mybytes = bytearray()
         except IOError:
             aerisutils.print_log('Exception while waiting for URC.', verbose)
             ser.close()
             find_serial(com_port, verbose=True, timeout=(timeout - elapsed_time))
             if returnonreset:
-                return bytes_or_utf(myfinalout, returnbytes)
+                return bytes_or_utf(myfinalout, returnbytes, verbose)
             else:
                 ser.open()
         time.sleep(0.5)
         elapsed_time = time.time() - start_time
     aerisutils.print_log('Finished waiting for URC.', verbose)
-    return bytes_or_utf(myfinalout, returnbytes)
+    return bytes_or_utf(myfinalout, returnbytes, verbose)
 
-def bytes_or_utf(b, want_bytes=False):
-    aerisutils.print_log(f'Returning bytes: {want_bytes} from something that is bytes {isinstance(b, bytes)}', True)
+def bytes_or_utf(b, want_bytes=False, verbose=False):
+    aerisutils.print_log(f'Returning bytes: {want_bytes} from something that is bytes {isinstance(b, bytes)}', verbose)
     if want_bytes:
         return b
     else:
