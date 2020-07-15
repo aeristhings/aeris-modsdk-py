@@ -404,7 +404,8 @@ def shoulder_tap(ctx, port):
     """
     shoulder_taps = get_shoulder_taps(my_module, port, ctx.obj["verbose"])
     for st in shoulder_taps:
-        print(f'Shoulder tap request ID: <<{st.getRequestId()}>> and payload: <<{st.payload}>>')
+        if st is not None:
+            print(f'Shoulder tap request ID: <<{st.getRequestId()}>> and payload: <<{st.payload}>>')
 
 
 # ========================================================================

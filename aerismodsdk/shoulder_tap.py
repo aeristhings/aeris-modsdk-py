@@ -46,7 +46,9 @@ def get_shoulder_taps(module, port=23747, verbose=False):
         payloads = module.udp_urcs_to_payloads(urcs, verbose)
         for payload in payloads:
             aerisutils.print_log('Got payload: ' + aerisutils.bytes_to_utf_or_hex(payload), verbose)
-            yield parse_shoulder_tap(payload, imsi)
+            shoulder_tap = parse_shoulder_tap(payload, imsi)
+            if shoulder_tap is not None:
+                yield shoulder_tap
 
 
 def parse_shoulder_tap(packet, imsi, verbose=False):
@@ -83,7 +85,7 @@ def parse_shoulder_tap(packet, imsi, verbose=False):
     if message_type == b'01':
         return parse_udp0_packet(packet[3:], imsi, verbose=verbose)
     else:
-        aerisutils.print_log('Error: message type was not 01 for Udp0; it was ' + aerisutils.bytes_to_urf_or_hex(message_type), verbose=True)
+        aerisutils.print_log('Error: message type was not 01 for Udp0; it was ' + aerisutils.bytes_to_utf_or_hex(message_type), verbose=True)
         return None
 
 
