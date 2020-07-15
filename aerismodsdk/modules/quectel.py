@@ -235,9 +235,16 @@ class QuectelModule(Module):
                 # this is not the URC we expected
                 # consume to the next newline, output as a warning or whatever, and try again
                 newline_index = current_input.find(b'\n')
-                unexpected_urc = current_input[:newline_index]
-                aerisutils.print_log('Warning: found unexpected URC: ' + aerisutils.bytes_to_utf_or_hex(unexpected_urc), verbose=True)
-                current_input = current_input[newline_index+1:]
+                if newline_index == -1:
+                    aerisutils.print_log('Warning: no newline at end of unexpected URC: <<' + aerisutils.bytes_to_utf_or_hex(current_input) + '>>')
+                    # consume the rest of the input
+                    current_input = []
+                else:
+                    unexpected_urc = current_input[:newline_index]
+                    # this might be a blank line, i.e., just a CRLF
+                    if unexpected_urc != b'\x0D':
+                        aerisutils.print_log('Warning: found unexpected URC: <<' + aerisutils.bytes_to_utf_or_hex(unexpected_urc) + '>>', verbose=True)
+                    current_input = current_input[newline_index+1:]
         return payloads
 
     def udp_echo(self, host, port, echo_delay, echo_wait, verbose=True):
