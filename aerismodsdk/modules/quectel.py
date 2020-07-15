@@ -187,6 +187,8 @@ class QuectelModule(Module):
         # state machine:
         # (initial) -> (receive: +QIURC: "recv") -> (parse <connectID>,<currentrecvlength>,"remote ip",<remoteport><CR><LF>) -> read <currentrecvlength> bytes -> (initial)
         # (initial) -> (receive: +) -> (read rest of line, output as "unexpected URC") -> (initial)
+        CHAR_CR = 13
+        CHAR_LF = 10
         URC_HEAD = b'+QIURC: "recv",'
         urc_regex = re.compile(rb'\+QIURC: "recv",(?P<connectID>\d+),(?P<currentrecvlength>\d+),"(?P<remoteIP>[^"]+)",(?P<remotePort>\d+)')
         payloads = []
@@ -217,8 +219,8 @@ class QuectelModule(Module):
                 current_input = current_input[next_carriage_return_index:]
                 
                 # consume the CRLF
-                if not (current_input[0] == b'\x0D' and current_input[1] == b'\x0A'):
-                    aerisutils.print_log('Error: the two characters after the length were not a CRLF')
+                if not (current_input[0] == CHAR_CR and current_input[1] == CHAR_LF):
+                    aerisutils.print_log('Sanity: the two bytes after the length were not a CRLF')
                 current_input = current_input[2:]
                 # consume the next length bytes, and advance that many
                 payload = current_input[:int(length)]
@@ -226,8 +228,8 @@ class QuectelModule(Module):
                 aerisutils.print_log('Found packet: ' + aerisutils.bytes_to_utf_or_hex(payload), verbose)
                 current_input = current_input[int(length):]
                 # consume the trailing CRLF
-                if not (current_input[0] == b'\x0D' and current_input[1] == b'\x0A'):
-                    aerisutils.print_log('Error: the two characters after the payload were not a CRLF')
+                if not (current_input[0] == CHAR_CR and current_input[1] == CHAR_LF):
+                    aerisutils.print_log('Sanity: the two characters after the payload were not a CRLF')
                 current_input = current_input[2:]
             else:
                 # this is not the URC we expected
