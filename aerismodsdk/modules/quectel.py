@@ -178,7 +178,7 @@ class QuectelModule(Module):
             The unsolicited result codes as output from e.g. udp_listen
             When delivered to a connectID that is serving a service of "UDP SERVICE," the Quectel BG96 outputs these URCs as "+QIURC: "recv",<connectID>,<currentrecvlength>,"<remote IP address>",<remoteport><CR><LF><data>
         verbose : bool, optional
-            True to enable debug logging??? Unrecognized URCs will be logged regarldess of this value.
+            True to enable verbose/debugging output. Unrecognized URCs will be logged regardless of this value.
         Returns
         -------
         list
