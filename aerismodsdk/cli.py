@@ -18,6 +18,7 @@ import click
 import json
 import pathlib
 import time
+import subprocess
 import aerismodsdk.utils.rmutils as rmutils
 import aerismodsdk.modules.ublox as ublox
 import aerismodsdk.modules.quectel as quectel
@@ -679,6 +680,89 @@ def update(ctx):
 
     """
     my_module.fw_update()
+
+
+# ========================================================================
+#
+# Define wvdial group of commands
+#
+@mycli.group()
+@click.pass_context
+def wvdial(ctx):
+    """wvdial commands
+    \f
+
+    """
+
+
+def get_process_output(process):
+    while True:
+        output = process.stdout.readline()
+        print(output.strip())
+        # Do something else
+        return_code = process.poll()
+        if return_code is not None:
+            print('RETURN CODE', return_code)
+            # Process has finished, read rest of the output 
+            for output in process.stdout.readlines():
+                print(output.strip())
+            break
+    return output
+
+wvdial_config = """
+[Dialer aerismodsdk]
+Stupid mode = 1
+Init1 = ATZ
+Init2 = ATQ0 V1 E1 S0=0 &C1 &D2
+Init3 = AT+CGDCONT=1,"IP","mmc.atsp.eu.aeris.net"
+ISDN = 0
+Modem Type = Analog Modem
+New PPPD = yes
+Phone = *99#
+Modem = /dev/ttyUSB1
+Username = { }
+Password = { }
+Baud = 4608000
+"""
+
+
+@wvdial.command()
+@click.pass_context
+def config(ctx):
+    """Create wvdial config that matches this sdk config
+    \f
+
+    """
+    # Verify wvdial installation
+    print('Verify wvdial installed.')
+    process = subprocess.Popen(['sudo', 'ls', '-la', '/etc/wvdial.conf'], 
+                               stdout=subprocess.PIPE,
+                               universal_newlines=True)
+    output = get_process_output(process)
+    if output.find('No such') > 0:
+        print('Please verify that wvdial has been installed.')
+        exit()        
+    # Make a copy of current config
+    print('Making copy of current wvdial.conf')
+    process = subprocess.Popen(['cp', '/etc/wvdial.conf', home_directory + '/wvdial.conf.bak'], 
+                               stdout=subprocess.PIPE,
+                               universal_newlines=True)
+    output = get_process_output(process)
+    # Create new config
+    print('Creating new wvdial.conf.')
+    try:
+        with open(home_directory + '/wvdial.conf.new', 'w') as wvdial_config_file:
+            wvdial_config_file.write(wvdial_config)
+            wvdial_config_file.close()
+    except IOError:
+        print('Failed to write new configuration file.')
+        exit()    
+    # Copy new config into etc directory
+    print('Copying new wvdial.conf to /etc.')
+    process = subprocess.Popen(['sudo', 'cp', home_directory + '/wvdial.conf.new', '/etc/wvdial.conf'], 
+                               stdout=subprocess.PIPE,
+                               universal_newlines=True)
+    output = get_process_output(process)
 
 
 # ========================================================================
