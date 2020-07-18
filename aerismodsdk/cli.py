@@ -126,19 +126,8 @@ def config(ctx, modemmfg, comport, apn):
 
 @mycli.command()
 @click.pass_context
-def modem(ctx):
-    """Modem information
-    \f
-
-    """
-    if rmutils.find_serial('/dev/tty'+ctx.obj['comPort'], verbose=True, timeout=5):
-        my_module.get_info()
-
-
-@mycli.command()
-@click.pass_context
 def info(ctx):
-    """Module information
+    """Module and SIM information
     \f
 
     """
@@ -590,7 +579,7 @@ def test(ctx, timeout, cycletime, delay):
 @mycli.group()
 @click.pass_context
 def pi(ctx):
-    """pi commands
+    """Raspberry Pi commands
     \f
 
     """

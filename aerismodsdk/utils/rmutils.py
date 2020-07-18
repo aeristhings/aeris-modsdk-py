@@ -51,10 +51,14 @@ def open_serial(modem_port):
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS,
             timeout=1,
-            rtscts=False,
-            dsrdtr=False
+            xonxoff=False,
+            rtscts=True,
+            dsrdtr=True
         )
         myserial.isOpen()
+        myserial.sendBreak()
+        myserial.reset_input_buffer()
+        myserial.reset_output_buffer()        
     except serial.serialutil.SerialException:
         myserial = None
         print("Could not open serial port")
@@ -116,7 +120,11 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
                 mybyte = ser.read()[0]
                 mybytes.append(mybyte)
                 if mybyte == 10:  # Newline
-                    oneline = mybytes.decode("utf-8")  # Change to utf-8
+                    try:
+                        oneline = mybytes.decode("utf-8")  # Change to utf-8
+                    except UnicodeDecodeError as e:
+                        aerisutils.print_log('Error in wait_urc')
+                        return myfinalout
                     aerisutils.print_log("<< " + oneline.strip(), verbose)
                     myfinalout = myfinalout + oneline
                     if returnonvalue:

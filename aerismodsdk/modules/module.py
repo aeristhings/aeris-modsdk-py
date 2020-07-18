@@ -40,11 +40,16 @@ class Module:
         self.apn = apn
         self.verbose = verbose
         self.modem_mfg = modem_mfg
+        self.cmd_iccid = 'CCID'
         #aerisutils.vprint(verbose, 'Using modem port: ' + com_port)
         self.myserial = rmutils.open_serial(self.com_port)
         if self.myserial is not None:
             logger.info('Established Serial Connection')
             rmutils.write(self.myserial, 'ATE0', verbose=verbose)  # Turn off echo
+
+
+    def set_cmd_iccid(self, cmd_iccid):
+        self.cmd_iccid = cmd_iccid
 
 
     def init_serial(self, com_port, apn, verbose=True):
@@ -71,6 +76,9 @@ class Module:
             logger.warn('WARNING : The ATI command is not working. Please review configuration.')
             return False
         self.get_info_for_obj('AT+CIMI', 'imsi', mod_info)
+        self.get_info_for_obj_prefix('AT+'+self.cmd_iccid, 
+            '+' + self.cmd_iccid + ':', 
+            'iccid', mod_info)
         response = rmutils.write(ser, 'AT+GMI', delay=1)  # Module Manufacturer
         mod_type = (response.split('\r\n')[1]).replace('-', '').strip().upper()
         mod_info.update( {'maker':mod_type} )
@@ -134,7 +142,9 @@ class Module:
         if operator_name == 'auto':
             mycmd = 'AT+COPS=0'
         else:
-            mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(act)
+            # BG95 is having problems if we include ACT
+            #mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(act)
+            mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '"'
         rmutils.write(self.myserial, mycmd)
         rmutils.wait_urc(self.myserial, 10, self.com_port)
 
@@ -180,6 +190,12 @@ class Module:
         ser = self.myserial
         value = self.parse_cmd_single_response(rmutils.write(ser, cmd))
         info_obj.update( {keyname:value} )
+
+
+    def get_info_for_obj_prefix(self, cmd, prefix, keyname, info_obj):
+        ser = self.myserial
+        value = self.get_values_for_cmd(cmd, prefix)
+        info_obj.update( {keyname:value[0]} )
 
 
     def parse_cmd_response(self, response):

@@ -21,6 +21,12 @@ from urllib.parse import urlsplit
 
 class TelitModule(Module):
 
+
+    def __init__(self, modem_mfg, com_port, apn, verbose=True):
+        super().__init__(modem_mfg, com_port, apn, verbose=True)
+        super().set_cmd_iccid('CCID')
+
+
     # ========================================================================
     #
     # The packet stuff
