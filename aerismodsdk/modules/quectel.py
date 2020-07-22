@@ -222,11 +222,15 @@ class QuectelModule(Module):
                 if not (current_input[0] == CHAR_CR and current_input[1] == CHAR_LF):
                     aerisutils.print_log('Sanity: the two bytes after the length were not a CRLF')
                 current_input = current_input[2:]
-                # consume the next length bytes, and advance that many
+                # consume the next number of bytes the URC said we would get, and advance that many
                 payload = current_input[:int(length)]
+                extracted_payload_length = len(payload)
+                current_input = current_input[int(length):]
+                if extracted_payload_length != int(length):
+                    aerisutils.print_log(f'Sanity: the packet extracted from the buffer was not {length} bytes long, it was {extracted_payload_length} bytes long. Ignoring packet.')
+                    continue
                 payloads.append(payload)
                 aerisutils.print_log('Found packet: ' + aerisutils.bytes_to_utf_or_hex(payload), verbose)
-                current_input = current_input[int(length):]
                 # consume the trailing CRLF
                 if not (current_input[0] == CHAR_CR and current_input[1] == CHAR_LF):
                     aerisutils.print_log('Sanity: the two characters after the payload were not a CRLF')

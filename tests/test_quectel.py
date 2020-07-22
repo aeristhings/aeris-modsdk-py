@@ -28,8 +28,48 @@ class QuectelTests(unittest.TestCase):
         urc += b'\x0D\x0A'
         return urc
 
+    def create_one_line_urc(self, payload, ip='1.1.1.1', port=65534):
+        """Creates a "broken" one-line URC to simulate the condition where
+        the "buffer" of URCs is cut-off after the CRLF but before the UDP packet."""
+        urc = self.create_urc(payload, ip, port)
+        # include the first LF at the end of the URC
+        return urc[:urc.find(b'\x0A')+1]
+
+
+    def test_parse_one_line_urc(self):
+        sent_payloads = [b'Hello, world!']
+        expected_payloads = []
+        urcs = b''
+        for p in sent_payloads:
+            urcs += self.create_one_line_urc(p)
+
+        my_module = module_factory().get(Manufacturer.quectel, '1',
+                                         'anyapn', verbose=True)
+        payloads = my_module.udp_urcs_to_payloads(urcs, verbose=True)
+
+        self.assertEqual(expected_payloads, payloads)
+
+    def test_parse_interrupted_packet(self):
+        """If the URC buffer ends with a cut-off UDP packet, that packet should be ignored."""
+        sent_payloads = [b'0123456789']
+        expected_payloads = []
+        urcs = b''
+        for p in sent_payloads:
+            urcs += self.create_urc(p)
+
+        # the URC line should claim that the UDP packet is 10 bytes long
+        # cut it off after 5 bytes
+        lf_index = urcs.find(b'\x0A')
+        urcs = urcs[:lf_index + 1 + 5]
+
+        my_module = module_factory().get(Manufacturer.quectel, '1',
+                                         'anyapn', verbose=True)
+        payloads = my_module.udp_urcs_to_payloads(urcs, verbose=True)
+
+        self.assertEqual(expected_payloads, payloads)
+
+
     def test_parse_single_urc(self):
-        print('starting test_parse_single_urc ...')
         expected_payloads = [b'Hello, world!']
         urcs = b''
         for p in expected_payloads:
