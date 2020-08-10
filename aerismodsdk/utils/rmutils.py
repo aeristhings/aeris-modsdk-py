@@ -51,10 +51,14 @@ def open_serial(modem_port):
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS,
             timeout=1,
-            rtscts=False,
-            dsrdtr=False
+            xonxoff=False,
+            rtscts=True,
+            dsrdtr=True
         )
         myserial.isOpen()
+        myserial.sendBreak()
+        myserial.reset_input_buffer()
+        myserial.reset_output_buffer()        
     except serial.serialutil.SerialException:
         myserial = None
         print("Could not open serial port")

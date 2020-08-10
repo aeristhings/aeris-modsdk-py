@@ -18,6 +18,7 @@ import click
 import json
 import pathlib
 import time
+import subprocess
 import aerismodsdk.utils.rmutils as rmutils
 import aerismodsdk.modules.ublox as ublox
 import aerismodsdk.modules.quectel as quectel
@@ -127,19 +128,8 @@ def config(ctx, modemmfg, comport, apn):
 
 @mycli.command()
 @click.pass_context
-def modem(ctx):
-    """Modem information
-    \f
-
-    """
-    if rmutils.find_serial('/dev/tty'+ctx.obj['comPort'], verbose=True, timeout=5):
-        my_module.get_info()
-
-
-@mycli.command()
-@click.pass_context
 def info(ctx):
-    """Module information
+    """Module and SIM information
     \f
 
     """
@@ -605,7 +595,7 @@ def test(ctx, timeout, cycletime, delay):
 @mycli.group()
 @click.pass_context
 def pi(ctx):
-    """pi commands
+    """Raspberry Pi commands
     \f
 
     """
@@ -705,6 +695,108 @@ def update(ctx):
 
     """
     my_module.fw_update()
+
+
+# ========================================================================
+#
+# Define wvdial group of commands
+#
+@mycli.group()
+@click.pass_context
+def wvdial(ctx):
+    """wvdial commands
+    \f
+
+    """
+
+
+def get_process_output(process):
+    while True:
+        output = process.stdout.readline()
+        print(output.strip())
+        # Do something else
+        return_code = process.poll()
+        if return_code is not None:
+            print('RETURN CODE', return_code)
+            # Process has finished, read rest of the output 
+            for output in process.stdout.readlines():
+                print(output.strip())
+            break
+    return output
+
+#Init1 = ATZ
+#Init3 = AT+CGDCONT=1,"IP","mnoapntoreplace"
+# Init2 = ATQ0 V1 E1 S0=0 &C1 &D2
+# Init2 = ATQ0 V1 E1 &C1 &D2 +FCLASS=0
+# Baud = 4608000
+wvdial_config = """
+[Dialer aerismodsdk]
+Stupid mode = 1
+Init1 = ATZ
+Init2 = ATQ0 V1 E1 S0=0 &C1 &D2
+Init3 = AT+CGDCONT=1,"IP","mnoapntoreplace"
+ISDN = 0
+Modem Type = Analog Modem
+New PPPD = yes
+Phone = *99#
+Modem = /dev/ttycomporttoreplace
+Username = { }
+Password = { }
+Baud = 115200
+"""
+
+
+@wvdial.command()
+@click.pass_context
+def config(ctx):
+    """Create wvdial config that matches this sdk config
+    \f
+
+    """
+    # Verify wvdial installation
+    print('Verify wvdial installed.')
+    process = subprocess.Popen(['sudo', 'ls', '-la', '/etc/wvdial.conf'], 
+                               stdout=subprocess.PIPE,
+                               universal_newlines=True)
+    output = get_process_output(process)
+    if output.find('No such') > 0:
+        print('Please verify that wvdial has been installed.')
+        print('Install via "sudo apt-get install wvdial"')
+        exit()        
+    # Create new config
+    print('Creating ~/wvdial.conf.aerismodsdk')
+    try:
+        with open(home_directory + '/wvdial.conf.aerismodsdk', 'w') as wvdial_config_file:
+            new_wvdial_config = wvdial_config.replace('mnoapntoreplace', ctx.obj['apn'])
+            new_wvdial_config = new_wvdial_config.replace('comporttoreplace', ctx.obj['comPort'])
+            wvdial_config_file.write(new_wvdial_config)
+            wvdial_config_file.close()
+    except IOError:
+        print('Failed to write new configuration file.')
+        exit()    
+
+
+@wvdial.command()
+@click.pass_context
+def run(ctx):
+    """Run wvdial based on aerismodsdk config
+    \f
+
+    """
+    # Verify aerismodsdk wvdial configuration
+    print('Verify wvdial installed.')
+    process = subprocess.Popen(['sudo', 'ls', '-la', home_directory + '/wvdial.conf.aerismodsdk'], 
+                               stdout=subprocess.PIPE,
+                               universal_newlines=True)
+    output = get_process_output(process)
+    if output.find('No such') > 0:
+        print('Creating configuration')
+    # Run wvdial and point to our configuration
+    print('Verify wvdial installed.')
+    process = subprocess.Popen(['sudo', 'wvdial', '-C', home_directory + '/wvdial.conf.aerismodsdk', 'aerismodsdk'], 
+                               stdout=subprocess.PIPE,
+                               universal_newlines=True)
+    output = get_process_output(process)
 
 
 # ========================================================================
