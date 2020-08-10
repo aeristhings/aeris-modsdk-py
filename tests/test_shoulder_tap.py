@@ -26,7 +26,7 @@ class ShoulderTapTest(unittest.TestCase):
         result = shoulder_tap.parse_shoulder_tap(packet, self.imsi, True)
         self.assertIsInstance(result, Udp0ShoulderTap)
         self.assertIsNone(result.payload)
-        self.assertEqual(self.imsi+'-'+'00001', result.getRequestId())
+        self.assertEqual(self.imsi+'-'+'1', result.getRequestId())
 
     def test_parse_no_payload_maxsequencenumber(self):
         packet = b'\x0201ffff00\x03'

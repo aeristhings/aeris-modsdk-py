@@ -166,4 +166,4 @@ class Udp0ShoulderTap(BaseShoulderTap):
     def getRequestId(self):
         '''Returns the request ID of this shoulder-tap. It is formatted as this device's IMSI, a dash,
         and the sequence number (in base-10) from the payload. '''
-        return f'{self.imsi}-{self.payloadId:05}'
+        return f'{self.imsi}-{self.payloadId}'
