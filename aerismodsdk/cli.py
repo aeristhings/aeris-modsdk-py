@@ -45,7 +45,7 @@ modules = {
 }
 
 
-# Loads configuration from file
+# Loads configuration from json file previously created during initialization
 def load_config(ctx, config_filename):
     try:
         with open(config_filename) as my_config_file:
