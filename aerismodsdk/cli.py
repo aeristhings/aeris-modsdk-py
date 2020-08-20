@@ -679,7 +679,11 @@ def update(ctx):
     \f
 
     """
-    my_module.fw_update()
+    if my_module.fw_update():
+        print('Update successful.')
+    else:
+        print('Not supported or not successful.')
+    
 
 
 # ========================================================================

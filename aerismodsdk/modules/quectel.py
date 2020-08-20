@@ -255,3 +255,12 @@ class QuectelModule(Module):
     # The eDRX stuff - see base class
     #
 
+
+    # ========================================================================
+    #
+    # The firmware stuff
+    #
+
+    def fw_update(self):
+        return False
+
