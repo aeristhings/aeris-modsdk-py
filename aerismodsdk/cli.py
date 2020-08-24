@@ -692,7 +692,10 @@ def loadapp(ctx):
     \f
 
     """
-    if my_module.load_app():
+    filename = 'program.bin'
+    path = '/home/pi/share/pio-bg96-1/.pio/build/bg96/'
+    my_module.delete_app(filename)
+    if my_module.load_app(path, filename):
         print('Loading app successful.')
     else:
         print('Not supported or not successful.')

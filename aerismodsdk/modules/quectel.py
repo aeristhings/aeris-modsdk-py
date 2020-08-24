@@ -275,15 +275,15 @@ class QuectelModule(Module):
         return False
 
 
-    def load_app(self):
+    def load_app(self, path, filename):
         ser = self.myserial
         #filename = 'oem_app_path.ini'
-        filename = 'program.bin'
-        path = '/home/pi/share/pio-bg96-1/.pio/build/bg96/' + filename
-        stats = os.stat(path)
+        #filename = 'program.bin'
+        #path = '/home/pi/share/pio-bg96-1/.pio/build/bg96/' + filename
+        stats = os.stat(path + filename)
         filesize = stats.st_size
         print('Size of file is ' + str(stats.st_size) + ' bytes')
-        f = open(path, 'rb')
+        f = open(path + filename, 'rb')
         mycmd = 'AT+QFUPL="EUFS:/datatx/' + filename+ '",' + str(filesize)
         rmutils.write(ser, mycmd)
         i = 0
@@ -303,10 +303,10 @@ class QuectelModule(Module):
         return True
 
 
-    def delete_app(self):
+    def delete_app(self, filename):
         ser = self.myserial
         #filename = 'oem_app_disable.ini'
-        filename = 'program.bin'
+        #filename = 'program.bin'
         path = '/datatx/' + filename
         mycmd = 'AT+QFDEL="EUFS:' + path +'"'
         rmutils.write(ser, mycmd)
