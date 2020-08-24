@@ -685,6 +685,58 @@ def update(ctx):
         print('Not supported or not successful.')
     
 
+@fw.command()
+@click.pass_context
+def loadapp(ctx):
+    """Load app into radio module soc
+    \f
+
+    """
+    if my_module.load_app():
+        print('Loading app successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@fw.command()
+@click.pass_context
+def listapp(ctx):
+    """List apps in radio module soc
+    \f
+
+    """
+    if my_module.list_app():
+        print('Listing app successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@fw.command()
+@click.pass_context
+def delapp(ctx):
+    """Delete apps in radio module soc
+    \f
+
+    """
+    if my_module.delete_app():
+        print('Deleting app successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@fw.command()
+@click.pass_context
+def dwnapp(ctx):
+    """Download apps in radio module soc
+    \f
+
+    """
+    if my_module.download_app():
+        print('Download app successful.')
+    else:
+        print('Not supported or not successful.')
+
+
 
 # ========================================================================
 #

@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
+
 import aerismodsdk.utils.rmutils as rmutils
 import aerismodsdk.utils.aerisutils as aerisutils
 from aerismodsdk.modules.module import Module
@@ -261,6 +263,66 @@ class QuectelModule(Module):
     # The firmware stuff
     #
 
+    def getc(self, size=1, timeout=1):
+        return self.myserial.read(size) or None
+
+
+    def putc(self,data, timeout=1):
+        return self.myserial.write(data)  # note that this ignores the timeout
+
+
     def fw_update(self):
         return False
+
+
+    def load_app(self):
+        ser = self.myserial
+        #filename = 'oem_app_path.ini'
+        filename = 'program.bin'
+        path = '/home/pi/share/pio-bg96-1/.pio/build/bg96/' + filename
+        stats = os.stat(path)
+        filesize = stats.st_size
+        print('Size of file is ' + str(stats.st_size) + ' bytes')
+        f = open(path, 'rb')
+        mycmd = 'AT+QFUPL="EUFS:/datatx/' + filename+ '",' + str(filesize)
+        rmutils.write(ser, mycmd)
+        i = 0
+        while i < filesize:
+            self.putc(f.read(1))
+            i += 1
+        f.close()
+        return True
+
+
+    def list_app(self):
+        ser = self.myserial
+        mycmd = 'AT+QFLST="EUFS:/datatx/*"'
+        #mycmd = 'AT+QFLST="EUFS:*"'
+        rmutils.write(ser, mycmd)
+        #rmutils.wait_urc(ser, 20, self.com_port)
+        return True
+
+
+    def delete_app(self):
+        ser = self.myserial
+        #filename = 'oem_app_disable.ini'
+        filename = 'program.bin'
+        path = '/datatx/' + filename
+        mycmd = 'AT+QFDEL="EUFS:' + path +'"'
+        rmutils.write(ser, mycmd)
+        return True
+
+
+    def download_app(self):
+        ser = self.myserial
+        #filename = 'oem_app_disable.ini'
+        filename = 'oem_app_path.ini'
+        mycmd = 'AT+QFDWL="EUFS:/datatx/' + filename + '"'
+        rmutils.write(ser, mycmd)
+        char = ''
+        while char is not None:
+            char = self.getc()
+            print('Char: ' + str(char))
+        return True
+
 
