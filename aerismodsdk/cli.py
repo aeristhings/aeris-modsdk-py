@@ -696,6 +696,9 @@ def loadapp(ctx):
     path = '/home/pi/share/pio-bg96-1/.pio/build/bg96/'
     my_module.delete_app(filename)
     if my_module.load_app(path, filename):
+        #time.sleep(10)
+        #filename = 'oem_app_path.ini'
+        #my_module.load_app(path, filename)
         print('Loading app successful.')
     else:
         print('Not supported or not successful.')
@@ -721,7 +724,8 @@ def delapp(ctx):
     \f
 
     """
-    if my_module.delete_app():
+    filename = 'program.bin'
+    if my_module.delete_app(filename):
         print('Deleting app successful.')
     else:
         print('Not supported or not successful.')

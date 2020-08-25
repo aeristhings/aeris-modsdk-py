@@ -291,6 +291,7 @@ class QuectelModule(Module):
             self.putc(f.read(1))
             i += 1
         f.close()
+        rmutils.wait_urc(ser, 5, self.com_port)  # Wait up to 5 seconds for results to come back via urc
         return True
 
 
