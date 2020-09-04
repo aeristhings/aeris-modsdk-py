@@ -240,6 +240,7 @@ def lookup(ctx, host):
     print('ip: ' + str(ipvals))
 
 
+
 # ========================================================================
 #
 # Define the http group of commands
@@ -845,6 +846,36 @@ def run(ctx):
                                stdout=subprocess.PIPE,
                                universal_newlines=True)
     output = get_process_output(process)
+
+
+# ========================================================================
+#
+# Verifying MQTT Connection with GCP IoT core as backend
+#
+
+@mycli.group()
+@click.pass_context
+def mqtt(ctx):
+    """MQTT commands
+    \f
+
+    """
+
+
+@mqtt.command()
+@click.option("--project", prompt="GCP Project Id for IoT Core", default='chatbot-aerislabs-poc', help="GCP Project Id for IoT Core")
+@click.option("--region", prompt="GCP Region for IoT Core", default='us-central1',  help="GCP Region for IoT Core")
+@click.option("--registry", prompt="GCP IoT Core Registry Id", default='registry.iotcore.aeris', help="GCP IoT Core Registry Id")
+@click.option("--cacert", default='roots.pem', help="GCP IoT Core Root CA Certificate File Name")
+@click.option("--clientkey", prompt="Client Private Key", default='key.pem', help="Client Private Key")
+@click.option("--algorithm", prompt='Key Algorithm', type=click.Choice(['ES256', 'RS256']), default='ES256', help="Client Certificate Algorithm")
+@click.option("--deviceid", prompt="Device Id", default='IMEI-866425034908345', help="Registered IoT Device Id")
+@click.pass_context
+def demo(ctx, project, region, registry, cacert, clientkey,algorithm, deviceid):
+    print('Upload GCP Root CA certificate (roots.pem) into modem using AT+QFUPL command before running this function')
+    print('Place Client Private Ley file in current directory')
+    my_module.mqtt_demo(project, region, registry, cacert, clientkey, algorithm, deviceid, verbose=ctx.obj['verbose'])
+
 
 
 # ========================================================================

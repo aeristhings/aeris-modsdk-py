@@ -19,6 +19,8 @@ import os
 import aerismodsdk.utils.rmutils as rmutils
 import aerismodsdk.utils.aerisutils as aerisutils
 from aerismodsdk.modules.module import Module
+import jwt
+import datetime
 
 
 class QuectelModule(Module):
@@ -326,4 +328,49 @@ class QuectelModule(Module):
             print('Char: ' + str(char))
         return True
 
-
+    def mqtt_demo(self, project, region, registry, cacert, clientkey, algorithm, deviceid, verbose):
+        ser = self.myserial        
+        rmutils.write(ser, 'AT+QMTCFG="version",0,4', delay=1) 
+        rmutils.write(ser, 'AT+QMTCFG="SSL",0,1,3', delay=1) 
+        rmutils.write(ser, 'AT+QSSLCFG="cacert",3,"'+cacert+'"', delay=1) 
+        rmutils.write(ser, 'AT+QSSLCFG="seclevel",3,2', delay=1) 
+        rmutils.write(ser, 'AT+QSSLCFG="sslversion",3,4', delay=1) 
+        rmutils.write(ser, 'AT+QSSLCFG="ciphersuite",3,0xFFFF', delay=1) 
+        rmutils.write(ser, 'AT+QSSLCFG="ignorelocaltime",3,1', delay=1) 
+        rmutils.write(ser, 'AT+QMTOPEN=0,"mqtt.googleapis.com",8883') 
+        vals = rmutils.wait_urc(ser, 10, self.com_port, returnonreset=True, returnonvalue='+QMTOPEN:')  
+        vals = super().parse_response(vals, '+QMTOPEN:')
+        print('Network Status: ' + str(vals))
+        if vals[1] != '0' :
+          print('Failed to connect to MQTT Network')
+        else:
+          print('Successfully opened Network to MQTT Server')
+          token_req = {
+                  'iat': datetime.datetime.utcnow(),
+                  'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
+                  'aud': project
+                  }
+          with open(clientkey, 'r') as f:
+             private_key = f.read()	
+          token1 = jwt.encode(token_req, private_key, algorithm=algorithm).decode('utf-8')
+          print(token1);		  
+          cmd = 'AT+QMTCONN=0,"projects/'+project+'/locations/'+region+'/registries/'+registry+'/devices/'+deviceid+'","unused","'+token1+'"'
+          rmutils.write(ser, cmd)
+          vals = rmutils.wait_urc(ser, 10, self.com_port, returnonreset=True, returnonvalue='+QMTCONN:')  
+          vals = super().parse_response(vals, '+QMTCONN:')
+          print('Connection Response: ' + str(vals))
+          if vals[2] != '0':
+            print('Unable to establish Connection')
+          else:
+            print('Successfully Established MQTT Connection')
+            rmutils.write(ser, 'AT+QMTSUB=0,1,"/devices/'+deviceid+'/config",1')		
+            vals = rmutils.wait_urc(ser, 5, self.com_port, returnonreset=True, returnonvalue='+QMTRECV:')  
+            vals = super().parse_response(vals, '+QMTRECV:')
+            print('Received Message : ' + str(vals))
+            rmutils.write(ser, 'AT+QMTPUB=0,1,1,0,"/devices/'+deviceid+'/events"')            
+            rmutils.write(ser, 'helloserver'+chr(26))
+            vals = rmutils.wait_urc(ser, 5, self.com_port, returnonreset=True, returnonvalue='+QMTPUB:')  
+            vals = super().parse_response(vals, '+QMTPUB:')
+            print('Message Publish Status : ' + str(vals))	
+            rmutils.write(ser, 'AT+QMTDISC=0', delay=1) 
+            print('MQTT Connection Closed')	
