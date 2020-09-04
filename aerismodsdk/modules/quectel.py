@@ -328,15 +328,28 @@ class QuectelModule(Module):
             print('Char: ' + str(char))
         return True
 
+    def create_jwt(self, project,clientkey,algorithm):
+      token_req = {
+                  'iat': datetime.datetime.utcnow(),
+                  'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
+                  'aud': project
+                  }
+      with open(clientkey, 'r') as f:
+        private_key = f.read()
+      return jwt.encode(token_req, private_key, algorithm=algorithm).decode('utf-8')
+
+    def configure_mqtt(self, ser, cacert):
+      rmutils.write(ser, 'AT+QMTCFG="version",0,4', delay=1) 
+      rmutils.write(ser, 'AT+QMTCFG="SSL",0,1,3', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="cacert",3,"'+cacert+'"', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="seclevel",3,2', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="sslversion",3,4', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="ciphersuite",3,0xFFFF', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="ignorelocaltime",3,1', delay=1) 
+    
     def mqtt_demo(self, project, region, registry, cacert, clientkey, algorithm, deviceid, verbose):
         ser = self.myserial        
-        rmutils.write(ser, 'AT+QMTCFG="version",0,4', delay=1) 
-        rmutils.write(ser, 'AT+QMTCFG="SSL",0,1,3', delay=1) 
-        rmutils.write(ser, 'AT+QSSLCFG="cacert",3,"'+cacert+'"', delay=1) 
-        rmutils.write(ser, 'AT+QSSLCFG="seclevel",3,2', delay=1) 
-        rmutils.write(ser, 'AT+QSSLCFG="sslversion",3,4', delay=1) 
-        rmutils.write(ser, 'AT+QSSLCFG="ciphersuite",3,0xFFFF', delay=1) 
-        rmutils.write(ser, 'AT+QSSLCFG="ignorelocaltime",3,1', delay=1) 
+        self.configure_mqtt(ser, cacert)
         rmutils.write(ser, 'AT+QMTOPEN=0,"mqtt.googleapis.com",8883') 
         vals = rmutils.wait_urc(ser, 10, self.com_port, returnonreset=True, returnonvalue='+QMTOPEN:')  
         vals = super().parse_response(vals, '+QMTOPEN:')
@@ -345,16 +358,8 @@ class QuectelModule(Module):
           print('Failed to connect to MQTT Network')
         else:
           print('Successfully opened Network to MQTT Server')
-          token_req = {
-                  'iat': datetime.datetime.utcnow(),
-                  'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
-                  'aud': project
-                  }
-          with open(clientkey, 'r') as f:
-             private_key = f.read()	
-          token1 = jwt.encode(token_req, private_key, algorithm=algorithm).decode('utf-8')
-          print(token1);		  
-          cmd = 'AT+QMTCONN=0,"projects/'+project+'/locations/'+region+'/registries/'+registry+'/devices/'+deviceid+'","unused","'+token1+'"'
+          token=self.create_jwt(project,clientkey,algorithm)          
+          cmd = 'AT+QMTCONN=0,"projects/'+project+'/locations/'+region+'/registries/'+registry+'/devices/'+deviceid+'","unused","'+token+'"'
           rmutils.write(ser, cmd)
           vals = rmutils.wait_urc(ser, 10, self.com_port, returnonreset=True, returnonvalue='+QMTCONN:')  
           vals = super().parse_response(vals, '+QMTCONN:')
@@ -374,3 +379,5 @@ class QuectelModule(Module):
             print('Message Publish Status : ' + str(vals))	
             rmutils.write(ser, 'AT+QMTDISC=0', delay=1) 
             print('MQTT Connection Closed')	
+
+        
