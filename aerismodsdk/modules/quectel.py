@@ -14,9 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
+
 import aerismodsdk.utils.rmutils as rmutils
 import aerismodsdk.utils.aerisutils as aerisutils
 from aerismodsdk.modules.module import Module
+import jwt
+import datetime
 
 import re
 
@@ -357,3 +361,125 @@ class QuectelModule(Module):
     # The eDRX stuff - see base class
     #
 
+
+    # ========================================================================
+    #
+    # The firmware stuff
+    #
+
+    def getc(self, size=1, timeout=1):
+        return self.myserial.read(size) or None
+
+
+    def putc(self,data, timeout=1):
+        return self.myserial.write(data)  # note that this ignores the timeout
+
+
+    def fw_update(self):
+        return False
+
+
+    def load_app(self, path, filename):
+        ser = self.myserial
+        #filename = 'oem_app_path.ini'
+        #filename = 'program.bin'
+        #path = '/home/pi/share/pio-bg96-1/.pio/build/bg96/' + filename
+        stats = os.stat(path + filename)
+        filesize = stats.st_size
+        print('Size of file is ' + str(stats.st_size) + ' bytes')
+        f = open(path + filename, 'rb')
+        mycmd = 'AT+QFUPL="EUFS:/datatx/' + filename+ '",' + str(filesize)
+        rmutils.write(ser, mycmd)
+        i = 0
+        while i < filesize:
+            self.putc(f.read(1))
+            i += 1
+        f.close()
+        rmutils.wait_urc(ser, 5, self.com_port)  # Wait up to 5 seconds for results to come back via urc
+        return True
+
+
+    def list_app(self):
+        ser = self.myserial
+        mycmd = 'AT+QFLST="EUFS:/datatx/*"'
+        #mycmd = 'AT+QFLST="EUFS:*"'
+        rmutils.write(ser, mycmd)
+        #rmutils.wait_urc(ser, 20, self.com_port)
+        return True
+
+
+    def delete_app(self, filename):
+        ser = self.myserial
+        #filename = 'oem_app_disable.ini'
+        #filename = 'program.bin'
+        path = '/datatx/' + filename
+        mycmd = 'AT+QFDEL="EUFS:' + path +'"'
+        rmutils.write(ser, mycmd)
+        return True
+
+
+    def download_app(self):
+        ser = self.myserial
+        #filename = 'oem_app_disable.ini'
+        filename = 'oem_app_path.ini'
+        mycmd = 'AT+QFDWL="EUFS:/datatx/' + filename + '"'
+        rmutils.write(ser, mycmd)
+        char = ''
+        while char is not None:
+            char = self.getc()
+            print('Char: ' + str(char))
+        return True
+
+    def create_jwt(self, project,clientkey,algorithm):
+      token_req = {
+                  'iat': datetime.datetime.utcnow(),
+                  'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=10),
+                  'aud': project
+                  }
+      with open(clientkey, 'r') as f:
+        private_key = f.read()
+      return jwt.encode(token_req, private_key, algorithm=algorithm).decode('utf-8')
+
+    def configure_mqtt(self, ser, cacert):
+      rmutils.write(ser, 'AT+QMTCFG="version",0,4', delay=1) 
+      rmutils.write(ser, 'AT+QMTCFG="SSL",0,1,3', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="cacert",3,"'+cacert+'"', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="seclevel",3,2', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="sslversion",3,4', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="ciphersuite",3,0xFFFF', delay=1) 
+      rmutils.write(ser, 'AT+QSSLCFG="ignorelocaltime",3,1', delay=1) 
+    
+    def mqtt_demo(self, project, region, registry, cacert, clientkey, algorithm, deviceid, verbose):
+        ser = self.myserial        
+        self.configure_mqtt(ser, cacert)
+        rmutils.write(ser, 'AT+QMTOPEN=0,"mqtt.googleapis.com",8883') 
+        vals = rmutils.wait_urc(ser, 10, self.com_port, returnonreset=True, returnonvalue='+QMTOPEN:')  
+        vals = super().parse_response(vals, '+QMTOPEN:')
+        print('Network Status: ' + str(vals))
+        if vals[1] != '0' :
+          print('Failed to connect to MQTT Network')
+        else:
+          print('Successfully opened Network to MQTT Server')
+          token=self.create_jwt(project,clientkey,algorithm)          
+          cmd = 'AT+QMTCONN=0,"projects/'+project+'/locations/'+region+'/registries/'+registry+'/devices/'+deviceid+'","unused","'+token+'"'
+          rmutils.write(ser, cmd)
+          vals = rmutils.wait_urc(ser, 10, self.com_port, returnonreset=True, returnonvalue='+QMTCONN:')  
+          vals = super().parse_response(vals, '+QMTCONN:')
+          print('Connection Response: ' + str(vals))
+          if vals[2] != '0':
+            print('Unable to establish Connection')
+          else:
+            print('Successfully Established MQTT Connection')
+            rmutils.write(ser, 'AT+QMTSUB=0,1,"/devices/'+deviceid+'/config",1')		
+            vals = rmutils.wait_urc(ser, 5, self.com_port, returnonreset=True, returnonvalue='+QMTRECV:')  
+            vals = super().parse_response(vals, '+QMTRECV:')
+            print('Received Message : ' + str(vals))
+            rmutils.write(ser, 'AT+QMTPUB=0,1,1,0,"/devices/'+deviceid+'/events"')            
+            rmutils.write(ser, 'helloserver'+chr(26))
+            vals = rmutils.wait_urc(ser, 5, self.com_port, returnonreset=True, returnonvalue='+QMTPUB:')  
+            vals = super().parse_response(vals, '+QMTPUB:')
+            print('Message Publish Status : ' + str(vals))	
+            rmutils.write(ser, 'AT+QMTDISC=0', delay=1) 
+            print('MQTT Connection Closed')	
+
+        

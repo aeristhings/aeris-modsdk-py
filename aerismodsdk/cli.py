@@ -46,7 +46,7 @@ modules = {
 }
 
 
-# Loads configuration from file
+# Loads configuration from json file previously created during initialization
 def load_config(ctx, config_filename):
     try:
         with open(config_filename) as my_config_file:
@@ -239,6 +239,7 @@ def ping(ctx, host):
 def lookup(ctx, host):
     ipvals = my_module.lookup(host, verbose=ctx.obj['verbose'])
     print('ip: ' + str(ipvals))
+
 
 
 # ========================================================================
@@ -694,7 +695,70 @@ def update(ctx):
     \f
 
     """
-    my_module.fw_update()
+    if my_module.fw_update():
+        print('Update successful.')
+    else:
+        print('Not supported or not successful.')
+    
+
+@fw.command()
+@click.pass_context
+def loadapp(ctx):
+    """Load app into radio module soc
+    \f
+
+    """
+    filename = 'program.bin'
+    path = '/home/pi/share/pio-bg96-1/.pio/build/bg96/'
+    my_module.delete_app(filename)
+    if my_module.load_app(path, filename):
+        #time.sleep(10)
+        #filename = 'oem_app_path.ini'
+        #my_module.load_app(path, filename)
+        print('Loading app successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@fw.command()
+@click.pass_context
+def listapp(ctx):
+    """List apps in radio module soc
+    \f
+
+    """
+    if my_module.list_app():
+        print('Listing app successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@fw.command()
+@click.pass_context
+def delapp(ctx):
+    """Delete apps in radio module soc
+    \f
+
+    """
+    filename = 'program.bin'
+    if my_module.delete_app(filename):
+        print('Deleting app successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@fw.command()
+@click.pass_context
+def dwnapp(ctx):
+    """Download apps in radio module soc
+    \f
+
+    """
+    if my_module.download_app():
+        print('Download app successful.')
+    else:
+        print('Not supported or not successful.')
+
 
 
 # ========================================================================
@@ -797,6 +861,36 @@ def run(ctx):
                                stdout=subprocess.PIPE,
                                universal_newlines=True)
     output = get_process_output(process)
+
+
+# ========================================================================
+#
+# Verifying MQTT Connection with GCP IoT core as backend
+#
+
+@mycli.group()
+@click.pass_context
+def mqtt(ctx):
+    """MQTT commands
+    \f
+
+    """
+
+
+@mqtt.command()
+@click.option("--project", prompt="GCP Project Id for IoT Core", default='chatbot-aerislabs-poc', help="GCP Project Id for IoT Core")
+@click.option("--region", prompt="GCP Region for IoT Core", default='us-central1',  help="GCP Region for IoT Core")
+@click.option("--registry", prompt="GCP IoT Core Registry Id", default='registry.iotcore.aeris', help="GCP IoT Core Registry Id")
+@click.option("--cacert", default='roots.pem', help="GCP IoT Core Root CA Certificate File Name")
+@click.option("--clientkey", prompt="Client Private Key", default='key.pem', help="Client Private Key")
+@click.option("--algorithm", prompt='Key Algorithm', type=click.Choice(['ES256', 'RS256']), default='ES256', help="Client Certificate Algorithm")
+@click.option("--deviceid", prompt="Device Id", default='IMEI-866425034908345', help="Registered IoT Device Id")
+@click.pass_context
+def demo(ctx, project, region, registry, cacert, clientkey,algorithm, deviceid):
+    print('Upload GCP Root CA certificate (roots.pem) into modem using AT+QFUPL command before running this function')
+    print('Place Client Private Ley file in current directory')
+    my_module.mqtt_demo(project, region, registry, cacert, clientkey, algorithm, deviceid, verbose=ctx.obj['verbose'])
+
 
 
 # ========================================================================

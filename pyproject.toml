@@ -11,6 +11,8 @@ pyusb = "^1.0.2"
 pyserial = "^3.4"
 "RPi.GPIO" = "^0.7.0"
 xmodem = "^0.4.5"
+pyjwt = "^1.7.1"
+cryptography = "^3.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
