@@ -30,7 +30,17 @@ def get_shoulder_taps(module, port=23747, verbose=False):
         the AerFrame Shoulder-Tap API for how to send shoulder-taps to a different port.
     verbose : bool, optional
         True to enable verbose output.
+
+    Raises
+    ------
+    NotImplementedError if this feature is not implemented for your radio module.
     '''
+
+    # The parsing of URCs to payloads is currently only implemented for
+    # Quectel modules, so fail early if the module in question doesn't
+    # support that...
+    if not hasattr(module, 'udp_urcs_to_payloads'):
+        raise NotImplementedError('Not supported for modem manufacturer ' + module.modem_mfg)
     DEFAULT_WAIT_DURATION = 30
     mod_info = {}
     module.get_info_for_obj('AT+CIMI', 'imsi', mod_info)
