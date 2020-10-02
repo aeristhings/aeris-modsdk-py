@@ -18,7 +18,7 @@ from aerismodsdk.utils import aerisutils
 def get_shoulder_taps(module, port=23747, verbose=False):
     '''Gets shoulder taps and prints their request IDs and payloads.
     Requires that module is in a packet data session.
-    Currently only supports the Udp0 protocol, UTF-8 payloads, and the Quectel BG96 modem.
+    Currently only supports the Udp0 protocol and the Quectel BG96 modem.
     Is a generator.
 
     Parameters
