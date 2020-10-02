@@ -14,8 +14,8 @@
 
 import unittest
 
-from aerismodsdk import shoulder_tap
-from aerismodsdk.shoulder_tap import Udp0ShoulderTap
+from aerismodsdk.utils import shoulder_tap
+from aerismodsdk.model.shoulder_tap import Udp0ShoulderTap
 
 
 class ShoulderTapTest(unittest.TestCase):

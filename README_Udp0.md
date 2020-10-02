@@ -55,4 +55,4 @@ This CLI will cause the radio module to listen on UDP port 23747 for shoulder-ta
 
 ### Python Integration
 
-The file `aerismodsdk/shoulder_tap.py` exposes the `parse_shoulder_tap` function which decodes a binary packet (received, e.g., through a Python program listening on a UDP socket) into an object that exposes the payload and request ID of the shoulder-tap.
+The file `aerismodsdk/utils/shoulder_tap.py` exposes the `parse_shoulder_tap` function which decodes a binary packet (received, e.g., through a Python program listening on a UDP socket) into an object that exposes the payload and request ID of the shoulder-tap.

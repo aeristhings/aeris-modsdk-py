@@ -25,7 +25,6 @@ import aerismodsdk.modules.quectel as quectel
 import aerismodsdk.modules.telit as telit
 import aerismodsdk.utils.aerisutils as aerisutils
 import aerismodsdk.utils.gpioutils as gpioutils
-from aerismodsdk.shoulder_tap import get_shoulder_taps
 
 from aerismodsdk.manufacturer import Manufacturer
 from aerismodsdk.modulefactory import module_factory
@@ -394,7 +393,7 @@ def shoulder_tap(ctx, port):
     """Listen for Shoulder-Tap packets and print their details. Runs until terminated with a SIGINT (e.g., CTRL+C).
     Requires that the module is in a packet data session; see the 'packet start' command.
     """
-    shoulder_taps = get_shoulder_taps(my_module, port, ctx.obj["verbose"])
+    shoulder_taps = my_module.get_shoulder_taps(port, ctx.obj["verbose"])
     for st in shoulder_taps:
         if st is not None:
             print(f'Shoulder tap request ID: <<{st.getRequestId()}>> and payload: <<{st.payload}>>')

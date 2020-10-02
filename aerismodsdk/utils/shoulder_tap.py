@@ -13,52 +13,7 @@
 # limitations under the License.
 
 from aerismodsdk.utils import aerisutils
-
-
-def get_shoulder_taps(module, port=23747, verbose=False):
-    '''Gets shoulder taps and prints their request IDs and payloads.
-    Requires that module is in a packet data session.
-    Currently only supports the Udp0 protocol and the Quectel BG96 modem.
-    Is a generator.
-
-    Parameters
-    ----------
-    module : Module
-        The object associated with your radio module.
-    port : int, optional
-        The port on which to listen for shoulder-taps. See the documentation of
-        the AerFrame Shoulder-Tap API for how to send shoulder-taps to a different port.
-    verbose : bool, optional
-        True to enable verbose output.
-
-    Raises
-    ------
-    NotImplementedError if this feature is not implemented for your radio module.
-    '''
-
-    # The parsing of URCs to payloads is currently only implemented for
-    # Quectel modules, so fail early if the module in question doesn't
-    # support that...
-    if not hasattr(module, 'udp_urcs_to_payloads'):
-        raise NotImplementedError('Not supported for modem manufacturer ' + module.modem_mfg)
-    DEFAULT_WAIT_DURATION = 30
-    mod_info = {}
-    module.get_info_for_obj('AT+CIMI', 'imsi', mod_info)
-    imsi = mod_info['imsi']
-    if not imsi or len(imsi) == 0:
-        aerisutils.print_log('IMSI not found -- is the module powered up?')
-    while True:
-        urcs = module.udp_listen(port, DEFAULT_WAIT_DURATION, verbose, returnbytes=True)
-        if urcs is False:
-            # module may not be in a packet session. Try again!
-            aerisutils.print_log('Failed to retrieve URCs. Is the module in a packet session?')
-            continue
-        payloads = module.udp_urcs_to_payloads(urcs, verbose)
-        for payload in payloads:
-            aerisutils.print_log('Got payload: ' + aerisutils.bytes_to_utf_or_hex(payload), verbose)
-            shoulder_tap = parse_shoulder_tap(payload, imsi)
-            if shoulder_tap is not None:
-                yield shoulder_tap
+from aerismodsdk.model import shoulder_tap
 
 
 def parse_shoulder_tap(packet, imsi, verbose=False):
@@ -149,31 +104,4 @@ def parse_udp0_packet(packet, imsi, verbose=False):
         aerisutils.print_log(f'Error: byte after the payload was not an ETX; it was (binary) {final_character}', verbose=True)
         return None
 
-    return Udp0ShoulderTap(payload, sequence_decimal, imsi)
-
-
-class BaseShoulderTap:
-    def __init__(self, payload, payloadId, imsi):
-        '''Creates a representation of a Shoulder-Tap.
-        Parameters
-        ----------
-        payload : bytes
-            The payload contained by the shoulder-tap.
-        payloadId : int or str
-            The ID of the shoulder-tap, as present in its protocol representation.
-        imsi : str
-            The IMSI of this device.
-        '''
-        self.payload = payload
-        self.payloadId = payloadId
-        self.imsi = imsi
-
-    def getRequestId(self):
-        return self.payloadId
-
-
-class Udp0ShoulderTap(BaseShoulderTap):
-    def getRequestId(self):
-        '''Returns the request ID of this shoulder-tap. It is formatted as this device's IMSI, a dash,
-        and the sequence number (in base-10) from the payload. '''
-        return f'{self.imsi}-{self.payloadId}'
+    return shoulder_tap.Udp0ShoulderTap(payload, sequence_decimal, imsi)
