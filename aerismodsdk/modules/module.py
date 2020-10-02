@@ -484,3 +484,14 @@ class Module:
         rmutils.write(ser, mycmd, verbose=verbose)
         print('edrx is now disabled')
 
+
+    # ========================================================================
+    #
+    # Common lwm2m stuff
+    #
+
+    def lwm2m_config(self):
+        return False
+
+
+

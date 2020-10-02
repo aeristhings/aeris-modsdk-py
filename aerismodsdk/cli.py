@@ -110,7 +110,8 @@ def mycli(ctx, verbose, config_file):
 @mycli.command()
 @click.option('--modemmfg', prompt='Modem mfg', type=click.Choice(['ublox', 'quectel', 'telit']),
               cls=default_from_context('modemMfg', 'ublox'), help="Modem manufacturer.")
-@click.option('--comport', prompt='COM port', type=click.Choice(['ACM0','S0', 'S1', 'USB0', 'USB1', 'USB2', 'USB3', 'USB4']),
+@click.option('--comport', prompt='COM port', 
+              type=click.Choice(['ACM0','S0', 'S1', 'USB0', 'USB1', 'USB2', 'USB3', 'USB4', 'USB5', 'USB6', 'USB7']),
               cls=default_from_context('comPort', 'USB0'), help="Modem COM port.")
 @click.option('--apn', prompt='APN', cls=default_from_context('apn', 'lpiot.aer.net'), help="APN to use")
 @click.pass_context
@@ -759,6 +760,45 @@ def dwnapp(ctx):
     else:
         print('Not supported or not successful.')
 
+
+
+# ========================================================================
+#
+# Define the lwm2m group of commands
+#
+@mycli.group()
+@click.pass_context
+def lwm2m(ctx):
+    """LwM2M commands
+    \f
+
+    """
+
+
+@lwm2m.command()
+@click.pass_context
+def config(ctx):
+    """Configure lwm2m client
+    \f
+
+    """
+    if my_module.lwm2m_config():
+        print('Configuration successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@lwm2m.command()
+@click.pass_context
+def reset(ctx):
+    """Reset ME to reload lwm2m client
+    \f
+
+    """
+    if my_module.lwm2m_reset():
+        print('Reset successful.')
+    else:
+        print('Not supported or not successful.')
 
 
 # ========================================================================

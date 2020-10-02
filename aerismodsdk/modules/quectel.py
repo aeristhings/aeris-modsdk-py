@@ -430,6 +430,12 @@ class QuectelModule(Module):
             print('Char: ' + str(char))
         return True
 
+    # ========================================================================
+    #
+    # The mqtt stuff
+    #
+
+
     def create_jwt(self, project,clientkey,algorithm):
       token_req = {
                   'iat': datetime.datetime.utcnow(),
@@ -482,4 +488,43 @@ class QuectelModule(Module):
             rmutils.write(ser, 'AT+QMTDISC=0', delay=1) 
             print('MQTT Connection Closed')	
 
-        
+ 
+    # ========================================================================
+    #
+    # The lwm2m stuff
+    #
+
+    def lwm2m_config(self):
+        ser = self.myserial
+        # Clean previous config
+        rmutils.write(ser, 'AT+QLWM2M="clean"') 
+        # Select Leshan server
+        rmutils.write(ser, 'AT+QLWM2M="select",0') 
+        # Point to Leshan demo server
+        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coap://leshan.eclipseprojects.io:5683"') 
+        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coaps://leshan.eclipseprojects.io:5684"') 
+        # Point to Telefonica or Leshan open source server on Aeris
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coap://35.212.147.4:5683"') 
+        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coaps://35.212.147.4:5684"') 
+        # Set registration timeout
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",2,600') # 60 x 10 = 10 minutes
+        # Set to registration server
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",3,"false"') 
+        # Set security mode to no security
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",4,3') 
+        # Set apn for lwm2m
+        rmutils.write(ser, 'AT+QLWM2M="apn","lpiot.aer.net"') 
+        # Set registration endpoint to imei
+        rmutils.write(ser, 'AT+QLWM2M="endpoint",4,4') 
+        # Enable the client
+        rmutils.write(ser, 'AT+QLWM2M="enable",1') 
+        return True
+
+
+    def lwm2m_reset(self):
+        ser = self.myserial
+        # Reset the ME for new config to take effect
+        rmutils.write(ser, 'AT+CFUN=1,1') 
+        return True
+
+ 
