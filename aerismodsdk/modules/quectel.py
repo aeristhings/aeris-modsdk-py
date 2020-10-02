@@ -399,9 +399,11 @@ class QuectelModule(Module):
         # Select Leshan server
         rmutils.write(ser, 'AT+QLWM2M="select",0') 
         # Point to Leshan demo server
-        rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coaps://leshan.eclipseprojects.io:5683"') 
-        # Point to Telefonica open source server on Aeris
-        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coap://35.212.147.4:5684"') 
+        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coap://leshan.eclipseprojects.io:5683"') 
+        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coaps://leshan.eclipseprojects.io:5684"') 
+        # Point to Telefonica or Leshan open source server on Aeris
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coap://35.212.147.4:5683"') 
+        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coaps://35.212.147.4:5684"') 
         # Set registration timeout
         rmutils.write(ser, 'AT+QLWM2M="bootstrap",2,600') # 60 x 10 = 10 minutes
         # Set to registration server
