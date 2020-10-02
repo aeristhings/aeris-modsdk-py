@@ -127,17 +127,18 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
     verbose : bool, optional
         True to print verbose output.
     returnbytes : bool, optional
-        True to return a bytes object. Otherwise, tries to return a string decoded from UTF-8. Default: False.
+        True to return a bytes object. Otherwise, tries to return a string decoded from UTF-8. If decoding any URC to UTF-8 fails, the returned string will be all of the preivous, successfully-decoded URCs. Default: False.
     Returns
     ------
     Either a bytes or a string, depending on the returnbytes parameter.
-    Raises
-    ------
-    UnicodeDecodeError, if returnbytes is False but the module outputted a byte (or bytes) that couldn't be decoded from UTF-8.
     '''
     
     mybytes = bytearray()
-    myfinalout = b''
+    myfinalout = None
+    if returnbytes:
+        myfinalout = b''
+    else:
+        myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
     aerisutils.print_log('Starting to wait up to {0}s for URC; returning bytes: {1}'.format(timeout, returnbytes), verbose)
@@ -147,26 +148,34 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
                 mybyte = ser.read()[0]
                 mybytes.append(mybyte)
                 if mybyte == 10:  # Newline
-                    # Change to either utf-8 or hex -- the URC for a received packet may contain bytes that are not UTF-8
-                    oneline = aerisutils.bytes_to_utf_or_hex(mybytes)  
-                    aerisutils.print_log("<< " + oneline.strip(), verbose)
-                    myfinalout = myfinalout + mybytes
+                    if returnbytes:
+                        oneline = mybytes
+                        myfinalout = myfinalout + mybytes
+                        aerisutils.print_log("<< " + aerisutils.bytes_to_utf_or_hex(oneline.strip()), verbose)
+                    else:
+                        try:
+                            oneline = mybytes.decode("utf-8")
+                        except UnicodeDecodeError as e:
+                            aerisutils.print_log('Error in wait_urc')
+                            return myfinalout
+                        myfinalout = myfinalout + oneline
+                        aerisutils.print_log("<< " + oneline.strip(), verbose)
                     if returnonvalue:
                         if oneline.find(returnonvalue) > -1:
-                            return bytes_or_utf(myfinalout, returnbytes, verbose)
+                            return myfinalout
                     mybytes = bytearray()
         except IOError:
             aerisutils.print_log('Exception while waiting for URC.', verbose)
             ser.close()
             find_serial(com_port, verbose=True, timeout=(timeout - elapsed_time))
             if returnonreset:
-                return bytes_or_utf(myfinalout, returnbytes, verbose)
+                return myfinalout
             else:
                 ser.open()
         time.sleep(0.5)
         elapsed_time = time.time() - start_time
     aerisutils.print_log('Finished waiting for URC.', verbose)
-    return bytes_or_utf(myfinalout, returnbytes, verbose)
+    return myfinalout
 
 def bytes_or_utf(b, want_bytes=False, verbose=False):
     aerisutils.print_log(f'Returning bytes: {want_bytes} from something that is bytes {isinstance(b, bytes)}', verbose)
