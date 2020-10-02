@@ -264,7 +264,7 @@ class Module:
         # Quectel modules, so fail early if the module in question doesn't
         # support that...
         if not hasattr(self, 'udp_urcs_to_payloads'):
-            raise NotImplementedError('Not supported for modem manufacturer ' + module.modem_mfg)
+            raise NotImplementedError('Not supported for modem manufacturer ' + self.modem_mfg)
         DEFAULT_WAIT_DURATION = 30
         mod_info = {}
         self.get_info_for_obj('AT+CIMI', 'imsi', mod_info)
