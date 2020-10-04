@@ -398,6 +398,7 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QLWM2M="clean"') 
         # Select Leshan server
         rmutils.write(ser, 'AT+QLWM2M="select",0') 
+        #rmutils.write(ser, 'AT+QLWM2M="select",3') 
         # Point to Leshan demo server
         #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coap://leshan.eclipseprojects.io:5683"') 
         #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coaps://leshan.eclipseprojects.io:5684"') 
@@ -405,7 +406,8 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coap://35.212.147.4:5683"') 
         #rmutils.write(ser, 'AT+QLWM2M="bootstrap",1,"coaps://35.212.147.4:5684"') 
         # Set registration timeout
-        rmutils.write(ser, 'AT+QLWM2M="bootstrap",2,600') # 60 x 10 = 10 minutes
+        #rmutils.write(ser, 'AT+QLWM2M="bootstrap",2,600') # 60 x 10 = 10 minutes
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",2,14400') # 60 x 10 x 24 = 4 hours
         # Set to registration server
         rmutils.write(ser, 'AT+QLWM2M="bootstrap",3,"false"') 
         # Set security mode to no security
