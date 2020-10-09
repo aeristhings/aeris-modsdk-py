@@ -170,6 +170,10 @@ class Module:
         return getpacket.replace('<hostname>', hostname)
 
         
+    def sms_list(self, verbose):
+        rmutils.write(self.myserial, 'AT+CMGL="ALL"')
+
+
     # ========================================================================
     #
     # Common stuff

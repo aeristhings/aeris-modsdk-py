@@ -387,6 +387,30 @@ def send(ctx, host, port):
 
 # ========================================================================
 #
+# Define the sms group of commands
+#
+@mycli.group()
+@click.pass_context
+def sms(ctx):
+    """SMS commands
+    \f
+
+    """
+
+
+@sms.command()
+@click.pass_context
+def list(ctx):
+    """List SMS messages
+    \f
+
+    """
+    success = my_module.sms_list(verbose=ctx.obj['verbose'])
+    print('Success: ' + str(success))
+
+
+# ========================================================================
+#
 # Define the psm group of commands
 #
 @mycli.group()
