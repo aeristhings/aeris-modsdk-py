@@ -140,6 +140,17 @@ def info(ctx):
 
 @mycli.command()
 @click.pass_context
+def wait(ctx):
+    """Wait for a urc
+    \f
+
+    """
+    rmutils.wait_urc(my_module.myserial, 60, my_module.com_port,
+                     verbose=ctx.obj['verbose'])  # Wait up to X seconds for urc
+
+
+@mycli.command()
+@click.pass_context
 def reset(ctx):
     """Reset module
     \f
@@ -406,6 +417,28 @@ def list(ctx):
 
     """
     success = my_module.sms_list(verbose=ctx.obj['verbose'])
+    print('Success: ' + str(success))
+
+
+@sms.command()
+@click.pass_context
+def delete(ctx):
+    """Delete SMS messages
+    \f
+
+    """
+    success = my_module.sms_delete(verbose=ctx.obj['verbose'])
+    print('Success: ' + str(success))
+
+
+@sms.command()
+@click.pass_context
+def wait(ctx):
+    """Wait for incoming SMS message
+    \f
+
+    """
+    success = my_module.sms_wait(verbose=ctx.obj['verbose'])
     print('Success: ' + str(success))
 
 

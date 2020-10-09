@@ -170,8 +170,22 @@ class Module:
         return getpacket.replace('<hostname>', hostname)
 
         
+    # ========================================================================
+    #
+    # The sms stuff
+    #
+
+
     def sms_list(self, verbose):
         rmutils.write(self.myserial, 'AT+CMGL="ALL"')
+
+
+    def sms_delete(self, verbose):
+        rmutils.write(self.myserial, 'AT+CMGD=1,4') # Delete all messages for now
+
+
+    def sms_wait(self, verbose):
+        vals = rmutils.wait_urc(self.myserial, 60, self.com_port, returnonvalue='+CMTI:')
 
 
     # ========================================================================
