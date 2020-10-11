@@ -432,13 +432,15 @@ def delete(ctx):
 
 
 @sms.command()
+@click.option("--time", "-t", default=60,
+              help="Time (s) to wait for incoming MT SMS.")
 @click.pass_context
-def wait(ctx):
+def wait(ctx, time):
     """Wait for incoming SMS message
     \f
 
     """
-    success = my_module.sms_wait(verbose=ctx.obj['verbose'])
+    success = my_module.sms_wait(time, verbose=ctx.obj['verbose'])
     print('Success: ' + str(success))
 
 

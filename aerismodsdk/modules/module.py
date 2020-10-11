@@ -184,8 +184,8 @@ class Module:
         rmutils.write(self.myserial, 'AT+CMGD=1,4') # Delete all messages for now
 
 
-    def sms_wait(self, verbose):
-        vals = rmutils.wait_urc(self.myserial, 60, self.com_port, returnonvalue='+CMTI:')
+    def sms_wait(self, time, verbose):
+        vals = rmutils.wait_urc(self.myserial, time, self.com_port, returnonvalue='+CMTI:')
 
 
     # ========================================================================

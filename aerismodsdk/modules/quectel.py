@@ -206,10 +206,10 @@ class QuectelModule(Module):
     #
 
 
-    def sms_wait(self, verbose):
+    def sms_wait(self, time, verbose):
         rmutils.write(self.myserial, 'AT+QURCCFG="urcport","usbat"') # Send URCs to USB AT port
         rmutils.write(self.myserial, 'AT+CNMI=2,1,0,1,0') # Enable URC notifications
-        return super().sms_wait(verbose)
+        return super().sms_wait(time, verbose)
 
 
     # ========================================================================
