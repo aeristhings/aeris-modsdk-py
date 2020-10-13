@@ -176,7 +176,13 @@ class Module:
     #
 
 
+    def sms_info(self, verbose):
+        rmutils.write(self.myserial, 'AT+CMGF?')
+        rmutils.write(self.myserial, 'AT+CSCA?')
+
+
     def sms_list(self, verbose):
+        rmutils.write(self.myserial, 'AT+CMGF=1')
         rmutils.write(self.myserial, 'AT+CMGL="ALL"')
 
 

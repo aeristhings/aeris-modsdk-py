@@ -411,6 +411,17 @@ def sms(ctx):
 
 @sms.command()
 @click.pass_context
+def info(ctx):
+    """SMS configuration info
+    \f
+
+    """
+    success = my_module.sms_info(verbose=ctx.obj['verbose'])
+    print('Success: ' + str(success))
+
+
+@sms.command()
+@click.pass_context
 def list(ctx):
     """List SMS messages
     \f
