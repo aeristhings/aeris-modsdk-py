@@ -455,6 +455,19 @@ def wait(ctx, time):
     print('Success: ' + str(success))
 
 
+@sms.command()
+@click.option("--destination", "-d", default='50964',
+              help="Destination for MO SMS.")
+@click.pass_context
+def send(ctx, destination):
+    """Sending MO SMS message
+    \f
+
+    """
+    success = my_module.sms_send(destination, verbose=ctx.obj['verbose'])
+    print('Success: ' + str(success))
+
+
 # ========================================================================
 #
 # Define the psm group of commands
