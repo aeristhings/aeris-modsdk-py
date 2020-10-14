@@ -458,13 +458,15 @@ def wait(ctx, time):
 @sms.command()
 @click.option("--destination", "-d", default='50964',
               help="Destination for MO SMS.")
+@click.option("--message", "-m", default='Testing...',
+              help="Message for MO SMS.")
 @click.pass_context
-def send(ctx, destination):
+def send(ctx, destination, message):
     """Sending MO SMS message
     \f
 
     """
-    success = my_module.sms_send(destination, verbose=ctx.obj['verbose'])
+    success = my_module.sms_send(destination, message, verbose=ctx.obj['verbose'])
     print('Success: ' + str(success))
 
 

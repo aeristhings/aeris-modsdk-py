@@ -194,11 +194,11 @@ class Module:
         vals = rmutils.wait_urc(self.myserial, time, self.com_port, returnonvalue='+CMTI:')
 
 
-    def sms_send(self, destination, verbose):
+    def sms_send(self, destination, message, verbose):
         rmutils.write(self.myserial, 'AT+CMGF=1')
         rmutils.write(self.myserial, 'AT+CSMP=17,167,0,0')
         rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",129', delay=1)
-        rmutils.write(self.myserial, 'Testing...' + '\x1a', delay=1)
+        rmutils.write(self.myserial, message, delay=1)
         rmutils.write(self.myserial, '\x1a', delay=1)  # End with crtl-z
         
 
