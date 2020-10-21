@@ -1,8 +1,8 @@
 # Overview
 
-This document gives a brief overview of the Aeris Shoulder-Tap System (name pending), and a more detailed overview of the Udp0 shoulder-tap protocol and how you can use this Module SDK to evaluate the Udp0 shoulder-tap protocol for your use case.
+This document gives a brief overview of the Aeris IP Shoulder-Tap System (name pending), and a more detailed overview of the Udp0 shoulder-tap protocol and how you can use this Module SDK to evaluate the Udp0 shoulder-tap protocol for your use case.
 
-The Aeris Shoulder-Tap System is in a limited-availability status. Talk to your Aeris sales representative or contact Aeris at https://www.aeris.com/contact-us/ to learn more.
+Talk to your Aeris sales representative or contact Aeris at https://www.aeris.com/contact-us/ to learn more.
 
 # Scenario
 
@@ -14,7 +14,8 @@ However, your Aeris-connected device may be using a technique such as Power Savi
 
 Aeris' AerFrame APIs allow you to send a shoulder-tap message to your Aeris-connected device; software running on the device receives the shoulder-taps and prompts the application to take some action. 
 Aeris' system will do its best to deliver the shoulder-tap to the connected device.
-See (aeriscom.zendesk.com link forthcoming) for more details.
+
+See https://aeriscom.zendesk.com/hc/en-us/articles/360036914654-AerFrame-Device-Communication-and-Control-API for how to use the AerFrame APIs to create shoulder-tap messages.
 
 # Udp0
 
@@ -45,13 +46,13 @@ Included in each Udp0 shoulder-tap packet is a sequence number. This sequence nu
 
 This Module SDK provides two methods for receiving Udp0 shoulder-taps from the Aeris AerFrame APIs. 
 
-Currently, this Module SDK only supports the Quectel BG96 radio module.
-
 ### CLI
 
 Run `poetry run aeriscli udp shoulder-tap`
 
 This CLI will cause the radio module to listen on UDP port 23747 for shoulder-tap packets and will print out their request IDs and payloads.
+
+Currently, the CLI only supports the Quectel BG96 radio module.
 
 ### Python Integration
 
