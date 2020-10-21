@@ -90,7 +90,9 @@ def write(ser, cmd, moredata=None, waitoe=False, delay=0, timeout=1.0, verbose=T
         myoutbytes = ser.readline()
         # if counter > 100:
         # print('More than 100 chars read from serial port.')
-        myoututf8 = myoututf8 + myoutbytes.decode("utf-8")  # Change to utf-8
+        # If, for example, the module receives a UDP packet and writes that UDP packet's payload as an URC, this consumption might read that payload.
+        # Use the error-handling strategy of 'replace' to mangle the output, but not crash.
+        myoututf8 = myoututf8 + myoutbytes.decode("utf-8", errors='replace')  # Change to utf-8
         if waitoe:
             #print('Checking for OK')
             if 'OK' in myoututf8 or 'ERROR' in myoututf8:
@@ -108,25 +110,56 @@ def write(ser, cmd, moredata=None, waitoe=False, delay=0, timeout=1.0, verbose=T
     return myoututf8
 
 
-def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, verbose=True):
+def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, verbose=True, returnbytes=False):
+    '''Wait for unsolicited result codes from the module.
+    Parameters
+    ----------
+    ser : serial port object
+        The serial port the module is communicating on.
+    timeout : int
+        How many seconds to wait
+    com_port : int
+        The com port associated with the module
+    returnonreset : bool, optional
+        If truthy, this method will return as soon as there is a problem. Default: False.
+    returnonvalue : any, optional
+        If truthy, this function will return once this value is found on a line of output. Default: False.
+    verbose : bool, optional
+        True to print verbose output.
+    returnbytes : bool, optional
+        True to return a bytes object. Otherwise, tries to return a string decoded from UTF-8. If decoding any URC to UTF-8 fails, the returned string will be all of the preivous, successfully-decoded URCs. Default: False.
+    Returns
+    ------
+    Either a bytes or a string, depending on the returnbytes parameter.
+    '''
+    
     mybytes = bytearray()
-    myfinalout = ''
+    myfinalout = None
+    if returnbytes:
+        myfinalout = b''
+    else:
+        myfinalout = ''
     start_time = time.time()
     elapsed_time = 0
-    aerisutils.print_log('Starting to wait up to {0}s for URC.'.format(timeout), verbose)
+    aerisutils.print_log('Starting to wait up to {0}s for URC; returning bytes: {1}'.format(timeout, returnbytes), verbose)
     while elapsed_time < timeout:
         try:
             while ser.inWaiting() > 0:
                 mybyte = ser.read()[0]
                 mybytes.append(mybyte)
                 if mybyte == 10:  # Newline
-                    try:
-                        oneline = mybytes.decode("utf-8")  # Change to utf-8
-                    except UnicodeDecodeError as e:
-                        aerisutils.print_log('Error in wait_urc')
-                        return myfinalout
-                    aerisutils.print_log("<< " + oneline.strip(), verbose)
-                    myfinalout = myfinalout + oneline
+                    if returnbytes:
+                        oneline = mybytes
+                        myfinalout = myfinalout + mybytes
+                        aerisutils.print_log("<< " + aerisutils.bytes_to_utf_or_hex(oneline.strip()), verbose)
+                    else:
+                        try:
+                            oneline = mybytes.decode("utf-8")
+                        except UnicodeDecodeError as e:
+                            aerisutils.print_log('Error in wait_urc')
+                            return myfinalout
+                        myfinalout = myfinalout + oneline
+                        aerisutils.print_log("<< " + oneline.strip(), verbose)
                     if returnonvalue:
                         if oneline.find(returnonvalue) > -1:
                             return myfinalout
@@ -143,6 +176,14 @@ def wait_urc(ser, timeout, com_port, returnonreset=False, returnonvalue=False, v
         elapsed_time = time.time() - start_time
     aerisutils.print_log('Finished waiting for URC.', verbose)
     return myfinalout
+
+def bytes_or_utf(b, want_bytes=False, verbose=False):
+    aerisutils.print_log(f'Returning bytes: {want_bytes} from something that is bytes {isinstance(b, bytes)}', verbose)
+    if want_bytes:
+        return b
+    else:
+        return b.decode('utf-8')
+    
 
 
 # TODO Unused method, should be removed if not needed

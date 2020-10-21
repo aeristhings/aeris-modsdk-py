@@ -26,11 +26,11 @@ import aerismodsdk.modules.telit as telit
 import aerismodsdk.utils.aerisutils as aerisutils
 import aerismodsdk.utils.gpioutils as gpioutils
 
-# Resolve this user's home directory path
 from aerismodsdk.manufacturer import Manufacturer
 from aerismodsdk.modulefactory import module_factory
 from aerismodsdk.utils import loggerutils
 
+# Resolve this user's home directory path
 home_directory = str(pathlib.Path.home())
 default_config_filename = home_directory + "/.aeris_config"
 
@@ -394,6 +394,20 @@ def send(ctx, host, port):
 
     """
     #my_module.udp_listen(port, wait)
+    pass
+
+
+@udp.command()
+@click.option("--port", "-p", default=23747, help="Shoulder-Tap listen port")
+@click.pass_context
+def shoulder_tap(ctx, port):
+    """Listen for Shoulder-Tap packets and print their details. Runs until terminated with a SIGINT (e.g., CTRL+C).
+    Requires that the module is in a packet data session; see the 'packet start' command.
+    """
+    shoulder_taps = my_module.get_shoulder_taps(port, ctx.obj["verbose"])
+    for st in shoulder_taps:
+        if st is not None:
+            print(f'Shoulder tap request ID: <<{st.getRequestId()}>> and payload: <<{st.payload}>>')
 
 
 # ========================================================================
