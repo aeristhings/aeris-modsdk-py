@@ -195,9 +195,11 @@ def info(ctx, scan):
 @click.argument('name', default='auto')
 @click.option("--format", "-f", default=0,
               help="Format: 0=Long, 1=Short, 2=Numeric")
+@click.option("--access", "-a", default=None,
+              help="Access type: 0=GSM, 8=LTE-M")
 @click.pass_context
-def set(ctx, name, format):
-    my_module.set_network(name, format)
+def set(ctx, name, format, access):
+    my_module.set_network(name, format, access)
 
 
 @network.command()

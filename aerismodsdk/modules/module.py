@@ -137,15 +137,16 @@ class Module:
         return net_info
 
 
-    def set_network(self, operator_name, format, act=8):
+    def set_network(self, operator_name, format, access_type):
         #rmutils.write(self.myserial, 'AT+COPS=2')
         #rmutils.wait_urc(self.myserial, 10, self.com_port)
         if operator_name == 'auto':
             mycmd = 'AT+COPS=0'
         else:
-            # BG95 is having problems if we include ACT
-            #mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(act)
-            mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '"'
+            if access_type is None:
+                mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '"'
+            else:
+                mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(access_type)
         rmutils.write(self.myserial, mycmd)
         rmutils.wait_urc(self.myserial, 10, self.com_port)
 
