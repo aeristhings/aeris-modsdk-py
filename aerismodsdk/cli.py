@@ -876,6 +876,32 @@ def config(ctx):
 
 @lwm2m.command()
 @click.pass_context
+def info(ctx):
+    """Get config info for lwm2m client
+    \f
+
+    """
+    if my_module.lwm2m_info():
+        print('Info command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@lwm2m.command()
+@click.pass_context
+def disable(ctx):
+    """Disable lwm2m client
+    \f
+
+    """
+    if my_module.lwm2m_disable():
+        print('Disable command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@lwm2m.command()
+@click.pass_context
 def reset(ctx):
     """Reset ME to reload lwm2m client
     \f

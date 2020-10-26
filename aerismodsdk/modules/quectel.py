@@ -535,6 +535,34 @@ class QuectelModule(Module):
         return True
 
 
+    def lwm2m_info(self):
+        ser = self.myserial
+        # Check server type
+        rmutils.write(ser, 'AT+QLWM2M="select"') 
+        # Check server config
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",1') 
+        # Check registration timeout
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",2')
+        # Check registration server vs bootstrap server
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",3') 
+        # Check security mode to no security
+        rmutils.write(ser, 'AT+QLWM2M="bootstrap",4') 
+        # Check apn for lwm2m
+        rmutils.write(ser, 'AT+QLWM2M="apn"') 
+        # Check registration endpoint type
+        rmutils.write(ser, 'AT+QLWM2M="endpoint"') 
+        # Check if client enabled
+        rmutils.write(ser, 'AT+QLWM2M="enable"') 
+        return True
+
+
+    def lwm2m_disable(self):
+        ser = self.myserial
+        # Disable client
+        rmutils.write(ser, 'AT+QLWM2M="enable",0') 
+        return True
+
+
     def lwm2m_reset(self):
         ser = self.myserial
         # Reset the ME for new config to take effect
