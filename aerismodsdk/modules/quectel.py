@@ -32,6 +32,12 @@ class QuectelModule(Module):
         super().set_cmd_iccid('QCCID')
 
 
+    def get_info(self):
+        ser = self.myserial
+        rmutils.write(ser, 'AT+QGMR?') 
+        return super().get_info()
+
+
     # ========================================================================
     #
     # The network stuff
