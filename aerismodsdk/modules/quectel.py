@@ -21,7 +21,8 @@ import aerismodsdk.utils.aerisutils as aerisutils
 from aerismodsdk.modules.module import Module
 import jwt
 import datetime
-
+import requests
+import pathlib
 import re
 
 class QuectelModule(Module):
@@ -50,6 +51,8 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+CREG=2') 
         # Quectel-specific advanced configuration
         rmutils.write(ser, 'AT+QPSMEXTCFG?') 
+        # Quectel-specific 
+        rmutils.write(ser, 'AT+QNWINFO') 
         return super().get_network_info(scan, verbose)
 
 
@@ -512,6 +515,7 @@ class QuectelModule(Module):
     # The lwm2m stuff
     #
 
+
     def lwm2m_config(self):
         ser = self.myserial
         # Clean previous config
@@ -575,4 +579,103 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+CFUN=1,1') 
         return True
 
- 
+
+    # ========================================================================
+    #
+    # The gps stuff
+    #
+
+
+    def gps_info(self):
+        ser = self.myserial
+        # Check if GPS enabled
+        rmutils.write(ser, 'AT+QGPS?') 
+        # Check if GPSOneExtra is enabled
+        rmutils.write(ser, 'AT+QGPSXTRA?')
+        # Check GPSOneExtra data file
+        rmutils.write(ser, 'AT+QGPSXTRADATA?')
+        # Check output port
+        rmutils.write(ser, 'AT+QGPSCFG="outport"')
+        # Check config of nmea at command
+        rmutils.write(ser, 'AT+QGPSCFG="nmeasrc"')
+        # Check config of nmea sentence type config
+        rmutils.write(ser, 'AT+QGPSCFG="gpsnmeatype"')
+        # Check if we have a location
+        rmutils.write(ser, 'AT+QGPSLOC=0')
+        return True
+
+
+    def gps_config(self):
+        ser = self.myserial
+        # Enable GPSOneExtra
+        rmutils.write(ser, 'AT+QGPSXTRA=1')
+        # Download and save GPSOneExtra data file
+        print('Downloading GPSOneExtra data file.')
+        #url = 'http://xtrapath1.izatcloud.net/xtra2.bin'
+        url = 'http://xtrapath4.izatcloud.net/xtra2.bin'
+        r = requests.get(url, allow_redirects=True)
+        src_path = str(pathlib.Path.home()) + '/'
+        f = open(src_path + 'xtra2.bin', 'wb')
+        f.write(r.content)
+        f.close()
+        # Upload to the module
+        self.upload_file(src_path, 'UFS:', 'xtra2.bin')
+        # Inject time
+        from datetime import datetime, timezone
+        my_datetime = datetime.now(timezone.utc).strftime("%Y/%m/%d,%H:%M:%S")
+        rmutils.write(ser, 'AT+QGPSXTRATIME=0,"' + my_datetime + '",1,1,3500')
+        # Inject data file
+        rmutils.write(ser, 'AT+QGPSXTRADATA="UFS:xtra2.bin"')
+        # Now we can delete the data file from the file system
+        rmutils.write(ser, 'AT+QFDEL="UFS:xtra2.bin"')
+        # Now turn on gps
+        rmutils.write(ser, 'AT+QGPS=1')
+        return True
+
+
+    def upload_file(self, src_path, dst_path, filename):
+        ser = self.myserial
+        # Ensure source file exists
+        stats = os.stat(src_path + filename)
+        filesize = stats.st_size
+        print('Size of file is ' + str(stats.st_size) + ' bytes')
+        # Open source file for reading
+        f = open(src_path + filename, 'rb')
+        # Issue upload command to destination path
+        #mycmd = 'AT+QFUPL="EUFS:/datatx/' + filename+ '",' + str(filesize)
+        mycmd = 'AT+QFUPL="' + dst_path + filename+ '",' + str(filesize)
+        rmutils.write(ser, mycmd)
+        i = 0
+        while i < filesize:
+            self.putc(f.read(1))
+            i += 1
+        f.close()
+        rmutils.wait_urc(ser, 5, self.com_port)  # Wait up to 5 seconds for results to come back via urc
+        return True
+
+
+    def gps_time(self):
+        ser = self.myserial
+        # Inject time
+        from datetime import datetime, timezone
+        my_datetime = datetime.now(timezone.utc).strftime("%Y/%m/%d,%H:%M:%S")
+        rmutils.write(ser, 'AT+QGPSXTRATIME=0,"' + my_datetime + '",1,1,3500')
+        # Check if GPSOneExtra is enabled
+        rmutils.write(ser, 'AT+QGPSXTRA?')
+        # Check GPSOneExtra data file
+        rmutils.write(ser, 'AT+QGPSXTRADATA?')
+        return True
+
+
+    def gps_enable(self):
+        ser = self.myserial
+        # Now turn on gps
+        rmutils.write(ser, 'AT+QGPS=1')
+        return True
+
+
+    def gps_disable(self):
+        ser = self.myserial
+        # Disable / end gps
+        rmutils.write(ser, 'AT+QGPSEND')
+        return True

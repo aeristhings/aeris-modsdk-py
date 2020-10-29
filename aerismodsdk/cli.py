@@ -915,6 +915,97 @@ def reset(ctx):
 
 # ========================================================================
 #
+# Define the gps group of commands
+#
+@mycli.group()
+@click.pass_context
+def gps(ctx):
+    """GPS commands
+    \f
+
+    """
+
+
+@gps.command()
+@click.pass_context
+def info(ctx):
+    """Get config info for GPS
+    \f
+
+    """
+    if my_module.gps_info():
+        print('Info command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@gps.command()
+@click.pass_context
+def config(ctx):
+    """Configure GPS
+    \f
+
+    """
+    if my_module.gps_config():
+        print('Config command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@gps.command()
+@click.pass_context
+def enable(ctx):
+    """Enable GPS
+    \f
+
+    """
+    if my_module.gps_enable():
+        print('Enable command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@gps.command()
+@click.pass_context
+def time(ctx):
+    """Set time
+    \f
+
+    """
+    if my_module.gps_time():
+        print('Command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@gps.command()
+@click.pass_context
+def disable(ctx):
+    """Disable GPS
+    \f
+
+    """
+    if my_module.gps_disable():
+        print('Disable command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@gps.command()
+@click.pass_context
+def reset(ctx):
+    """Reset ME for GPS
+    \f
+
+    """
+    if my_module.lwm2m_reset():
+        print('Reset successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+# ========================================================================
+#
 # Define wvdial group of commands
 #
 @mycli.group()
