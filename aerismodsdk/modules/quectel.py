@@ -51,8 +51,22 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+CREG=2') 
         # Quectel-specific advanced configuration
         rmutils.write(ser, 'AT+QPSMEXTCFG?') 
-        # Quectel-specific 
+        # Quectel-specific network info
         rmutils.write(ser, 'AT+QNWINFO') 
+        # Quectel - Network scan sequence
+        rmutils.write(ser, 'AT+QCFG="nwscanseq"') 
+        # Quectel - Network scan mode
+        rmutils.write(ser, 'AT+QCFG="nwscanmode"') 
+        # Quectel - IoT operating mode
+        rmutils.write(ser, 'AT+QCFG="iotopmode"') 
+        # Quectel - Roaming
+        rmutils.write(ser, 'AT+QCFG="roamservice"') 
+        # Quectel - Bands
+        rmutils.write(ser, 'AT+QCFG="band"') 
+        # Quectel - Service Domain
+        rmutils.write(ser, 'AT+QCFG="servicedomain"') 
+        # Quectel - NB band priority
+        rmutils.write(ser, 'AT+QCFG="nb/bandprior"') 
         return super().get_network_info(scan, verbose)
 
 
@@ -600,8 +614,23 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QGPSCFG="nmeasrc"')
         # Check config of nmea sentence type config
         rmutils.write(ser, 'AT+QGPSCFG="gpsnmeatype"')
+        # Check constellation enabled
+        rmutils.write(ser, 'AT+QGPSCFG="gnssconfig"')
         # Check if we have a location
         rmutils.write(ser, 'AT+QGPSLOC=0')
+        # Get NMEA sentences
+        print('Global Positioning System Fix Data')
+        rmutils.write(ser, 'AT+QGPSGNMEA="GGA"')
+        print('Recommended minimum specific GPS/Transit data')
+        rmutils.write(ser, 'AT+QGPSGNMEA="RMC"')
+        print('GPS Satellites in view')
+        rmutils.write(ser, 'AT+QGPSGNMEA="GSV"')
+        print('GPS DOP and active satellites')
+        rmutils.write(ser, 'AT+QGPSGNMEA="GSA"')
+        print('Track made good and ground speed')
+        rmutils.write(ser, 'AT+QGPSGNMEA="VTG"')
+        print('Fix data')
+        rmutils.write(ser, 'AT+QGPSGNMEA="GNS"')
         return True
 
 
