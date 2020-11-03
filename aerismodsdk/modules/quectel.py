@@ -70,6 +70,14 @@ class QuectelModule(Module):
         return super().get_network_info(scan, verbose)
 
 
+    def set_config(self, verbose):
+        ser = self.myserial
+        # Set enabled bands
+        rmutils.write(ser, 'AT+QCFG="band",F,1000802,802,1') 
+        # Quectel - IoT operating mode
+        rmutils.write(ser, 'AT+QCFG="iotopmode",0,1') 
+
+
     # ========================================================================
     #
     # The packet stuff
@@ -399,8 +407,10 @@ class QuectelModule(Module):
 
     # ========================================================================
     #
-    # The firmware stuff
+    # The file stuff
     #
+
+
 
     def getc(self, size=1, timeout=1):
         return self.myserial.read(size) or None
@@ -408,6 +418,47 @@ class QuectelModule(Module):
 
     def putc(self,data, timeout=1):
         return self.myserial.write(data)  # note that this ignores the timeout
+
+
+    def file_list(self):
+        ser = self.myserial
+        # User file system
+        mycmd = 'AT+QFLST="UFS:*"'
+        rmutils.write(ser, mycmd)
+        # Extended User file system
+        mycmd = 'AT+QFLST="EUFS:*"'
+        rmutils.write(ser, mycmd)
+        # Extended User file system - threadx
+        mycmd = 'AT+QFLST="EUFS:/datatx/*"'
+        rmutils.write(ser, mycmd)
+        return True
+
+
+    def file_upload(self, src_path, dst_path, filename):
+        ser = self.myserial
+        # Ensure source file exists
+        stats = os.stat(src_path + filename)
+        filesize = stats.st_size
+        print('Size of file is ' + str(stats.st_size) + ' bytes')
+        # Open source file for reading
+        f = open(src_path + filename, 'rb')
+        # Issue upload command to destination path
+        #mycmd = 'AT+QFUPL="EUFS:/datatx/' + filename+ '",' + str(filesize)
+        mycmd = 'AT+QFUPL="' + dst_path + filename+ '",' + str(filesize)
+        rmutils.write(ser, mycmd)
+        i = 0
+        while i < filesize:
+            self.putc(f.read(1))
+            i += 1
+        f.close()
+        rmutils.wait_urc(ser, 5, self.com_port)  # Wait up to 5 seconds for results to come back via urc
+        return True
+
+
+    # ========================================================================
+    #
+    # The firmware stuff
+    #
 
 
     def fw_update(self):
@@ -649,7 +700,7 @@ class QuectelModule(Module):
         f.write(r.content)
         f.close()
         # Upload to the module
-        self.upload_file(src_path, 'UFS:', 'xtra2.bin')
+        self.file_upload(src_path, 'UFS:', 'xtra2.bin')
         # Inject time
         from datetime import datetime, timezone
         my_datetime = datetime.now(timezone.utc).strftime("%Y/%m/%d,%H:%M:%S")
@@ -660,27 +711,6 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QFDEL="UFS:xtra2.bin"')
         # Now turn on gps
         rmutils.write(ser, 'AT+QGPS=1')
-        return True
-
-
-    def upload_file(self, src_path, dst_path, filename):
-        ser = self.myserial
-        # Ensure source file exists
-        stats = os.stat(src_path + filename)
-        filesize = stats.st_size
-        print('Size of file is ' + str(stats.st_size) + ' bytes')
-        # Open source file for reading
-        f = open(src_path + filename, 'rb')
-        # Issue upload command to destination path
-        #mycmd = 'AT+QFUPL="EUFS:/datatx/' + filename+ '",' + str(filesize)
-        mycmd = 'AT+QFUPL="' + dst_path + filename+ '",' + str(filesize)
-        rmutils.write(ser, mycmd)
-        i = 0
-        while i < filesize:
-            self.putc(f.read(1))
-            i += 1
-        f.close()
-        rmutils.wait_urc(ser, 5, self.com_port)  # Wait up to 5 seconds for results to come back via urc
         return True
 
 

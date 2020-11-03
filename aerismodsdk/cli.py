@@ -204,6 +204,12 @@ def set(ctx, name, format, access):
 
 @network.command()
 @click.pass_context
+def config(ctx):
+    my_module.set_config(ctx.obj['verbose'])
+
+
+@network.command()
+@click.pass_context
 def off(ctx):
     my_module.turn_off_network(ctx.obj['verbose'])
 
@@ -760,6 +766,32 @@ def writegpio(ctx, gpio_id, gpio_val):
     gpioutils.setup(gpio_id, asinput=False)
     print('Setting pin {0} to {1}'.format(gpio_id, gpio_val))
     gpioutils.set(gpio_id, gpio_val)
+
+
+# ========================================================================
+#
+# Define the file group of commands
+#
+@mycli.group()
+@click.pass_context
+def file(ctx):
+    """file commands
+    \f
+
+    """
+
+
+@file.command()
+@click.pass_context
+def list(ctx):
+    """List files
+    \f
+
+    """
+    if my_module.file_list():
+        print('Command successful.')
+    else:
+        print('Not supported or not successful.')
 
 
 # ========================================================================
