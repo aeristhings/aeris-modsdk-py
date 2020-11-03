@@ -119,21 +119,13 @@ class Module:
         values = self.get_values_for_cmd('AT+CSQ', '+CSQ:')
         net_info.update( {'rssi':(-113 + (2*int(values[0])))} )        
         net_info.update( {'ber':values[1]} )
-        # Indicator control (for quectel) -- move to quectel
-        # values = self.get_values_for_cmd('AT+CIND?', '+CIND:')
-        # net_info.update( {'battchg':values[0]} )
-        # net_info.update( {'signal':values[1]} )
-        # net_info.update( {'service':values[2]} )
-        # net_info.update( {'call':values[3]} )
-        # net_info.update( {'roam':values[4]} )
-        # net_info.update( {'smsfull':values[5]} )
-        # net_info.update( {'gprs_cov':values[6]} )
-        # net_info.update( {'callsetup':values[7]} )
         if scan:
             ops = rmutils.write(self.myserial, 'AT+COPS=?')
+            #rmutils.write(self.myserial, 'AT+CREG?') 
             if ops is None or ops == '':
                 #print('No return from cops=?')
-                ops = rmutils.wait_urc(self.myserial, 180, self.com_port, returnonvalue='+COPS:')
+                #ops = rmutils.wait_urc(self.myserial, 180, self.com_port, returnonvalue='+COPS:')
+                ops = rmutils.wait_urc(self.myserial, 300, self.com_port, returnonvalue='+COPS:')
         return net_info
 
 

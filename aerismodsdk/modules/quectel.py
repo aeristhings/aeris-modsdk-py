@@ -631,6 +631,7 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QGPSGNMEA="VTG"')
         print('Fix data')
         rmutils.write(ser, 'AT+QGPSGNMEA="GNS"')
+        rmutils.wait_urc(self.myserial, 15, self.com_port)
         return True
 
 
