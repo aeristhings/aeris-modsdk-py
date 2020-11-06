@@ -51,8 +51,6 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+CREG=2') 
         # Quectel-specific advanced configuration
         rmutils.write(ser, 'AT+QPSMEXTCFG?') 
-        # Quectel-specific network info
-        rmutils.write(ser, 'AT+QNWINFO') 
         # Quectel - Network scan sequence
         rmutils.write(ser, 'AT+QCFG="nwscanseq"') 
         # Quectel - Network scan mode
@@ -67,6 +65,12 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QCFG="servicedomain"') 
         # Quectel - NB band priority
         rmutils.write(ser, 'AT+QCFG="nb/bandprior"') 
+        # Quectel-specific network info
+        rmutils.write(ser, 'AT+QNWINFO') 
+        # Quectel-specific network info
+        rmutils.write(ser, 'AT+QENG="servingcell"') 
+        # Quectel-specific network info
+        rmutils.write(ser, 'AT+QENG="neighbourcell"') 
         return super().get_network_info(scan, verbose)
 
 
@@ -76,6 +80,8 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QCFG="band",F,1000802,802,1') 
         # Quectel - IoT operating mode
         rmutils.write(ser, 'AT+QCFG="iotopmode",0,1') 
+        # Quectel - Service Domain
+        rmutils.write(ser, 'AT+QCFG="servicedomain",2,1') 
 
 
     # ========================================================================
@@ -682,7 +688,10 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QGPSGNMEA="VTG"')
         print('Fix data')
         rmutils.write(ser, 'AT+QGPSGNMEA="GNS"')
-        rmutils.wait_urc(self.myserial, 15, self.com_port)
+        # Check if we have a location
+        rmutils.write(ser, 'AT+QGPSLOC=0')
+        # Wait for straggling URC
+        rmutils.wait_urc(self.myserial, 5, self.com_port)
         return True
 
 
