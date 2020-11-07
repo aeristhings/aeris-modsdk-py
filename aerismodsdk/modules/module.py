@@ -203,12 +203,12 @@ class Module:
     #
 
 
-    def get_values_for_cmd(self, cmd, prefix):
+    def get_values_for_cmd(self, cmd, prefix, verbose = True):
         """
         Writes the command to the module and returns the response values
         """
         ser = self.myserial
-        response = rmutils.write(ser, cmd, waitoe = True)
+        response = rmutils.write(ser, cmd, waitoe = True, verbose=verbose)
         vals = self.parse_response(response, prefix)
         return vals
 

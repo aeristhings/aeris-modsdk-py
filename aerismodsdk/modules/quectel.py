@@ -68,9 +68,9 @@ class QuectelModule(Module):
         # Quectel-specific network info
         rmutils.write(ser, 'AT+QNWINFO') 
         # Quectel-specific network info
-        rmutils.write(ser, 'AT+QENG="servingcell"') 
+        rmutils.write(ser, 'AT+QENG="servingcell"', waitoe = True) 
         # Quectel-specific network info
-        rmutils.write(ser, 'AT+QENG="neighbourcell"') 
+        rmutils.write(ser, 'AT+QENG="neighbourcell"', waitoe = True) 
         return super().get_network_info(scan, verbose)
 
 
