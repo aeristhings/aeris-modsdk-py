@@ -203,9 +203,11 @@ def set(ctx, name, format, access):
 
 
 @network.command()
+@click.option('--b25/--no-b25', default=False)
+@click.option('--catm/--no-catm', default=True)
 @click.pass_context
-def config(ctx):
-    my_module.set_config(ctx.obj['verbose'])
+def config(ctx, b25, catm):
+    my_module.set_config(b25, catm, ctx.obj['verbose'])
 
 
 @network.command()

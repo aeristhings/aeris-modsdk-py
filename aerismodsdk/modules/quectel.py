@@ -74,14 +74,36 @@ class QuectelModule(Module):
         return super().get_network_info(scan, verbose)
 
 
-    def set_config(self, verbose):
+    def set_config(self, b25, catm, verbose):
         ser = self.myserial
-        # Set enabled bands
-        rmutils.write(ser, 'AT+QCFG="band",F,1000802,802,1') 
-        # Quectel - IoT operating mode
-        rmutils.write(ser, 'AT+QCFG="iotopmode",0,1') 
-        # Quectel - Service Domain
+        # Set scan sequence
+        rmutils.write(ser, 'AT+QCFG="nwscanseq",020301,1') 
+        if catm:
+            # Set scan mode to LTE only
+            rmutils.write(ser, 'AT+QCFG="nwscanmode",3,1') 
+            # Quectel - IoT operating mode - CAT-M only
+            rmutils.write(ser, 'AT+QCFG="iotopmode",0,1') 
+            # Quectel - IoT operating mode - NB only
+            #rmutils.write(ser, 'AT+QCFG="iotopmode",1,1')
+        else:
+            # Set scan mode to auto
+            rmutils.write(ser, 'AT+QCFG="nwscanmode",0,1') 
+            # Quectel - IoT operating mode - auto
+            rmutils.write(ser, 'AT+QCFG="iotopmode",2,1') 
+        if b25:
+            # Set enabled bands with band 2, 12, 25
+            rmutils.write(ser, 'AT+QCFG="band",F,1000802,802,1')
+        else:
+            # Set enabled bands with band 2, 12 no band 25
+            rmutils.write(ser, 'AT+QCFG="band",F,802,802,1') 
+            # Set enabled bands with all
+            #rmutils.write(ser, 'AT+QCFG="band",f,400b0e189f,b0e189f,1') 
+            #rmutils.write(ser, 'AT+QCFG="band",f,89f,89f,1') 
+        # Quectel - Service Domain 1 = PS; 2 = CS & PS
         rmutils.write(ser, 'AT+QCFG="servicedomain",2,1') 
+        #rmutils.write(ser, 'AT+QCFG="servicedomain",1,1') 
+        # Quectel - Enable roaming 2 = enabled
+        rmutils.write(ser, 'AT+QCFG="roamservice",2,1') 
 
 
     # ========================================================================
