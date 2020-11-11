@@ -108,6 +108,16 @@ class Module:
         if len(values) < 2:  # Check for problem condition
             return net_info
         net_info.update({'reg_status': reg_status(values[1])})
+        # Registration status - gprs
+        values = self.get_values_for_cmd('AT+CGREG?', '+CGREG:')
+        if len(values) < 2:  # Check for problem condition
+            return net_info
+        net_info.update({'reg_status_gprs': reg_status(values[1])})
+        # Registration status - eps
+        values = self.get_values_for_cmd('AT+CEREG?', '+CEREG:')
+        if len(values) < 2:  # Check for problem condition
+            return net_info
+        net_info.update({'reg_status_eps': reg_status(values[1])})
         # Operator selection
         values = self.get_values_for_cmd('AT+COPS?', '+COPS:')
         net_info.update( {'op_mode':values[0]} )
