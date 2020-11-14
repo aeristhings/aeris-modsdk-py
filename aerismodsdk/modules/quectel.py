@@ -45,7 +45,7 @@ class QuectelModule(Module):
     #
 
 
-    def get_network_info(self, scan, verbose):
+    def network_info(self, scan, verbose):
         ser = self.myserial
         # Enable unsolicited reg results
         rmutils.write(ser, 'AT+CREG=2') 
@@ -71,14 +71,19 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QENG="servingcell"', waitoe = True) 
         # Quectel-specific network info
         rmutils.write(ser, 'AT+QENG="neighbourcell"', waitoe = True) 
-        return super().get_network_info(scan, verbose)
+        return super().network_info(scan, verbose)
 
 
-    def set_config(self, b25, catm, verbose):
+    def set_config(self, b25, bfull, gsm, catm, catnb, verbose):
         ser = self.myserial
         # Set scan sequence
         rmutils.write(ser, 'AT+QCFG="nwscanseq",020301,1') 
-        if catm:
+        if gsm:
+            # Set scan mode to auto
+            rmutils.write(ser, 'AT+QCFG="nwscanmode",0,1') 
+            # Quectel - IoT operating mode - auto
+            rmutils.write(ser, 'AT+QCFG="iotopmode",2,1') 
+        elif catm:
             # Set scan mode to LTE only
             rmutils.write(ser, 'AT+QCFG="nwscanmode",3,1') 
             # Quectel - IoT operating mode - CAT-M only
@@ -90,15 +95,15 @@ class QuectelModule(Module):
             rmutils.write(ser, 'AT+QCFG="nwscanmode",0,1') 
             # Quectel - IoT operating mode - auto
             rmutils.write(ser, 'AT+QCFG="iotopmode",2,1') 
-        if b25:
+        if bfull:
+            # Set enabled bands with all
+            rmutils.write(ser, 'AT+QCFG="band",f,400b0e189f,b0e189f,1') 
+        elif b25:
             # Set enabled bands with band 2, 12, 25
             rmutils.write(ser, 'AT+QCFG="band",F,1000802,802,1')
         else:
             # Set enabled bands with band 2, 12 no band 25
             rmutils.write(ser, 'AT+QCFG="band",F,802,802,1') 
-            # Set enabled bands with all
-            #rmutils.write(ser, 'AT+QCFG="band",f,400b0e189f,b0e189f,1') 
-            #rmutils.write(ser, 'AT+QCFG="band",f,89f,89f,1') 
         # Quectel - Service Domain 1 = PS; 2 = CS & PS
         rmutils.write(ser, 'AT+QCFG="servicedomain",2,1') 
         #rmutils.write(ser, 'AT+QCFG="servicedomain",1,1') 

@@ -101,7 +101,7 @@ class Module:
     # Network stuff
     #
 
-    def get_network_info(self, scan, verbose):
+    def network_info(self, scan, verbose):
         net_info = {}  # Initialize an empty dictionary object
         # Registration status
         values = self.get_values_for_cmd('AT+CREG?', '+CREG:')
@@ -137,6 +137,16 @@ class Module:
                 #ops = rmutils.wait_urc(self.myserial, 180, self.com_port, returnonvalue='+COPS:')
                 ops = rmutils.wait_urc(self.myserial, 300, self.com_port, returnonvalue='+COPS:')
         return net_info
+
+
+    def network_scan(self, verbose):
+        net_scan = {}  # Initialize an empty dictionary object
+        ops = rmutils.write(self.myserial, 'AT+COPS=?')
+        if ops is None or ops == '':
+            #print('No return from cops=?')
+            #ops = rmutils.wait_urc(self.myserial, 180, self.com_port, returnonvalue='+COPS:')
+            ops = rmutils.wait_urc(self.myserial, 300, self.com_port, returnonvalue='+COPS:')
+        return net_scan
 
 
     def set_network(self, operator_name, format, access_type):
@@ -201,7 +211,10 @@ class Module:
     def sms_send(self, destination, message, verbose):
         rmutils.write(self.myserial, 'AT+CMGF=1')
         rmutils.write(self.myserial, 'AT+CSMP=17,167,0,0')
-        rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",129', delay=1)
+        #rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",129', delay=1)
+        #rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",128', delay=1)
+        #rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",145', delay=1)
+        rmutils.write(self.myserial, 'AT+CMGS="' + destination + '"', delay=1)
         rmutils.write(self.myserial, message, delay=1)
         rmutils.write(self.myserial, '\x1a', delay=1)  # End with crtl-z
         

@@ -187,8 +187,15 @@ def network(ctx):
 @click.option('--scan/--no-scan', default=False)
 @click.pass_context
 def info(ctx, scan):
-    network_info = my_module.get_network_info(scan, ctx.obj['verbose'])
-    print('Network info object: ' + str(network_info))
+    network_info_object = my_module.network_info(scan, ctx.obj['verbose'])
+    print('Network info object: ' + str(network_info_object))
+
+
+@network.command()
+@click.pass_context
+def scan(ctx):
+    network_scan_object = my_module.network_scan(ctx.obj['verbose'])
+    print('Network scan object: ' + str(network_scan_object))
 
 
 @network.command()
@@ -204,10 +211,13 @@ def set(ctx, name, format, access):
 
 @network.command()
 @click.option('--b25/--no-b25', default=False)
+@click.option('--bfull/--no-bfull', default=False)
+@click.option('--gsm/--no-gsm', default=False)
 @click.option('--catm/--no-catm', default=True)
+@click.option('--catnb/--no-catnb', default=False)
 @click.pass_context
-def config(ctx, b25, catm):
-    my_module.set_config(b25, catm, ctx.obj['verbose'])
+def config(ctx, b25, bfull, gsm, catm, catnb):
+    my_module.set_config(b25, bfull, gsm, catm, catnb, ctx.obj['verbose'])
 
 
 @network.command()
