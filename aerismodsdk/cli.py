@@ -202,11 +202,12 @@ def scan(ctx):
 @click.argument('name', default='auto')
 @click.option("--format", "-f", default=0,
               help="Format: 0=Long, 1=Short, 2=Numeric")
-@click.option("--access", "-a", default=None,
+@click.option("--access", "-a", default=8,
               help="Access type: 0=GSM, 8=LTE-M")
 @click.pass_context
 def set(ctx, name, format, access):
-    my_module.set_network(name, format, access)
+    # Note that BG95 might have a problem when access type is set ...
+    my_module.network_set(name, format, access)
 
 
 @network.command()
@@ -964,6 +965,8 @@ def reset(ctx):
 #
 # Define the gps group of commands
 #
+
+
 @mycli.group()
 @click.pass_context
 def gps(ctx):
@@ -1047,6 +1050,34 @@ def reset(ctx):
     """
     if my_module.lwm2m_reset():
         print('Reset successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+# ========================================================================
+#
+# Define the sim group of commands
+#
+
+
+@mycli.group()
+@click.pass_context
+def sim(ctx):
+    """SIM commands
+    \f
+
+    """
+
+
+@sim.command()
+@click.pass_context
+def info(ctx):
+    """Get SIM info
+    \f
+
+    """
+    if my_module.sim_info():
+        print('Info command successful.')
     else:
         print('Not supported or not successful.')
 

@@ -29,8 +29,8 @@ class UbloxModule(Module):
         super(UbloxModule,self).__init__(modem_mfg, com_port, apn, verbose)
         rmutils.write(self.myserial, 'AT+CGEREP=1,1', verbose=verbose)  # Enable URCs
 
-    def set_network(self, operator_name, format, act=7):
-        return super(UbloxModule, self).set_network(operator_name, format, act=7)
+    def network_set(self, operator_name, format, act=7):
+        return super(UbloxModule, self).network_set(operator_name, format, act=7)
 
     # ========================================================================
     #

@@ -149,7 +149,7 @@ class Module:
         return net_scan
 
 
-    def set_network(self, operator_name, format, access_type):
+    def network_set(self, operator_name, format, access_type):
         #rmutils.write(self.myserial, 'AT+COPS=2')
         #rmutils.wait_urc(self.myserial, 10, self.com_port)
         if operator_name == 'auto':
@@ -218,6 +218,44 @@ class Module:
         rmutils.write(self.myserial, message, delay=1)
         rmutils.write(self.myserial, '\x1a', delay=1)  # End with crtl-z
         
+
+
+    # ========================================================================
+    #
+    # The SIM stuff
+    #
+
+
+    def sim_info(self):
+        # Request Form: <Class><Instruction Code><Parm1><Parm2><Cmd Bytes Len><Cmd Bytes><Max Expected>
+        # Class:
+        #   Select & Read: 0X
+        # Instructions:
+        #   Select File = A4
+        #   Read File = B0
+        # Response Form: <Data><Status byte 1><Status byte 2>
+        # Status bytes:
+        #   90 00: Normal ending
+        #   91 XX: Normal with extra info
+        #   93 00: Postponed
+        #   62 XX: Warnings
+        #   64 XX: Execution errors
+        #   67 XX: Checking errors
+        #   68 XX: CLA not supported
+        #   69 XX: Command not allowed
+        #   6A XX: Wrong parameters / 82=File not found
+        #   98 XX: Application errors
+        # Select file 3F00 (MF) 
+        resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40004023F00"')
+        # Select file 7FF1 (ADF USIM) 
+        #resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40800027FF1"')
+        # Select file 2FE2 (ICCID) 
+        resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40800022FE2"')
+        # Read file 2FE2 (ICCID) 
+        resp = rmutils.write(self.myserial, 'AT+CSIM=10,"00B000000A"')
+        # Select file 6F07 (IMSI) 
+        #resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40004026F07"')
+        return True
 
 
     # ========================================================================
