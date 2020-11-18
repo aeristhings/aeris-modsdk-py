@@ -226,6 +226,39 @@ class Module:
     #
 
 
+    def decode_response(self, response):
+        #print("Response: " + response)
+        s = response
+        decode = ""
+        for i in range(0, len(s), 2):
+            decode = decode + s[i+1] + s[i]
+        #print("Decoded: " + decode)
+        return decode
+
+
+    def decode_plmn(self, response):
+        #print("Response: " + response)
+        s = response
+        decode = ""
+        for i in range(0, len(s)-6, 6):
+            decode = decode + s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
+        #print("Decoded: " + decode)
+        return decode
+
+
+    def sim_read_binary(self, file_id_hex, decode=None):
+        file_id = int(file_id_hex, 16)
+        resp = rmutils.write(self.myserial, 'AT+CRSM=176,' + str(file_id) + ',0,0,0')
+        vals = self.parse_response(resp, '+CRSM:')
+        if decode is 'rev':
+            return self.decode_response(vals[2])
+        elif decode is 'plmn':
+            return self.decode_plmn(vals[2])
+        else:
+            return vals[2]
+        
+
+
     def sim_info(self):
         # Request Form: <Class><Instruction Code><Parm1><Parm2><Cmd Bytes Len><Cmd Bytes><Max Expected>
         # Class:
@@ -245,16 +278,34 @@ class Module:
         #   69 XX: Command not allowed
         #   6A XX: Wrong parameters / 82=File not found
         #   98 XX: Application errors
+        #
         # Select file 3F00 (MF) 
-        resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40004023F00"')
-        # Select file 7FF1 (ADF USIM) 
-        #resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40800027FF1"')
+        #resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40004023F00"')
         # Select file 2FE2 (ICCID) 
-        resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40800022FE2"')
+        #resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40800022FE2"')
         # Read file 2FE2 (ICCID) 
-        resp = rmutils.write(self.myserial, 'AT+CSIM=10,"00B000000A"')
-        # Select file 6F07 (IMSI) 
-        #resp = rmutils.write(self.myserial, 'AT+CSIM=14,"00A40004026F07"')
+        #resp = rmutils.write(self.myserial, 'AT+CSIM=10,"00B000000A"')
+        #
+        # ICCID 2FE2
+        print('ICCID 2FE2: ' + self.sim_read_binary('2FE2','rev'))
+        # IMSI 6F07
+        print('IMSI 6F07: ' + self.sim_read_binary('6F07','rev'))
+        # LRPLMNSI 6FDC
+        print('LRPLMNSI 6FDC: ' + self.sim_read_binary('6FDC'))
+        # HPLMNwAcT 6F62
+        print('HPLMNwAcT 6F62: ' + self.sim_read_binary('6F62','plmn'))
+        # OPLMNwAcT 6F61
+        print('OPLMNwAcT 6F61: ' + self.sim_read_binary('6F61','plmn'))
+        # FPLMN 6F7B
+        print('FPLMN 6F7B: ' + self.sim_read_binary('6F7B','plmn'))
+        # EHPLMN 6FD9
+        print('EHPLMN 6FD9: ' + self.sim_read_binary('6FD9','plmn'))
+        # LOCI 6F7E
+        print('LOCI 6F7E: ' + self.sim_read_binary('6F7E'))
+        # PSLOCI 6F73
+        print('PSLOCI 6F73: ' + self.sim_read_binary('6F73'))
+        # EPSLOCI 6FE3
+        print('EPSLOCI 6FE3: ' + self.sim_read_binary('6FE3'))
         return True
 
 
