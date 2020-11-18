@@ -226,36 +226,44 @@ class Module:
     #
 
 
-    def decode_response(self, response):
-        #print("Response: " + response)
-        s = response
-        decode = ""
+    def decode_rev(self, s):
+        #print("Response: " + s)
+        decode = str()
         for i in range(0, len(s), 2):
             decode = decode + s[i+1] + s[i]
-        #print("Decoded: " + decode)
+        #print("Decoded rev: " + decode)
         return decode
 
 
-    def decode_plmn(self, response):
-        #print("Response: " + response)
-        s = response
-        decode = ""
+    def decode_plmn(self, s):
+        #print("Response: " + s)
+        decode = str()
         for i in range(0, len(s)-6, 6):
             decode = decode + s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
         #print("Decoded: " + decode)
         return decode
 
 
+    def decode_psloci(self, s):
+        guti = s[0:24]
+        tai = s[24:34]
+        us = s[34:36]
+        return 'guti:'+guti+' tai:'+tai+' us:'+us
+
+
     def sim_read_binary(self, file_id_hex, decode=None):
         file_id = int(file_id_hex, 16)
         resp = rmutils.write(self.myserial, 'AT+CRSM=176,' + str(file_id) + ',0,0,0')
         vals = self.parse_response(resp, '+CRSM:')
+        resp = vals[2].rstrip('"').lstrip('"')
         if decode is 'rev':
-            return self.decode_response(vals[2])
+            return self.decode_rev(resp)
         elif decode is 'plmn':
-            return self.decode_plmn(vals[2])
+            return self.decode_plmn(resp)
+        elif decode is 'psloci':
+            return self.decode_psloci(resp)
         else:
-            return vals[2]
+            return resp
         
 
 
@@ -287,25 +295,25 @@ class Module:
         #resp = rmutils.write(self.myserial, 'AT+CSIM=10,"00B000000A"')
         #
         # ICCID 2FE2
-        print('ICCID 2FE2: ' + self.sim_read_binary('2FE2','rev'))
+        print('ICCID 2FE2: ' + self.sim_read_binary('2FE2','rev') + '\n')
         # IMSI 6F07
-        print('IMSI 6F07: ' + self.sim_read_binary('6F07','rev'))
+        print('IMSI 6F07: ' + self.sim_read_binary('6F07','rev') + '\n')
         # LRPLMNSI 6FDC
-        print('LRPLMNSI 6FDC: ' + self.sim_read_binary('6FDC'))
+        print('LRPLMNSI 6FDC: ' + self.sim_read_binary('6FDC') + '\n')
         # HPLMNwAcT 6F62
-        print('HPLMNwAcT 6F62: ' + self.sim_read_binary('6F62','plmn'))
+        print('HPLMNwAcT 6F62: ' + self.sim_read_binary('6F62','plmn') + '\n')
         # OPLMNwAcT 6F61
-        print('OPLMNwAcT 6F61: ' + self.sim_read_binary('6F61','plmn'))
+        print('OPLMNwAcT 6F61: ' + self.sim_read_binary('6F61','plmn') + '\n')
         # FPLMN 6F7B
-        print('FPLMN 6F7B: ' + self.sim_read_binary('6F7B','plmn'))
+        print('FPLMN 6F7B: ' + self.sim_read_binary('6F7B','plmn') + '\n')
         # EHPLMN 6FD9
-        print('EHPLMN 6FD9: ' + self.sim_read_binary('6FD9','plmn'))
+        print('EHPLMN 6FD9: ' + self.sim_read_binary('6FD9','plmn') + '\n')
         # LOCI 6F7E
-        print('LOCI 6F7E: ' + self.sim_read_binary('6F7E'))
+        print('LOCI 6F7E: ' + self.sim_read_binary('6F7E') + '\n')
         # PSLOCI 6F73
-        print('PSLOCI 6F73: ' + self.sim_read_binary('6F73'))
+        print('PSLOCI 6F73: ' + self.sim_read_binary('6F73') + '\n')
         # EPSLOCI 6FE3
-        print('EPSLOCI 6FE3: ' + self.sim_read_binary('6FE3'))
+        print('EPSLOCI 6FE3: ' + self.sim_read_binary('6FE3','psloci') + '\n')
         return True
 
 
