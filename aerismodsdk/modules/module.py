@@ -102,6 +102,11 @@ class Module:
     #
 
     def network_info(self, scan, verbose):
+        ser = self.myserial
+        # Enable unsolicited reg results
+        rmutils.write(ser, 'AT+CREG=2') 
+        rmutils.write(ser, 'AT+CGREG=2')    
+        rmutils.write(ser, 'AT+CEREG=2')    
         net_info = {}  # Initialize an empty dictionary object
         # Registration status
         values = self.get_values_for_cmd('AT+CREG?', '+CREG:')
@@ -154,13 +159,15 @@ class Module:
         #rmutils.wait_urc(self.myserial, 10, self.com_port)
         if operator_name == 'auto':
             mycmd = 'AT+COPS=0'
+        elif operator_name == 'dereg':
+            mycmd = 'AT+COPS=2'
         else:
             if access_type is None:
                 mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '"'
             else:
                 mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(access_type)
         rmutils.write(self.myserial, mycmd)
-        rmutils.wait_urc(self.myserial, 10, self.com_port)
+        rmutils.wait_urc(self.myserial, 60, self.com_port)
 
 
     def turn_off_network(self, verbose):
@@ -236,35 +243,72 @@ class Module:
 
 
     def decode_plmn(self, s):
-        #print("Response: " + s)
         decode = str()
-        for i in range(0, len(s)-6, 6):
-            decode = decode + s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
-        #print("Decoded: " + decode)
+        for i in range(0, len(s)-2, 6):
+            decode = decode + ' plmn:'+ s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
         return decode
 
 
-    def decode_psloci(self, s):
+    def decode_plmnact(self, s):
+        decode = str()
+        for i in range(0, len(s), 8):
+            decode = decode + ' plmn:'+ s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
+            decode = decode + ' act:' + s[6]
+        return decode
+
+
+    def decode_epsloci(self, s):
+        # Status: 0=updated, 1=not updated, 2=plmn not allowed, 3=Routing area not allowed
         guti = s[0:24]
+        #tai = self.decode_plmn(s[24:30]) + s[30:34]
         tai = s[24:34]
         us = s[34:36]
         return 'guti:'+guti+' tai:'+tai+' us:'+us
 
 
+    def rstrip_filler(self, s):
+        #print("Response: " + s)
+        rs = str()
+        x = len(s)
+        for i in range(len(s)-1, 0, -1):
+            if s[i] is 'F' or s[i] is '0':
+                x = i
+        rs = s[0:x]
+        #print("Decoded: " + rs)
+        return rs
+
+
     def sim_read_binary(self, file_id_hex, decode=None):
         file_id = int(file_id_hex, 16)
+        # <cmd><fileid><p1><p2><p3><data>
         resp = rmutils.write(self.myserial, 'AT+CRSM=176,' + str(file_id) + ',0,0,0')
         vals = self.parse_response(resp, '+CRSM:')
+        if len(vals) < 2:
+            return 'Error'
         resp = vals[2].rstrip('"').lstrip('"')
+        resp = resp.rstrip('FF')
         if decode is 'rev':
-            return self.decode_rev(resp)
+            resp = self.decode_rev(resp)
         elif decode is 'plmn':
-            return self.decode_plmn(resp)
-        elif decode is 'psloci':
-            return self.decode_psloci(resp)
+            resp = self.rstrip_filler(resp)
+            resp = self.decode_plmn(resp)
+        elif decode is 'plmnact':
+            resp = self.rstrip_filler(resp)
+            resp = self.decode_plmnact(resp)
+        elif decode is 'epsloci':
+            resp = self.decode_epsloci(resp)
         else:
-            return resp
+            resp = resp
+        return resp
         
+
+    def sim_update_binary(self, file_id_hex, data_hex, decode=None):
+        file_id = int(file_id_hex, 16)
+        data_size = str(int(len(data_hex) / 2))
+        # <cmd><fileid><p1><p2><p3><data>
+        resp = rmutils.write(self.myserial, 'AT+CRSM=214,' + str(file_id) + ',0,0,' + data_size + ',' + data_hex)
+        vals = self.parse_response(resp, '+CRSM:')
+        return str(vals)
 
 
     def sim_info(self):
@@ -301,9 +345,9 @@ class Module:
         # LRPLMNSI 6FDC
         print('LRPLMNSI 6FDC: ' + self.sim_read_binary('6FDC') + '\n')
         # HPLMNwAcT 6F62
-        print('HPLMNwAcT 6F62: ' + self.sim_read_binary('6F62','plmn') + '\n')
+        print('HPLMNwAcT 6F62: ' + self.sim_read_binary('6F62','plmnact') + '\n')
         # OPLMNwAcT 6F61
-        print('OPLMNwAcT 6F61: ' + self.sim_read_binary('6F61','plmn') + '\n')
+        print('OPLMNwAcT 6F61: ' + self.sim_read_binary('6F61','plmnact') + '\n')
         # FPLMN 6F7B
         print('FPLMN 6F7B: ' + self.sim_read_binary('6F7B','plmn') + '\n')
         # EHPLMN 6FD9
@@ -313,7 +357,17 @@ class Module:
         # PSLOCI 6F73
         print('PSLOCI 6F73: ' + self.sim_read_binary('6F73') + '\n')
         # EPSLOCI 6FE3
-        print('EPSLOCI 6FE3: ' + self.sim_read_binary('6FE3','psloci') + '\n')
+        print('EPSLOCI 6FE3: ' + self.sim_read_binary('6FE3','epsloci') + '\n')
+        return True
+
+
+    def sim_config(self):
+        #print('LOCI 6F7E: ' + self.sim_update_binary('6F7E','FFFFFFFFFFFFFFFFFFFF01') + '\n')
+        #print('PSLOCI 6F73: ' + self.sim_update_binary('6F73','FFFFFFFFFFFFFFFFFFFFFFFFFF01') + '\n')
+        # Empty / unset GUTI
+        #print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01') + '\n')
+        # Invalid / updated GUTI
+        #print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','0BF6130014FF5019D93E67E41300148B3500') + '\n')
         return True
 
 

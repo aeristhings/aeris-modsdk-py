@@ -207,6 +207,7 @@ def scan(ctx):
 @click.pass_context
 def set(ctx, name, format, access):
     # Note that BG95 might have a problem when access type is set ...
+    # Name = 'auto', 'dereg', 'manauto', <MCCMNC>, <op name>
     my_module.network_set(name, format, access)
 
 
@@ -1078,6 +1079,19 @@ def info(ctx):
     """
     if my_module.sim_info():
         print('Info command successful.')
+    else:
+        print('Not supported or not successful.')
+
+
+@sim.command()
+@click.pass_context
+def config(ctx):
+    """Update some SIM values
+    \f
+
+    """
+    if my_module.sim_config():
+        print('Command successful.')
     else:
         print('Not supported or not successful.')
 

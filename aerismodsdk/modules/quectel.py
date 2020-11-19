@@ -47,8 +47,6 @@ class QuectelModule(Module):
 
     def network_info(self, scan, verbose):
         ser = self.myserial
-        # Enable unsolicited reg results
-        rmutils.write(ser, 'AT+CREG=2') 
         # Quectel-specific advanced configuration
         rmutils.write(ser, 'AT+QPSMEXTCFG?') 
         # Quectel - Network scan sequence
