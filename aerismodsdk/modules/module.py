@@ -245,16 +245,41 @@ class Module:
     def decode_plmn(self, s):
         decode = str()
         for i in range(0, len(s)-2, 6):
+            if s[i] is 'F':
+                break
             decode = decode + ' plmn:'+ s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
         return decode
 
 
     def decode_plmnact(self, s):
+        #print("s: " + str(len(s)))
         decode = str()
-        for i in range(0, len(s), 8):
+        for i in range(0, len(s)-1, 10):
+            if s[i] is 'F':
+                break
             decode = decode + ' plmn:'+ s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
-            decode = decode + ' act:' + s[6]
+            decode = decode + ' act:' + s[7] + s[6] + s[9] + s[8]
         return decode
+
+
+    def decode_loci(self, s):
+        # Status: 0=updated, 1=not updated, 2=plmn not allowed, 3=Routing area not allowed
+        timsi = s[0:8]
+        #tai = self.decode_plmn(s[24:30]) + s[30:34]
+        lai = s[8:18]
+        ru = s[19:20]
+        us = s[20:22]
+        return 'timsi:'+timsi+' lai:'+lai+' ru:'+ru+' us:'+us
+
+
+    def decode_psloci(self, s):
+        # Status: 0=updated, 1=not updated, 2=plmn not allowed, 3=Routing area not allowed
+        ptimsi = s[0:8]
+        #tai = self.decode_plmn(s[24:30]) + s[30:34]
+        ptimsisig = s[8:14]
+        rai = s[14:26]
+        us = s[26:28]
+        return 'p-timsi:'+ptimsi+' p-timsi sig:'+ptimsisig+' rai:'+rai+' us:'+us
 
 
     def decode_epsloci(self, s):
@@ -267,14 +292,16 @@ class Module:
 
 
     def rstrip_filler(self, s):
-        #print("Response: " + s)
+        #print("rstrip-in: " + s)
         rs = str()
         x = len(s)
         for i in range(len(s)-1, 0, -1):
             if s[i] is 'F' or s[i] is '0':
                 x = i
+            else:
+                break
         rs = s[0:x]
-        #print("Decoded: " + rs)
+        #print("rstrip-out: " + rs)
         return rs
 
 
@@ -290,11 +317,15 @@ class Module:
         if decode is 'rev':
             resp = self.decode_rev(resp)
         elif decode is 'plmn':
-            resp = self.rstrip_filler(resp)
+            #resp = self.rstrip_filler(resp)
             resp = self.decode_plmn(resp)
         elif decode is 'plmnact':
-            resp = self.rstrip_filler(resp)
+            #resp = self.rstrip_filler(resp)
             resp = self.decode_plmnact(resp)
+        elif decode is 'loci':
+            resp = self.decode_loci(resp)
+        elif decode is 'psloci':
+            resp = self.decode_psloci(resp)
         elif decode is 'epsloci':
             resp = self.decode_epsloci(resp)
         else:
@@ -353,9 +384,9 @@ class Module:
         # EHPLMN 6FD9
         print('EHPLMN 6FD9: ' + self.sim_read_binary('6FD9','plmn') + '\n')
         # LOCI 6F7E
-        print('LOCI 6F7E: ' + self.sim_read_binary('6F7E') + '\n')
+        print('LOCI 6F7E: ' + self.sim_read_binary('6F7E', 'loci') + '\n')
         # PSLOCI 6F73
-        print('PSLOCI 6F73: ' + self.sim_read_binary('6F73') + '\n')
+        print('PSLOCI 6F73: ' + self.sim_read_binary('6F73', 'psloci') + '\n')
         # EPSLOCI 6FE3
         print('EPSLOCI 6FE3: ' + self.sim_read_binary('6FE3','epsloci') + '\n')
         return True
