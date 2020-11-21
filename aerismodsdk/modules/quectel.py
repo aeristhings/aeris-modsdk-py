@@ -72,11 +72,14 @@ class QuectelModule(Module):
         return super().network_info(scan, verbose)
 
 
-    def set_config(self, b25, bfull, gsm, catm, catnb, verbose):
+    def network_config(self, b25, bfull, gsm, catm, catnb, verbose):
         ser = self.myserial
         # Set scan sequence
         rmutils.write(ser, 'AT+QCFG="nwscanseq",020301,1') 
-        if gsm:
+        if gsm and not catm:
+            # Set scan mode to auto
+            rmutils.write(ser, 'AT+QCFG="nwscanmode",1,1') 
+        elif gsm:
             # Set scan mode to auto
             rmutils.write(ser, 'AT+QCFG="nwscanmode",0,1') 
             # Quectel - IoT operating mode - auto

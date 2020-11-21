@@ -139,13 +139,14 @@ def info(ctx):
 
 
 @mycli.command()
+@click.argument('time', default=60)
 @click.pass_context
-def wait(ctx):
+def wait(ctx, time):
     """Wait for a urc
     \f
 
     """
-    rmutils.wait_urc(my_module.myserial, 60, my_module.com_port,
+    rmutils.wait_urc(my_module.myserial, time, my_module.com_port,
                      verbose=ctx.obj['verbose'])  # Wait up to X seconds for urc
 
 
@@ -204,11 +205,13 @@ def scan(ctx):
               help="Format: 0=Long, 1=Short, 2=Numeric")
 @click.option("--access", "-a", default=8,
               help="Access type: 0=GSM, 8=LTE-M")
+@click.option("--timewait", "-t", default=60,
+              help="Time (s) to wait for result")
 @click.pass_context
-def set(ctx, name, format, access):
+def set(ctx, name, format, access, timewait):
     # Note that BG95 might have a problem when access type is set ...
     # Name = 'auto', 'dereg', 'manauto', <MCCMNC>, <op name>
-    my_module.network_set(name, format, access)
+    my_module.network_set(name, format, access, timewait)
 
 
 @network.command()
@@ -219,7 +222,7 @@ def set(ctx, name, format, access):
 @click.option('--catnb/--no-catnb', default=False)
 @click.pass_context
 def config(ctx, b25, bfull, gsm, catm, catnb):
-    my_module.set_config(b25, bfull, gsm, catm, catnb, ctx.obj['verbose'])
+    my_module.network_config(b25, bfull, gsm, catm, catnb, ctx.obj['verbose'])
 
 
 @network.command()

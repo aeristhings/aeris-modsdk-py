@@ -154,7 +154,7 @@ class Module:
         return net_scan
 
 
-    def network_set(self, operator_name, format, access_type):
+    def network_set(self, operator_name, format, access_type, timewait):
         #rmutils.write(self.myserial, 'AT+COPS=2')
         #rmutils.wait_urc(self.myserial, 10, self.com_port)
         if operator_name == 'auto':
@@ -167,7 +167,7 @@ class Module:
             else:
                 mycmd = 'AT+COPS=1,' + str(format) + ',"' + operator_name + '",' + str(access_type)
         rmutils.write(self.myserial, mycmd)
-        rmutils.wait_urc(self.myserial, 60, self.com_port)
+        rmutils.wait_urc(self.myserial, timewait, self.com_port)
 
 
     def turn_off_network(self, verbose):
@@ -393,6 +393,7 @@ class Module:
         # EHPLMN 6FD9
         print('EHPLMN 6FD9: ' + self.sim_read_binary('6FD9','plmn') + '\n')
         # LOCI 6F7E
+        print('LOCI Status:\n 0=updated, 1=not updated, 2=plmn not allowed, 3=Area not allowed')
         print('LOCI 6F7E: ' + self.sim_read_binary('6F7E', 'loci') + '\n')
         # PSLOCI 6F73
         print('PSLOCI 6F73: ' + self.sim_read_binary('6F73', 'psloci') + '\n')
