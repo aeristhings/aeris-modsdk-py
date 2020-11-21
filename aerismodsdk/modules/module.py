@@ -337,7 +337,16 @@ class Module:
         file_id = int(file_id_hex, 16)
         data_size = str(int(len(data_hex) / 2))
         # <cmd><fileid><p1><p2><p3><data>
-        resp = rmutils.write(self.myserial, 'AT+CRSM=214,' + str(file_id) + ',0,0,' + data_size + ',' + data_hex)
+        resp = rmutils.write(self.myserial, 'AT+CRSM=214,' + str(file_id) + ',0,0,' + data_size + ',"' + data_hex + '"')
+        vals = self.parse_response(resp, '+CRSM:')
+        return str(vals)
+
+
+    def sim_update_record(self, file_id_hex, rec_num, data_hex, decode=None):
+        file_id = int(file_id_hex, 16)
+        data_size = str(int(len(data_hex) / 2))
+        # <cmd><fileid><p1><p2><p3><data>
+        resp = rmutils.write(self.myserial, 'AT+CRSM=220,' + str(file_id) + ',' + rec_num + ',4,' + data_size + ',"' + data_hex + '"')
         vals = self.parse_response(resp, '+CRSM:')
         return str(vals)
 
@@ -392,13 +401,34 @@ class Module:
         return True
 
 
-    def sim_config(self):
-        #print('LOCI 6F7E: ' + self.sim_update_binary('6F7E','FFFFFFFFFFFFFFFFFFFF01') + '\n')
-        #print('PSLOCI 6F73: ' + self.sim_update_binary('6F73','FFFFFFFFFFFFFFFFFFFFFFFFFF01') + '\n')
-        # Empty / unset GUTI
-        #print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01') + '\n')
-        # Invalid / updated GUTI
-        #print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','0BF6130014FF5019D93E67E41300148B3500') + '\n')
+    def sim_config(self, cmd1, cmd2):
+        if cmd1 is 'loci':
+            if cmd2 is 'clear':
+                # Clear and set update status to not updated
+                print('LOCI 6F7E: ' + self.sim_update_binary('6F7E','FFFFFFFFFFFFFFFFFFFF01') + '\n')
+                print('PSLOCI 6F73: ' + self.sim_update_binary('6F73','FFFFFFFFFFFFFFFFFFFFFFFFFF01') + '\n')
+                print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01') + '\n')
+            elif cmd2 is 'set':
+                # Set to old/valid values and set update status to updated
+                print('LOCI 6F7E: ' + self.sim_update_binary('6F7E','41D639AA130062016EFF00') + '\n')
+                print('PSLOCI 6F73: ' + self.sim_update_binary('6F73','E211429CFFFFFF130062016E0100') + '\n')
+                print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','0BF61300628001BFC5BBD3F91300623A6900') + '\n')
+        elif cmd1 is 'fplmn':
+            #
+            # FPLMN
+            print('FPLMN 6F7B: ' + self.sim_update_binary('6F7B','130014FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') + '\n')
+            #print('FPLMN 6F7B: ' + self.sim_update_binary('6F7B','130014FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') + '\n')
+            #print('FPLMN 6F7B: ' + self.sim_update_binary('6F7B','FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF') + '\n')
+            #print('FPLMN 6F7B: ' + self.sim_update_binary('6F7B','000000') + '\n')
+            #print('FPLMN 6F7B: ' + self.sim_update_record('6F7B', '6', '130014') + '\n')
+        elif cmd1 is 'oplmn':
+            #print('OPLMNwAcT 6F61: ' + self.sim_update_record('6F61', '1', '130062C080') + '\n')
+            print('OPLMNwAcT 6F61: ' + self.sim_update_binary('6F61','130062C080') + '\n')
+        elif cmd1 is 'ehplmn':
+            #print('EHPLMN 6FD9: ' + self.sim_update_record('6FD9', '1', '130062') + '\n')
+            print('EHPLMN 6FD9: ' + self.sim_update_binary('6FD9','130062130062') + '\n')
+        else:
+            print('Not a valid command\n')
         return True
 
 

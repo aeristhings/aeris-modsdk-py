@@ -1084,13 +1084,15 @@ def info(ctx):
 
 
 @sim.command()
+@click.argument('cmd1', default='loci')
+@click.argument('cmd2', default='clear')
 @click.pass_context
-def config(ctx):
+def config(ctx, cmd1, cmd2):
     """Update some SIM values
     \f
 
     """
-    if my_module.sim_config():
+    if my_module.sim_config(cmd1, cmd2):
         print('Command successful.')
     else:
         print('Not supported or not successful.')
