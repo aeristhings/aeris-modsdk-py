@@ -258,7 +258,7 @@ class Module:
             if s[i] is 'F':
                 break
             decode = decode + ' plmn:'+ s[i+1] + s[i] + s[i+3] + s[i+5] + s[i+4] + s[i+2]
-            decode = decode + ' act:' + s[7] + s[6] + s[9] + s[8]
+            decode = decode + ' act:' + s[9] + s[8] + s[7] + s[6] 
         return decode
 
 
@@ -385,9 +385,12 @@ class Module:
         # LRPLMNSI 6FDC
         print('LRPLMNSI 6FDC: ' + self.sim_read_binary('6FDC') + '\n')
         # HPLMNwAcT 6F62
+        print('Acccess Tech: 8000=2G, 0080=3G, 0040=4G, 80C0=2G+3G+4G')
         print('HPLMNwAcT 6F62: ' + self.sim_read_binary('6F62','plmnact') + '\n')
         # OPLMNwAcT 6F61
         print('OPLMNwAcT 6F61: ' + self.sim_read_binary('6F61','plmnact') + '\n')
+        # PLMNwAcT 6F60
+        print('PLMNwAcT 6F60: ' + self.sim_read_binary('6F60','plmnact') + '\n')
         # FPLMN 6F7B
         print('FPLMN 6F7B: ' + self.sim_read_binary('6F7B','plmn') + '\n')
         # EHPLMN 6FD9

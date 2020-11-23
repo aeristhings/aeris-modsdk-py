@@ -220,9 +220,10 @@ def set(ctx, name, format, access, timewait):
 @click.option('--gsm/--no-gsm', default=False)
 @click.option('--catm/--no-catm', default=True)
 @click.option('--catnb/--no-catnb', default=False)
+@click.argument('mod', default='ec25')
 @click.pass_context
-def config(ctx, b25, bfull, gsm, catm, catnb):
-    my_module.network_config(b25, bfull, gsm, catm, catnb, ctx.obj['verbose'])
+def config(ctx, b25, bfull, gsm, catm, mod, catnb):
+    my_module.network_config(mod, b25, bfull, gsm, catm, catnb, ctx.obj['verbose'])
 
 
 @network.command()

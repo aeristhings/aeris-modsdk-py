@@ -72,7 +72,25 @@ class QuectelModule(Module):
         return super().network_info(scan, verbose)
 
 
-    def network_config(self, b25, bfull, gsm, catm, catnb, verbose):
+    def network_config_ec25(self):
+        ser = self.myserial
+        # Set scan sequence to LTE
+        rmutils.write(ser, 'AT+QCFG="nwscanseq",04') 
+        # Set scan mode to LTE
+        rmutils.write(ser, 'AT+QCFG="nwscanmode",3,1') 
+        # Quectel - Service Domain 1 = PS; 2 = CS & PS
+        rmutils.write(ser, 'AT+QCFG="servicedomain",2,1') 
+        #rmutils.write(ser, 'AT+QCFG="servicedomain",1,1') 
+        # Quectel - Enable roaming 2 = enabled
+        rmutils.write(ser, 'AT+QCFG="roamservice",2,1')
+        return True
+
+
+    def network_config(self, mod, b25, bfull, gsm, catm, catnb, verbose):
+        print("Mod: " + mod)
+        if mod is 'ec25':
+            print("Configuring ec25")
+            return self.network_config_ec25()
         ser = self.myserial
         # Set scan sequence
         rmutils.write(ser, 'AT+QCFG="nwscanseq",020301,1') 
