@@ -362,6 +362,7 @@ class QuectelModule(Module):
             sostate = rmutils.write(ser, 'AT+QISTATE=1,0', delay=1, verbose=verbose)  # Check socket state
         # Send data
         udppacket = str('{"delay":' + str(echo_delay * 1000) + ', "ip":"' + self.my_ip + '","port":' + str(port) + '}')
+        #udppacket = str('Echo test!')
         # print('UDP packet: ' + udppacket)
         mycmd = 'AT+QISEND=0,' + str(len(udppacket))
         rmutils.write(ser, mycmd, udppacket, delay=0, verbose=verbose)  # Write udp packet
@@ -379,7 +380,7 @@ class QuectelModule(Module):
                              returnonvalue='+QIURC:')  # Wait up to X seconds for UDP data to come in
             vals = super().parse_response(vals, '+QIURC:')
             print('Return: ' + str(vals))
-            if len(vals) > 3 and int(vals[2]) == len(udppacket):
+            if len(vals) > 2 and int(vals[2]) == len(udppacket):
                 return True
             else:
                 return False

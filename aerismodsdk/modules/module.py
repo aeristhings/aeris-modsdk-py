@@ -216,15 +216,17 @@ class Module:
 
 
     def sms_send(self, destination, message, verbose):
+        # Set to text mode
         rmutils.write(self.myserial, 'AT+CMGF=1')
+        # Set to submit-sm, 24 hour validity
         rmutils.write(self.myserial, 'AT+CSMP=17,167,0,0')
-        #rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",129', delay=1)
-        #rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",128', delay=1)
-        #rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",145', delay=1)
-        rmutils.write(self.myserial, 'AT+CMGS="' + destination + '"', delay=1)
+        if destination.startswith('+'):
+            rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",145', delay=1)
+        else:
+            rmutils.write(self.myserial, 'AT+CMGS="' + destination + '"', delay=1)
+            #rmutils.write(self.myserial, 'AT+CMGS="' + destination + '",129', delay=1)
         rmutils.write(self.myserial, message, delay=1)
         rmutils.write(self.myserial, '\x1a', delay=1)  # End with crtl-z
-        
 
 
     # ========================================================================
