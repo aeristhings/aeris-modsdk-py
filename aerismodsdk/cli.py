@@ -139,14 +139,14 @@ def info(ctx):
 
 
 @mycli.command()
-@click.argument('time', default=60)
+@click.argument('timeout', default=60)
 @click.pass_context
-def wait(ctx, time):
+def wait(ctx, timeout):
     """Wait for a urc
     \f
 
     """
-    rmutils.wait_urc(my_module.myserial, time, my_module.com_port,
+    rmutils.wait_urc(my_module.myserial, timeout, my_module.com_port,
                      verbose=ctx.obj['verbose'])  # Wait up to X seconds for urc
 
 
@@ -483,15 +483,15 @@ def delete(ctx):
 
 
 @sms.command()
-@click.option("--time", "-t", default=60,
+@click.option("--timeout", "-t", default=60,
               help="Time (s) to wait for incoming MT SMS.")
 @click.pass_context
-def wait(ctx, time):
+def wait(ctx, timeout):
     """Wait for incoming SMS message
     \f
 
     """
-    success = my_module.sms_wait(time, verbose=ctx.obj['verbose'])
+    success = my_module.sms_wait(timeout, verbose=ctx.obj['verbose'])
     print('Success: ' + str(success))
 
 
@@ -1022,7 +1022,7 @@ def enable(ctx):
 
 @gps.command()
 @click.pass_context
-def time(ctx):
+def timeset(ctx):
     """Set time
     \f
 
