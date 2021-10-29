@@ -70,6 +70,23 @@ class Module:
         return True
 
 
+    def interactive(self):
+        loggerutils.set_level(True)
+        logger.info('Enter AT command or type exit')
+        while 1:
+            myinput = input(">> ")
+            if myinput == 'exit':
+                self.myserial.close()
+                exit()
+            else:
+                out = rmutils.write(self.myserial, myinput)
+
+
+    def atcmd(self, myatcmd):
+        ser = self.myserial
+        response = rmutils.write(ser, myatcmd, delay=1)
+
+
     def get_info(self):
         ser = self.myserial
         mod_info = {}  # Initialize an empty dictionary object
@@ -173,18 +190,6 @@ class Module:
     def turn_off_network(self, verbose):
         rmutils.write(self.myserial, 'AT+COPS=2')
         rmutils.wait_urc(self.myserial, 10,self.com_port)
-
-
-    def interactive(self):
-        loggerutils.set_level(True)
-        logger.info('Enter AT command or type exit')
-        while 1:
-            myinput = input(">> ")
-            if myinput == 'exit':
-                self.myserial.close()
-                exit()
-            else:
-                out = rmutils.write(self.myserial, myinput)
 
 
     def get_http_packet(self, hostname):
@@ -416,9 +421,13 @@ class Module:
                 print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01') + '\n')
             elif cmd2 is 'set':
                 # Set to old/valid values and set update status to updated
-                print('LOCI 6F7E: ' + self.sim_update_binary('6F7E','41D639AA130062016EFF00') + '\n')
-                print('PSLOCI 6F73: ' + self.sim_update_binary('6F73','E211429CFFFFFF130062016E0100') + '\n')
-                print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','0BF61300628001BFC5BBD3F91300623A6900') + '\n')
+                #print('LOCI 6F7E: ' + self.sim_update_binary('6F7E','41D639AA130062016EFF00') + '\n')
+                #print('PSLOCI 6F73: ' + self.sim_update_binary('6F73','E211429CFFFFFF130062016E0100') + '\n')
+                #print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','0BF61300628001BFC5BBD3F91300623A6900') + '\n')
+                # Set to old/valid values and set update status to updated
+                print('LOCI 6F7E: ' + self.sim_update_binary('6F7E','41D639AA130062016EFF01') + '\n')
+                print('PSLOCI 6F73: ' + self.sim_update_binary('6F73','E211429CFFFFFF130062016E0101') + '\n')
+                print('EPSLOCI 6FE3: ' + self.sim_update_binary('6FE3','0BF61300628001BFC5BBD3F90243403A6900') + '\n')
         elif cmd1 is 'fplmn':
             #
             # FPLMN

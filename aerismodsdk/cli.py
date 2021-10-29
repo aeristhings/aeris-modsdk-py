@@ -171,6 +171,17 @@ def interactive(ctx):
     my_module.interactive()
 
 
+@mycli.command()
+@click.argument('myatcmd', default='ATI')
+@click.pass_context
+def atcmd(ctx, myatcmd):
+    """Execute AT Command
+    \f
+
+    """
+    my_module.atcmd(myatcmd)
+
+
 # ========================================================================
 #
 # Define the network group of commands
