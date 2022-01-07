@@ -92,8 +92,10 @@ class Module:
         mod_info = {}  # Initialize an empty dictionary object
         if not self.parse_cmd_response(rmutils.write(ser, 'ATI')):
             logger.warn('WARNING : The ATI command is not working. Please review configuration.')
-            return False
-        self.get_info_for_obj('AT+CIMI', 'imsi', mod_info)
+            return mod_info
+        if not self.get_info_for_obj('AT+CIMI', 'imsi', mod_info):
+            logger.warn('WARNING : The CIMI command is not working. Please check SIM.')
+            return mod_info            
         self.get_info_for_obj_prefix('AT+'+self.cmd_iccid, 
             '+' + self.cmd_iccid + ':', 
             'iccid', mod_info)
@@ -358,7 +360,7 @@ class Module:
         return str(vals)
 
 
-    def sim_info(self):
+    def sim_info(self, verbose):
         # Request Form: <Class><Instruction Code><Parm1><Parm2><Cmd Bytes Len><Cmd Bytes><Max Expected>
         # Class:
         #   Select & Read: 0X
@@ -385,31 +387,54 @@ class Module:
         # Read file 2FE2 (ICCID) 
         #resp = rmutils.write(self.myserial, 'AT+CSIM=10,"00B000000A"')
         #
+        sim_info = {}  # Initialize an empty dictionary object
         # ICCID 2FE2
-        print('ICCID 2FE2: ' + self.sim_read_binary('2FE2','rev') + '\n')
+        val = self.sim_read_binary('2FE2','rev')
+        sim_info.update( {'ICCID':val} )
+        print('ICCID 2FE2: ' + val + '\n')
         # IMSI 6F07
-        print('IMSI 6F07: ' + self.sim_read_binary('6F07','rev') + '\n')
+        val = self.sim_read_binary('6F07','rev')
+        sim_info.update( {'IMSI':val} )
+        print('IMSI 6F07: ' + val + '\n')
         # LRPLMNSI 6FDC
-        print('LRPLMNSI 6FDC: ' + self.sim_read_binary('6FDC') + '\n')
+        val = self.sim_read_binary('6FDC', 'plmn')
+        sim_info.update( {'LRPLMNSI':val} )
+        print('LRPLMNSI 6FDC: ' + val + '\n')
         # HPLMNwAcT 6F62
+        val = self.sim_read_binary('6F62','plmnact')
+        sim_info.update( {'HPLMNwAcT':val} )
         print('Acccess Tech: 8000=2G, 0080=3G, 0040=4G, 80C0=2G+3G+4G')
-        print('HPLMNwAcT 6F62: ' + self.sim_read_binary('6F62','plmnact') + '\n')
+        print('HPLMNwAcT 6F62: ' +  val + '\n')
         # OPLMNwAcT 6F61
-        print('OPLMNwAcT 6F61: ' + self.sim_read_binary('6F61','plmnact') + '\n')
+        val = self.sim_read_binary('6F61','plmnact')
+        sim_info.update( {'OPLMNwAcT':val} )
+        print('OPLMNwAcT 6F61: ' + val + '\n')
         # PLMNwAcT 6F60
+        val = self.sim_read_binary('6F60','plmnact')
+        sim_info.update( {'PLMNwAcT':val} )
         print('PLMNwAcT 6F60: ' + self.sim_read_binary('6F60','plmnact') + '\n')
         # FPLMN 6F7B
-        print('FPLMN 6F7B: ' + self.sim_read_binary('6F7B','plmn') + '\n')
+        val = self.sim_read_binary('6F7B','plmn')
+        sim_info.update( {'FPLMN':val} )
+        print('FPLMN 6F7B: ' + val + '\n')
         # EHPLMN 6FD9
-        print('EHPLMN 6FD9: ' + self.sim_read_binary('6FD9','plmn') + '\n')
+        val = self.sim_read_binary('6FD9','plmn')
+        sim_info.update( {'EHPLMN':val} )
+        print('EHPLMN 6FD9: ' + val + '\n')
         # LOCI 6F7E
+        val = self.sim_read_binary('6F7E', 'loci')
+        sim_info.update( {'LOCI':val} )
         print('LOCI Status:\n 0=updated, 1=not updated, 2=plmn not allowed, 3=Area not allowed')
-        print('LOCI 6F7E: ' + self.sim_read_binary('6F7E', 'loci') + '\n')
+        print('LOCI 6F7E: ' + val + '\n')
         # PSLOCI 6F73
-        print('PSLOCI 6F73: ' + self.sim_read_binary('6F73', 'psloci') + '\n')
+        val = self.sim_read_binary('6F73', 'psloci')
+        sim_info.update( {'PSLOCI':val} )
+        print('PSLOCI 6F73: ' + val + '\n')
         # EPSLOCI 6FE3
-        print('EPSLOCI 6FE3: ' + self.sim_read_binary('6FE3','epsloci') + '\n')
-        return True
+        val = self.sim_read_binary('6FE3', 'epsloci')
+        sim_info.update( {'EPSLOCI':val} )
+        print('EPSLOCI 6FE3: ' + val + '\n')
+        return sim_info
 
 
     def sim_config(self, cmd1, cmd2):
@@ -467,6 +492,7 @@ class Module:
         ser = self.myserial
         value = self.parse_cmd_single_response(rmutils.write(ser, cmd))
         info_obj.update( {keyname:value} )
+        return value
 
 
     def get_info_for_obj_prefix(self, cmd, prefix, keyname, info_obj):

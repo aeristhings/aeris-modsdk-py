@@ -1092,7 +1092,9 @@ def info(ctx):
     \f
 
     """
-    if my_module.sim_info():
+    sim_info_object = my_module.sim_info(ctx.obj['verbose'])
+    print('SIM info object: ' + str(sim_info_object))
+    if sim_info_object:
         print('Info command successful.')
     else:
         print('Not supported or not successful.')
