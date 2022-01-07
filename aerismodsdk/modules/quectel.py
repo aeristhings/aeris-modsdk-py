@@ -706,6 +706,7 @@ class QuectelModule(Module):
 
     def gps_info(self):
         ser = self.myserial
+        gps_info = {}  # Initialize an empty dictionary object
         # Check if GPS enabled
         rmutils.write(ser, 'AT+QGPS?') 
         # Check if GPSOneExtra is enabled
@@ -724,22 +725,43 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QGPSLOC=0')
         # Get NMEA sentences
         print('Global Positioning System Fix Data')
-        rmutils.write(ser, 'AT+QGPSGNMEA="GGA"')
+        #rmutils.write(ser, 'AT+QGPSGNMEA="GGA"')
+        values = self.get_values_for_cmd('AT+QGPSGNMEA="GGA"', '+QGPSGNMEA:')
+        gps_info.update( {'GGA':values} )
+        
         print('Recommended minimum specific GPS/Transit data')
-        rmutils.write(ser, 'AT+QGPSGNMEA="RMC"')
+        #rmutils.write(ser, 'AT+QGPSGNMEA="RMC"')
+        values = self.get_values_for_cmd('AT+QGPSGNMEA="RMC"', '+QGPSGNMEA:')
+        gps_info.update( {'RMC':values} )
+
         print('GPS Satellites in view')
-        rmutils.write(ser, 'AT+QGPSGNMEA="GSV"')
+        #rmutils.write(ser, 'AT+QGPSGNMEA="GSV"')
+        values = self.get_values_for_cmd('AT+QGPSGNMEA="GSV"', '+QGPSGNMEA:')
+        gps_info.update( {'GSV':values} )
+
         print('GPS DOP and active satellites')
-        rmutils.write(ser, 'AT+QGPSGNMEA="GSA"')
+        #rmutils.write(ser, 'AT+QGPSGNMEA="GSA"')
+        values = self.get_values_for_cmd('AT+QGPSGNMEA="GSA"', '+QGPSGNMEA:')
+        gps_info.update( {'GSA':values} )
+
         print('Track made good and ground speed')
-        rmutils.write(ser, 'AT+QGPSGNMEA="VTG"')
+        #rmutils.write(ser, 'AT+QGPSGNMEA="VTG"')
+        values = self.get_values_for_cmd('AT+QGPSGNMEA="VTG"', '+QGPSGNMEA:')
+        gps_info.update( {'VTG':values} )
+
         print('Fix data')
-        rmutils.write(ser, 'AT+QGPSGNMEA="GNS"')
+        #rmutils.write(ser, 'AT+QGPSGNMEA="GNS"')
+        values = self.get_values_for_cmd('AT+QGPSGNMEA="GNS"', '+QGPSGNMEA:')
+        gps_info.update( {'GNS':values} )
+
         # Check if we have a location
-        rmutils.write(ser, 'AT+QGPSLOC=0')
+        #rmutils.write(ser, 'AT+QGPSLOC=0')
+        values = self.get_values_for_cmd('AT+QGPSLOC=0', '+QGPSLOC:')
+        gps_info.update( {'QGPSLOC':values} )
+
         # Wait for straggling URC
-        rmutils.wait_urc(self.myserial, 5, self.com_port)
-        return True
+        #rmutils.wait_urc(self.myserial, 5, self.com_port)
+        return gps_info
 
 
     def gps_config(self):

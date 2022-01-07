@@ -999,7 +999,9 @@ def info(ctx):
     \f
 
     """
-    if my_module.gps_info():
+    gps_info_object = my_module.gps_info()
+    print('GPS info object: ' + str(gps_info_object))
+    if gps_info_object:
         print('Info command successful.')
     else:
         print('Not supported or not successful.')
