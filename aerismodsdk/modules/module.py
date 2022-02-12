@@ -19,8 +19,14 @@ from aerismodsdk.utils.loggerutils import logger
 from aerismodsdk.utils import rmutils, aerisutils
 from aerismodsdk.utils.shoulder_tap import parse_shoulder_tap
 
+#getpacket = """GET / HTTP/1.1
+#Host: <hostname>
+#"""
 getpacket = """GET / HTTP/1.1
 Host: <hostname>
+User-Agent: aerismodsdk
+Accept: */*
+
 """
 
 

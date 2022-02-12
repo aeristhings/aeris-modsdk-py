@@ -202,7 +202,7 @@ class QuectelModule(Module):
     def http_get(self, host, verbose):
         ser = self.myserial
         self.create_packet_session()
-        # Open TCP socket to the host
+        # Open TCP socket to the host in buffer access mode
         rmutils.write(ser, 'AT+QICLOSE=0', delay=1)  # Make sure no sockets open
         mycmd = 'AT+QIOPEN=1,0,\"TCP\",\"' + host + '\",80,0,0'
         rmutils.write(ser, mycmd, delay=1)  # Create TCP socket connection as a client
@@ -213,9 +213,11 @@ class QuectelModule(Module):
         getpacket = self.get_http_packet(host)
         mycmd = 'AT+QISEND=0,' + str(len(getpacket))
         rmutils.write(ser, mycmd, getpacket, delay=0)  # Write an http get command
-        rmutils.write(ser, 'AT+QISEND=0,0')  # Check how much data sent
+        rmutils.write(ser, 'AT+QISEND=0,0', delay=5)  # Check how much data sent
+        #rmutils.wait_urc(self.myserial, 5, self.com_port)
         # Read the response
-        rmutils.write(ser, 'AT+QIRD=0,1500')  # Check receive
+        rmutils.write(ser, 'AT+QIRD=0,1500', delay=5)  # Check receive
+        #rmutils.wait_urc(self.myserial, 5, self.com_port)
 
     # ========================================================================
     #
