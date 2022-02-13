@@ -47,6 +47,7 @@ class QuectelModule(Module):
 
     def network_info(self, scan, verbose):
         ser = self.myserial
+        net_info = {}  # Initialize an empty dictionary object
         # Quectel-specific advanced configuration
         rmutils.write(ser, 'AT+QPSMEXTCFG?') 
         # Quectel - Network scan sequence
@@ -64,12 +65,20 @@ class QuectelModule(Module):
         # Quectel - NB band priority
         rmutils.write(ser, 'AT+QCFG="nb/bandprior"') 
         # Quectel-specific network info
-        rmutils.write(ser, 'AT+QNWINFO') 
+        #rmutils.write(ser, 'AT+QNWINFO') 
+        values = self.get_values_for_cmd('AT+QNWINFO', '+QNWINFO:')
+        if len(values) < 1:  # Check for problem condition
+            return net_info
+        net_info.update({'act': values[0].strip('"')})
+        net_info.update({'oper': values[1].strip('"')})
+        net_info.update({'band': values[2].strip('"')})
+        net_info.update({'channel': values[3]})
         # Quectel-specific network info
         rmutils.write(ser, 'AT+QENG="servingcell"', waitoe = True) 
         # Quectel-specific network info
         rmutils.write(ser, 'AT+QENG="neighbourcell"', waitoe = True) 
-        return super().network_info(scan, verbose)
+        net_info.update(super().network_info(scan, verbose))
+        return net_info
 
 
     def network_config_ec25(self):
