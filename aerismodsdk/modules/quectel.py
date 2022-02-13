@@ -225,8 +225,9 @@ class QuectelModule(Module):
         rmutils.write(ser, 'AT+QISEND=0,0', delay=5)  # Check how much data sent
         #rmutils.wait_urc(self.myserial, 5, self.com_port)
         # Read the response
-        rmutils.write(ser, 'AT+QIRD=0,1500', delay=5)  # Check receive
+        http_response = rmutils.write(ser, 'AT+QIRD=0,1500', delay=5)  # Check receive
         #rmutils.wait_urc(self.myserial, 5, self.com_port)
+        return http_response
 
     # ========================================================================
     #
